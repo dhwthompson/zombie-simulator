@@ -1,15 +1,15 @@
 "use strict";
 
-var clear = require("clear");
+const clear = require("clear");
 
-var humanDensity = 0.1;
-var zombieProbability = 0.1;
+const humanDensity = 0.1;
+const zombieProbability = 0.1;
 
 function initGrid(gridSizeX, gridSizeY) {
-  var grid = [];
+  let grid = [];
 
   for (var i = 0; i < gridSizeY; i++) {
-    var row = new Array(gridSizeX);
+    let row = new Array(gridSizeX);
     row.fill(null);
     grid.push(row);
   }
@@ -17,8 +17,8 @@ function initGrid(gridSizeX, gridSizeY) {
 }
 
 function populateCharacters(grid) {
-  for (var row of grid) {
-    for (var x = 0; x < row.length; x++) {
+  for (let row of grid) {
+    for (let x = 0; x < row.length; x++) {
       if (Math.random() < humanDensity) {
         if (Math.random() < zombieProbability) {
           row[x] = '🧟';
@@ -31,9 +31,9 @@ function populateCharacters(grid) {
 }
 
 function renderGrid(grid) {
-  var rendered = "";
-  for (var row of grid) {
-    for (var cell of row) {
+  let rendered = "";
+  for (let row of grid) {
+    for (let cell of row) {
       if (cell === null) {
         rendered += ". ";
       } else {
@@ -45,7 +45,7 @@ function renderGrid(grid) {
   return rendered;
 }
 
-var grid = initGrid(40, 20);
+let grid = initGrid(40, 20);
 populateCharacters(grid);
 clear();
 console.log(renderGrid(grid));
