@@ -10,5 +10,8 @@
   "license": "ISC",
   "dependencies": {
     "clear": "^0.1.0"
+  },
+  "devDependencies": {
+    "jshint": "^2.9.5"
   }
 }
