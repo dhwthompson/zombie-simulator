@@ -1,7 +1,7 @@
 {
   "name": "zombie-simulator",
   "version": "0.1.0",
-  "description": "",
+  "description": "Simulating the zombie apocalypse through the medium of emoji",
   "main": "index.js",
   "scripts": {
     "test": "test"
