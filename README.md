@@ -15,7 +15,7 @@ From the root of this repo, run:
 
 ```bash
 npm install
-npx .
+npm start
 ```
 
 
