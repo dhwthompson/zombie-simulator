@@ -1,7 +1,5 @@
 "use strict";
 
-const clear = require("clear");
-
 const humanDensity = 0.1;
 const zombieProbability = 0.1;
 
@@ -47,5 +45,5 @@ function renderGrid(grid) {
 
 let grid = initGrid(40, 20);
 populateCharacters(grid);
-clear();
+console.clear();
 console.log(renderGrid(grid));

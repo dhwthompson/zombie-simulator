@@ -8,9 +8,7 @@
   },
   "author": "David Thompson <mail@fatbusinessman.com>",
   "license": "ISC",
-  "dependencies": {
-    "clear": "^0.1.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "jshint": "^2.9.5"
   }
