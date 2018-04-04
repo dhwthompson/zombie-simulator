@@ -4,7 +4,8 @@
   "description": "Simulating the zombie apocalypse through the medium of emoji",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "test": "mocha"
   },
   "author": "David Thompson <mail@fatbusinessman.com>",
   "license": "ISC",
