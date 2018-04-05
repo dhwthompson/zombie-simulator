@@ -26,6 +26,9 @@ class World {
   }
 
   at(x, y) {
+    if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
+      return undefined;
+    }
     const record = this.characters.find((r) => r.x == x && r.y == y);
     if(record === undefined) {
       return null;
