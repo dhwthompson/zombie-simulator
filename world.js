@@ -15,7 +15,7 @@ class World {
     for (let rowNum = 0; rowNum < this.height; rowNum++) {
       let row = new Array(this.width);
       for (let colNum = 0; colNum < this.width; colNum++) {
-        row[colNum] = this.at(colNum, rowNum);
+        row[colNum] = this._at(colNum, rowNum);
       }
       rows.push(row);
     }
@@ -27,7 +27,7 @@ class World {
     return new World(this.width, this.height, newChars);
   }
 
-  at(x, y) {
+  _at(x, y) {
     if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
       return undefined;
     }
