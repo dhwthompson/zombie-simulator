@@ -3,9 +3,9 @@ class Renderer {
     this.world = world;
   }
 
-  lines() {
+  get lines() {
     let lines = [];
-    for(let row of this.world.rows()) {
+    for(let row of this.world.rows) {
       let line = '';
       for(let cell of row) {
         line += '. ';

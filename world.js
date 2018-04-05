@@ -10,7 +10,7 @@ class World {
     }
   }
 
-  rows() {
+  get rows() {
     let rows = [];
     for (let rowNum = 0; rowNum < this.height; rowNum++) {
       let row = new Array(this.width);

@@ -4,17 +4,17 @@ const World = require('../world');
 describe('World', () => {
   it('has a single-cell row', function() {
     let world = new World(1, 1);
-    assert.deepEqual(world.rows(), [[null]]);
+    assert.deepEqual(world.rows, [[null]]);
   });
 
   it('has a single-row world', function() {
     let world = new World(3, 1);
-    assert.deepEqual(world.rows(), [[null, null, null]]);
+    assert.deepEqual(world.rows, [[null, null, null]]);
   });
 
   it('has a multi-row world', function() {
     let world = new World(2, 2);
-    assert.deepEqual(world.rows(), [[null, null], [null, null]]);
+    assert.deepEqual(world.rows, [[null, null], [null, null]]);
   });
 
   it('returns null for empty spaces', function() {
