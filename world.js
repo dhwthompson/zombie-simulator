@@ -14,7 +14,9 @@ class World {
     let rows = [];
     for (let rowNum = 0; rowNum < this.height; rowNum++) {
       let row = new Array(this.width);
-      row.fill(null);
+      for (let colNum = 0; colNum < this.width; colNum++) {
+        row[colNum] = this.at(colNum, rowNum);
+      }
       rows.push(row);
     }
     return rows;

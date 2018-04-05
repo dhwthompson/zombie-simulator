@@ -43,4 +43,11 @@ describe('World', () => {
     let populatedWorld = world.addCharacter(character, 1, 1);
     assert.strictEqual(populatedWorld.at(1, 1), character);
   });
+
+  it('includes characters in rows', function() {
+    let world = new World(1, 1);
+    let character = {};
+    world = world.addCharacter(character, 0, 0);
+    assert.deepEqual(world.rows, [[character]]);
+  });
 });
