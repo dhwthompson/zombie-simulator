@@ -1,49 +1,20 @@
 "use strict";
 
-const humanDensity = 0.1;
-const zombieProbability = 0.1;
+const character = require('./character');
+const Renderer = require('./renderer');
+const World = require('./world');
 
-function initGrid(gridSizeX, gridSizeY) {
-  let grid = [];
+const Population = character.Population;
 
-  for (var i = 0; i < gridSizeY; i++) {
-    let row = new Array(gridSizeX);
-    row.fill(null);
-    grid.push(row);
-  }
-  return grid;
-}
+const worldWidth = 40, worldHeight = 20;
+const humanDensity = 0.1, zombieProbability = 0.1;
 
-function populateCharacters(grid) {
-  for (let row of grid) {
-    for (let x = 0; x < row.length; x++) {
-      if (Math.random() < humanDensity) {
-        if (Math.random() < zombieProbability) {
-          row[x] = '🧟';
-        } else {
-          row[x] = '👱';
-        }
-      }
-    }
-  }
-}
+const population = new Population(humanDensity, zombieProbability);
 
-function renderGrid(grid) {
-  let rendered = "";
-  for (let row of grid) {
-    for (let cell of row) {
-      if (cell === null) {
-        rendered += ". ";
-      } else {
-        rendered += cell + " ";
-      }
-    }
-    rendered += "\n";
-  }
-  return rendered;
-}
+let world = World.populatedBy(worldWidth, worldHeight, population);
+let renderer = new Renderer(world);
 
-let grid = initGrid(40, 20);
-populateCharacters(grid);
 console.clear();
-console.log(renderGrid(grid));
+for (let line of renderer.lines) {
+  console.log(line);
+}
