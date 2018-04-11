@@ -30,4 +30,10 @@ describe('World', () => {
     world = world.addCharacter(character, 0, 0);
     assert.deepEqual(world.rows, [[character, null], [null, null]]);
   });
+
+  it('populates the world', function() {
+    let populator = { next: function() { return {c: 1}; } };
+    world = World.populatedBy(2, 2, populator);
+    assert.deepEqual(world.rows, [[{c: 1},{c: 1}],[{c: 1}, {c: 1}]]);
+  });
 });

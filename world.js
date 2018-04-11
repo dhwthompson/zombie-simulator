@@ -10,6 +10,17 @@ class World {
     }
   }
 
+  static populatedBy(width, height, populator) {
+    let world = new World(width, height);
+    for (let x = 0; x < width; x++) {
+      for (let y = 0; y < height; y++) {
+        world = world.addCharacter(populator.next(), x, y);
+      }
+    }
+
+    return world;
+  }
+
   get rows() {
     let rows = [];
     for (let rowNum = 0; rowNum < this.height; rowNum++) {
