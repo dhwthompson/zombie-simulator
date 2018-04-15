@@ -1,8 +1,24 @@
 class Zombie {
   constructor() { }
 
-  move() {
-    return {dx: 0, dy: 0};
+  move(environment) {
+    let dx = 0, dy = 0;
+
+    if (environment.length > 0) {
+      if (environment[0].dx > 0) {
+        dx = 1;
+      }
+      if (environment[0].dx < 0) {
+        dx = -1;
+      }
+      if (environment[0].dy > 0) {
+        dy = 1;
+      }
+      if (environment[0].dy < 0) {
+        dy = -1;
+      }
+    }
+    return {dx, dy};
   }
 }
 

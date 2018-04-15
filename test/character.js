@@ -1,6 +1,7 @@
 const assert = require('assert');
 const character = require('../character');
 
+const Human = character.Human;
 const Population = character.Population;
 const Zombie = character.Zombie;
 
@@ -10,6 +11,28 @@ describe('Zombie', function() {
     const environment = [];
 
     assert.deepEqual(zombie.move(environment), {dx: 0, dy: 0});
+  });
+
+  const singleCases = [
+    {desc: 'right', dx: 2, dy: 0, expectedMove: {dx: 1, dy: 0}},
+    {desc: 'left', dx: -2, dy: 0, expectedMove: {dx: -1, dy: 0}},
+    {desc: 'up', dx: 0, dy: 2, expectedMove: {dx: 0, dy: 1}},
+    {desc: 'down', dx: 0, dy: -2, expectedMove: {dx: 0, dy: -1}},
+    {desc: 'up-left', dx: -2, dy: 2, expectedMove: {dx: -1, dy: 1}},
+    {desc: 'up-right', dx: 2, dy: 2, expectedMove: {dx: 1, dy: 1}},
+    {desc: 'down-left', dx: -2, dy: -2, expectedMove: {dx: -1, dy: -1}},
+    {desc: 'down-right', dx: 2, dy: -2, expectedMove: {dx: 1, dy: -1}},
+  ];
+
+  singleCases.forEach(function(testCase) {
+    it('moves ' + testCase.desc + ' toward a human', function() {
+      let zombie = new Zombie();
+      const environment = [
+        {dx: testCase.dx, dy: testCase.dy, character: new Human()}
+      ];
+
+      assert.deepEqual(zombie.move(environment), testCase.expectedMove);
+    });
   });
 });
 
