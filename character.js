@@ -1,13 +1,17 @@
 class Zombie {
   constructor() { }
 
+  get living() { return false; }
+
   move(environment) {
     let dx = 0, dy = 0;
 
     let bestDistance = Infinity;
     let bestTarget = null;
 
-    environment.forEach(function(target) {
+    const targets = environment.filter(t => t.character.living);
+
+    targets.forEach(function(target) {
       /* Given we can move diagonally, Manhattan distance is fine */
       const distance = Math.abs(target.dx) + Math.abs(target.dy);
       if (distance < bestDistance) {
@@ -36,6 +40,8 @@ class Zombie {
 
 class Human {
   constructor() { }
+
+  get living() { return true; }
 }
 
 class Population {
