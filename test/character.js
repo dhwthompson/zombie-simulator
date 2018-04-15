@@ -54,6 +54,15 @@ describe('Zombie', function() {
 
     assert.deepEqual(zombie.move(environment), {dx: 0, dy: 0});
   });
+
+  it('does not move if next to a human', function() {
+    let zombie = new Zombie();
+    const environment = [
+      {dx: 1, dy: 1, character: new Human()}
+    ];
+
+    assert.deepEqual(zombie.move(environment), {dx: 0, dy: 0});
+  });
 });
 
 describe('Population', function() {

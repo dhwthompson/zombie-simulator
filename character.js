@@ -8,18 +8,28 @@ class Zombie {
 
     let bestDistance = Infinity;
     let bestTarget = null;
+    let bitingRange = false;
 
     const targets = environment.filter(t => t.character.living);
 
     targets.forEach(function(target) {
       /* Given we can move diagonally, Manhattan distance is fine */
-      const distance = Math.abs(target.dx) + Math.abs(target.dy);
+
+      const xDistance = Math.abs(target.dx);
+      const yDistance = Math.abs(target.dy);
+      const distance = xDistance + yDistance;
       if (distance < bestDistance) {
         bestDistance = distance;
         bestTarget = target;
+        if (Math.max(xDistance, yDistance) < 2) {
+          bitingRange = true;
+        }
       }
     });
 
+    if (bitingRange) {
+      return {dx: 0, dy: 0};
+    }
     if (bestTarget !== null) {
       if (bestTarget.dx > 0) {
         dx = 1;
