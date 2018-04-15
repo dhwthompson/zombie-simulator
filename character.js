@@ -43,6 +43,11 @@ class Zombie {
       if (bestTarget.dy < 0) {
         dy = -1;
       }
+
+      /* Collision detection */
+      if (environment.find(t => t.dx == dx && t.dy == dy)) {
+        return {dx: 0, dy: 0};
+      }
     }
     return {dx, dy};
   }
