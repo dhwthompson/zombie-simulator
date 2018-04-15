@@ -4,17 +4,29 @@ class Zombie {
   move(environment) {
     let dx = 0, dy = 0;
 
-    if (environment.length > 0) {
-      if (environment[0].dx > 0) {
+    let bestDistance = Infinity;
+    let bestTarget = null;
+
+    environment.forEach(function(target) {
+      /* Given we can move diagonally, Manhattan distance is fine */
+      const distance = Math.abs(target.dx) + Math.abs(target.dy);
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        bestTarget = target;
+      }
+    });
+
+    if (bestTarget !== null) {
+      if (bestTarget.dx > 0) {
         dx = 1;
       }
-      if (environment[0].dx < 0) {
+      if (bestTarget.dx < 0) {
         dx = -1;
       }
-      if (environment[0].dy > 0) {
+      if (bestTarget.dy > 0) {
         dy = 1;
       }
-      if (environment[0].dy < 0) {
+      if (bestTarget.dy < 0) {
         dy = -1;
       }
     }
