@@ -2,7 +2,16 @@ const assert = require('assert');
 const character = require('../character');
 
 const Population = character.Population;
+const Zombie = character.Zombie;
 
+describe('Zombie', function() {
+  it('stays still if nothing is nearby', function() {
+    let zombie = new Zombie();
+    const environment = [];
+
+    assert.deepEqual(zombie.move(environment), {dx: 0, dy: 0});
+  });
+});
 
 describe('Population', function() {
   it('generates no humans', function() {

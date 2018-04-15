@@ -1,5 +1,9 @@
 class Zombie {
   constructor() { }
+
+  move() {
+    return {dx: 0, dy: 0};
+  }
 }
 
 class Human {
