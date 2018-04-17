@@ -20,14 +20,14 @@ describe('World', () => {
   it('adds a character', function() {
     let world = new World(1, 1);
     let character = {};
-    world = world.addCharacter(character, 0, 0);
+    world = world.withCharacterAt(character, 0, 0);
     assert.deepEqual(world.rows, [[character]]);
   });
 
   it('adds a character to a multi-cell world', function() {
     let world = new World(2, 2);
     let character = {};
-    world = world.addCharacter(character, 0, 0);
+    world = world.withCharacterAt(character, 0, 0);
     assert.deepEqual(world.rows, [[character, null], [null, null]]);
   });
 

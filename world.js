@@ -14,7 +14,7 @@ class World {
     let world = new World(width, height);
     for (let x = 0; x < width; x++) {
       for (let y = 0; y < height; y++) {
-        world = world.addCharacter(populator.next(), x, y);
+        world = world.withCharacterAt(populator.next(), x, y);
       }
     }
 
@@ -33,7 +33,7 @@ class World {
     return rows;
   }
 
-  addCharacter(character, x, y) {
+  withCharacterAt(character, x, y) {
     const newChars = this.characters.concat([{x: x, y: y, character: character}]);
     return new World(this.width, this.height, newChars);
   }
