@@ -17,6 +17,18 @@ describe('World', () => {
       let world = new World(2, 2);
       assert.deepEqual(world.rows, [[null, null], [null, null]]);
     });
+
+    it('creates an explicitly empty world', function() {
+      let world = new World(2, 2, []);
+      assert.deepEqual(world.rows, [[null, null], [null, null]]);
+    });
+
+    it('creates a world with a character', function() {
+      const character = {};
+      let world = new World(2, 2, [{x: 0, y: 0, character: character}]);
+
+      assert.deepEqual(world.rows, [[character, null], [null, null]]);
+    });
   });
 
   describe('withCharacterAt', function() {
