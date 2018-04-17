@@ -85,6 +85,15 @@ describe('Zombie', function() {
   });
 });
 
+describe('Human', function() {
+  it('does not move', function() {
+    let human = new Human();
+    const environment = [];
+
+    assert.deepEqual(human.move(environment), {dx: 0, dy: 0});
+  });
+});
+
 describe('Population', function() {
   it('generates no humans', function() {
     let population = new Population(0, 0);

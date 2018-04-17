@@ -57,6 +57,10 @@ class Human {
   constructor() { }
 
   get living() { return true; }
+
+  move(environment) {
+    return {dx: 0, dy: 0};
+  }
 }
 
 class Population {
