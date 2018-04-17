@@ -34,8 +34,14 @@ class World {
   }
 
   withCharacterAt(character, x, y) {
-    const newChars = this.characters.concat([{x: x, y: y, character: character}]);
-    return new World(this.width, this.height, newChars);
+    let newCharacters = this.characters.filter(cr => cr.character !== character);
+    if (newCharacters.some(cr => cr.x === x && cr.y === y)) {
+      throw new Error('Invalid move to occupied space (' + x + ', ' + y + ')');
+    }
+
+    newCharacters.push({x: x, y: y, character: character});
+
+    return new World(this.width, this.height, newCharacters);
   }
 
   _at(x, y) {

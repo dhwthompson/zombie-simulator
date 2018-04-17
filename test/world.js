@@ -45,6 +45,55 @@ describe('World', () => {
       world = world.withCharacterAt(character, 0, 0);
       assert.deepEqual(world.rows, [[character, null], [null, null]]);
     });
+
+    it('moves an existing character', function() {
+      const character = {};
+      let world = new World(2, 2, [{x: 0, y: 0, character: character}]);
+
+      world = world.withCharacterAt(character, 1, 1);
+
+      assert.deepEqual(world.rows, [[null, null], [null, character]]);
+    });
+
+    it('leaves non-moving characters alone', function() {
+      const character = {a: 1};
+      const otherCharacter = {b: 1};
+      let world = new World(2, 2, [
+        {x: 0, y: 0, character: character},
+        {x: 1, y: 1, character: otherCharacter}
+      ]);
+
+      world = world.withCharacterAt(character, 1, 0);
+
+      assert.deepEqual(world.rows, [[null, character], [null, otherCharacter]]);
+    });
+
+    it('moves a character to the space they are in already', function() {
+      const character = {a: 1};
+      const otherCharacter = {b: 1};
+      const world = new World(2, 2, [
+        {x: 0, y: 0, character: character},
+        {x: 1, y: 1, character: otherCharacter}
+      ]);
+
+      let newWorld = world.withCharacterAt(character, 0, 0);
+
+      assert.deepEqual(newWorld.rows, world.rows);
+    });
+
+    it('refuses to move one character onto another', function() {
+      const character = {a: 1};
+      const otherCharacter = {b: 1};
+      let world = new World(2, 2, [
+        {x: 0, y: 0, character: character},
+        {x: 1, y: 1, character: otherCharacter}
+      ]);
+
+      assert.throws(
+        () => world.withCharacterAt(character, 1, 1),
+        Error
+      );
+    });
   });
 
   describe('populatedBy', function() {
