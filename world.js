@@ -44,6 +44,16 @@ class World {
     return new World(this.width, this.height, newCharacters);
   }
 
+  viewpoint(x, y) {
+    return this.characters.map(function(charRecord) {
+      return {
+        dx: charRecord.x - x,
+        dy: charRecord.y - y,
+        character: charRecord.character
+      };
+    });
+  }
+
   _at(x, y) {
     if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
       return undefined;

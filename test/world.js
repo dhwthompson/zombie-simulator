@@ -96,6 +96,30 @@ describe('World', () => {
     });
   });
 
+  describe('viewpoint', function() {
+    it('shows an empty environment', function() {
+      const world = new World(2, 2);
+      assert.deepEqual(world.viewpoint(1, 1), []);
+    });
+    it('shows a character with their grid offset', function() {
+      const world = new World(2, 2, [{x: 1, y: 1, character: {}}]);
+      assert.deepEqual(world.viewpoint(1, 1), [{dx: 0, dy: 0, character: {}}]);
+    });
+    it('shows multiple characters', function() {
+      const characters = [
+        {x: 1, y: 1, character: {a: 1}},
+        {x: 2, y: 0, character: {b: 1}}
+      ];
+      const world = new World(2, 2, characters);
+      assert.deepEqual(world.viewpoint(0, 1),
+        [
+          {dx: 1, dy: 0, character: {a: 1}},
+          {dx: 2, dy: -1, character: {b: 1}}
+        ]
+      );
+    });
+  });
+
   describe('populatedBy', function() {
     it('populates the world', function() {
       let populator = { next: function() { return {c: 1}; } };
