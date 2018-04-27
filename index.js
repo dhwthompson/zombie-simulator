@@ -8,8 +8,8 @@ const World = require('./world');
 
 const Population = character.Population;
 
-const worldWidth = 40, worldHeight = 20;
-const humanDensity = 0.1, zombieProbability = 0.1;
+const worldWidth = 60, worldHeight = 30;
+const humanDensity = 0.05, zombieProbability = 0.9;
 
 const population = new Population(humanDensity, zombieProbability);
 
