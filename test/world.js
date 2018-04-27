@@ -94,6 +94,14 @@ describe('World', () => {
         Error
       );
     });
+
+    it('refuses to add null characters', function() {
+      const world = new World(2, 2);
+      assert.throws(
+        () => world.withCharacterAt(null, 1, 1),
+        Error
+      );
+    });
   });
 
   describe('viewpoint', function() {
@@ -125,6 +133,12 @@ describe('World', () => {
       let populator = { next: function() { return {c: 1}; } };
       world = World.populatedBy(2, 2, populator);
       assert.deepEqual(world.rows, [[{c: 1},{c: 1}],[{c: 1}, {c: 1}]]);
+    });
+
+    it('does nothing for null values', function() {
+      let populator = { next: function() { return null; } };
+      world = World.populatedBy(2, 2, populator);
+      assert.deepEqual(world.rows, [[null, null], [null, null]]);
     });
   });
 });

@@ -14,7 +14,10 @@ class World {
     let world = new World(width, height);
     for (let x = 0; x < width; x++) {
       for (let y = 0; y < height; y++) {
-        world = world.withCharacterAt(populator.next(), x, y);
+        const newCharacter = populator.next();
+        if (newCharacter !== null) {
+          world = world.withCharacterAt(newCharacter, x, y);
+        }
       }
     }
 
@@ -34,6 +37,9 @@ class World {
   }
 
   withCharacterAt(character, x, y) {
+    if (character === null) {
+      throw new Error('Attempted to add a null character at (' + x + ', ' + y + ')');
+    }
     let newCharacters = this.characters.filter(cr => cr.character !== character);
     if (newCharacters.some(cr => cr.x === x && cr.y === y)) {
       throw new Error('Invalid move to occupied space (' + x + ', ' + y + ')');
