@@ -1,8 +1,98 @@
 const assert = require('assert');
 const character = require('../character');
 
+const Human = character.Human;
 const Population = character.Population;
+const Zombie = character.Zombie;
 
+describe('Zombie', function() {
+  it('stays still if nothing is nearby', function() {
+    let zombie = new Zombie();
+    const environment = [];
+
+    assert.deepEqual(zombie.move(environment), {dx: 0, dy: 0});
+  });
+
+  const singleCases = [
+    {desc: 'right', dx: 2, dy: 0, expectedMove: {dx: 1, dy: 0}},
+    {desc: 'left', dx: -2, dy: 0, expectedMove: {dx: -1, dy: 0}},
+    {desc: 'up', dx: 0, dy: 2, expectedMove: {dx: 0, dy: 1}},
+    {desc: 'down', dx: 0, dy: -2, expectedMove: {dx: 0, dy: -1}},
+    {desc: 'up-left', dx: -2, dy: 2, expectedMove: {dx: -1, dy: 1}},
+    {desc: 'up-right', dx: 2, dy: 2, expectedMove: {dx: 1, dy: 1}},
+    {desc: 'down-left', dx: -2, dy: -2, expectedMove: {dx: -1, dy: -1}},
+    {desc: 'down-right', dx: 2, dy: -2, expectedMove: {dx: 1, dy: -1}},
+  ];
+
+  singleCases.forEach(function(testCase) {
+    it('moves ' + testCase.desc + ' toward a human', function() {
+      let zombie = new Zombie();
+      const environment = [
+        {dx: testCase.dx, dy: testCase.dy, character: new Human()}
+      ];
+
+      assert.deepEqual(zombie.move(environment), testCase.expectedMove);
+    });
+  });
+
+  it('moves toward the nearest human', function() {
+    let zombie = new Zombie();
+    const environment = [
+        {dx: 3, dy: -3, character: new Human()},
+        {dx: 2, dy: 2, character: new Human()},
+        {dx: -3, dy: 3, character: new Human()},
+    ];
+
+    assert.deepEqual(zombie.move(environment), {dx: 1, dy: 1});
+  });
+
+  it('does not move toward zombies', function() {
+    let zombie = new Zombie();
+    const environment = [
+      {dx: 2, dy: 2, character: new Zombie()}
+    ];
+
+    assert.deepEqual(zombie.move(environment), {dx: 0, dy: 0});
+  });
+
+  it('does not move if next to a human', function() {
+    let zombie = new Zombie();
+    const environment = [
+      {dx: 1, dy: 1, character: new Human()}
+    ];
+
+    assert.deepEqual(zombie.move(environment), {dx: 0, dy: 0});
+  });
+
+  it('does not try to move through zombies', function() {
+    let zombie = new Zombie();
+    const environment = [
+      {dx: 2, dy: 2, character: new Human()},
+      {dx: 1, dy: 1, character: new Zombie()}
+    ];
+
+    assert.deepEqual(zombie.move(environment), {dx: 0, dy: 0});
+  });
+
+  it('does not try to move through humans', function() {
+    let zombie = new Zombie();
+    const environment = [
+      {dx: 2, dy: 2, character: new Human()},
+      {dx: 1, dy: 1, character: new Human()}
+    ];
+
+    assert.deepEqual(zombie.move(environment), {dx: 0, dy: 0});
+  });
+});
+
+describe('Human', function() {
+  it('does not move', function() {
+    let human = new Human();
+    const environment = [];
+
+    assert.deepEqual(human.move(environment), {dx: 0, dy: 0});
+  });
+});
 
 describe('Population', function() {
   it('generates no humans', function() {

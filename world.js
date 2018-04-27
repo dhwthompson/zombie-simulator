@@ -14,7 +14,10 @@ class World {
     let world = new World(width, height);
     for (let x = 0; x < width; x++) {
       for (let y = 0; y < height; y++) {
-        world = world.addCharacter(populator.next(), x, y);
+        const newCharacter = populator.next();
+        if (newCharacter !== null) {
+          world = world.withCharacterAt(newCharacter, x, y);
+        }
       }
     }
 
@@ -33,9 +36,44 @@ class World {
     return rows;
   }
 
-  addCharacter(character, x, y) {
-    const newChars = this.characters.concat([{x: x, y: y, character: character}]);
-    return new World(this.width, this.height, newChars);
+  withCharacterAt(character, x, y) {
+    if (character === null) {
+      throw new Error('Attempted to add a null character at (' + x + ', ' + y + ')');
+    }
+    let newCharacters = this.characters.filter(cr => cr.character !== character);
+    if (newCharacters.some(cr => cr.x === x && cr.y === y)) {
+      throw new Error('Invalid move to occupied space (' + x + ', ' + y + ')');
+    }
+
+    newCharacters.push({x: x, y: y, character: character});
+
+    return new World(this.width, this.height, newCharacters);
+  }
+
+  viewpoint(x, y) {
+    return this.characters.map(function(charRecord) {
+      return {
+        dx: charRecord.x - x,
+        dy: charRecord.y - y,
+        character: charRecord.character
+      };
+    });
+  }
+
+  tick() {
+    // Give each character a move, in order, and return the resulting world
+    return this.characters.reduce(
+      function(world, charRecord) {
+        const viewpoint = world.viewpoint(charRecord.x, charRecord.y);
+        const move = charRecord.character.move(viewpoint);
+        return world.withCharacterAt(
+          charRecord.character,
+          charRecord.x + move.dx,
+          charRecord.y + move.dy
+        );
+      },
+      this
+    );
   }
 
   _at(x, y) {
