@@ -9,7 +9,9 @@
   },
   "author": "David Thompson <mail@fatbusinessman.com>",
   "license": "ISC",
-  "dependencies": {},
+  "dependencies": {
+    "sleep": "^5.1.1"
+  },
   "devDependencies": {
     "jshint": "^2.9.5",
     "mocha": "^5.0.5"
