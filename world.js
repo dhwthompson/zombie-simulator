@@ -54,6 +54,22 @@ class World {
     });
   }
 
+  tick() {
+    // Give each character a move, in order, and return the resulting world
+    return this.characters.reduce(
+      function(world, charRecord) {
+        const viewpoint = world.viewpoint(charRecord.x, charRecord.y);
+        const move = charRecord.character.move(viewpoint);
+        return world.withCharacterAt(
+          charRecord.character,
+          charRecord.x + move.dx,
+          charRecord.y + move.dy
+        );
+      },
+      this
+    );
+  }
+
   _at(x, y) {
     if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
       return undefined;
