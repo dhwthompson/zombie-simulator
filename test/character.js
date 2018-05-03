@@ -64,11 +64,23 @@ describe('Zombie', function() {
     assert.deepEqual(zombie.move(environment), {dx: 0, dy: 0});
   });
 
-  it('does not try to move through zombies', function() {
+  it('takes an alternate path if its preferred direction is blocked', function() {
     let zombie = new Zombie();
     const environment = [
       {dx: 2, dy: 2, character: new Human()},
-      {dx: 1, dy: 1, character: new Zombie()}
+      {dx: 1, dy: 1, character: new Zombie()},
+      {dx: 1, dy: 0, character: new Zombie()}
+    ];
+
+    assert.deepEqual(zombie.move(environment), {dx: 0, dy: 1});
+  });
+  it('does not try to move if all paths are blocked by zombies', function() {
+    let zombie = new Zombie();
+    const environment = [
+      {dx: 2, dy: 2, character: new Human()},
+      {dx: 1, dy: 1, character: new Zombie()},
+      {dx: 1, dy: 0, character: new Zombie()},
+      {dx: 0, dy: 1, character: new Zombie()}
     ];
 
     assert.deepEqual(zombie.move(environment), {dx: 0, dy: 0});

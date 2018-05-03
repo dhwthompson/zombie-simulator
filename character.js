@@ -30,22 +30,30 @@ class Zombie {
     if (bitingRange) {
       return {dx: 0, dy: 0};
     }
+
+    let moves;
+
     if (bestTarget !== null) {
-      if (bestTarget.dx > 0) {
-        dx = 1;
+      dx = Math.sign(bestTarget.dx);
+      dy = Math.sign(bestTarget.dy);
+
+      if (dx == 0) {
+        moves = [{dx: 0, dy: dy}, {dx: -1, dy: dy}, {dx: 1, dy: dy}];
       }
-      if (bestTarget.dx < 0) {
-        dx = -1;
+      else if (dy == 0) {
+        moves = [{dx: dx, dy: 0}, {dx: dx, dy: -1}, {dx: dx, dy: 1}];
       }
-      if (bestTarget.dy > 0) {
-        dy = 1;
-      }
-      if (bestTarget.dy < 0) {
-        dy = -1;
+      else {
+        moves = [{dx: dx, dy: dy}, {dx: 0, dy: dy}, {dx: dx, dy: 0}];
       }
 
-      /* Collision detection */
-      if (environment.find(t => t.dx == dx && t.dy == dy)) {
+      moves = moves.filter(function(move) {
+        return !environment.some(t => t.dx == move.dx && t.dy == move.dy);
+      });
+
+      if (moves.length > 0) {
+        return moves[0];
+      } else {
         return {dx: 0, dy: 0};
       }
     }

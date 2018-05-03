@@ -37,11 +37,14 @@ describe('movement', function() {
 
     world = world.tick();
 
-    assert.deepEqual(
-      world.rows,
-      [[null, null, zombie2],
-       [null, null, zombie],
-       [null, null, human]]
-    );
+    let cells = [];
+    world.rows.forEach(function(row) {
+      cells = cells.concat(row);
+    });
+
+    /* Check that all the characters still exist in their own spaces */
+    assert(cells.includes(zombie));
+    assert(cells.includes(zombie2));
+    assert(cells.includes(human));
   });
 });
