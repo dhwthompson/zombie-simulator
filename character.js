@@ -1,63 +1,69 @@
+const Vector = require('./vector');
+
 class Zombie {
   constructor() { }
 
   get living() { return false; }
 
   move(environment) {
-    let dx = 0, dy = 0;
-
     let bestDistance = Infinity;
     let bestTarget = null;
-    let bitingRange = false;
+
+    const noMove = new Vector(0, 0);
+
+    environment = environment.map(function(envRecord) {
+      return { offset: new Vector(envRecord.dx, envRecord.dy), character: envRecord.character};
+    });
 
     const targets = environment.filter(t => t.character.living);
 
-    targets.forEach(function(target) {
-      /* Given we can move diagonally, Manhattan distance is fine */
+    function inBitingRange(offset) {
+      return Math.abs(offset.dx) < 2 && Math.abs(offset.dy) < 2;
+    }
 
-      const xDistance = Math.abs(target.dx);
-      const yDistance = Math.abs(target.dy);
-      const distance = xDistance + yDistance;
-      if (distance < bestDistance) {
-        bestDistance = distance;
+    if (targets.some(target => inBitingRange(target.offset))) {
+      return noMove;
+    }
+
+    targets.forEach(function(target) {
+      if (target.offset.distance < bestDistance) {
+        bestDistance = target.offset.distance;
         bestTarget = target;
-        if (Math.max(xDistance, yDistance) < 2) {
-          bitingRange = true;
-        }
       }
     });
 
-    if (bitingRange) {
-      return {dx: 0, dy: 0};
+    if (bestTarget === null) {
+      return noMove;
     }
 
     let moves;
 
-    if (bestTarget !== null) {
-      dx = Math.sign(bestTarget.dx);
-      dy = Math.sign(bestTarget.dy);
+    const bestX = Math.sign(bestTarget.offset.dx);
+    const bestY = Math.sign(bestTarget.offset.dy);
 
-      if (dx == 0) {
-        moves = [{dx: 0, dy: dy}, {dx: -1, dy: dy}, {dx: 1, dy: dy}];
-      }
-      else if (dy == 0) {
-        moves = [{dx: dx, dy: 0}, {dx: dx, dy: -1}, {dx: dx, dy: 1}];
-      }
-      else {
-        moves = [{dx: dx, dy: dy}, {dx: 0, dy: dy}, {dx: dx, dy: 0}];
-      }
-
-      moves = moves.filter(function(move) {
-        return !environment.some(t => t.dx == move.dx && t.dy == move.dy);
-      });
-
-      if (moves.length > 0) {
-        return moves[0];
-      } else {
-        return {dx: 0, dy: 0};
-      }
+    if (bestX == 0) {
+      moves = [0, -1, 1].map(dx => new Vector(dx, bestY));
     }
-    return {dx, dy};
+    else if (bestY == 0) {
+      moves = [0, -1, 1].map(dy => new Vector(bestX, dy));
+    }
+    else {
+      moves = [
+        new Vector(bestX, bestY),
+        new Vector(0, bestY),
+        new Vector(bestX, 0)
+      ];
+    }
+
+    moves = moves.filter(function(move) {
+      return !environment.some(t => t.offset.equals(move));
+    });
+
+    if (moves.length > 0) {
+      return moves[0];
+    } else {
+      return noMove;
+    }
   }
 }
 
