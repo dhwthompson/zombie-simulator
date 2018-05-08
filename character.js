@@ -5,6 +5,16 @@ class Zombie {
 
   get living() { return false; }
 
+  get _moves() {
+    let singleMoves = [];
+
+    [-1, 0, 1].forEach(function(dx) {
+      singleMoves = singleMoves.concat([-1, 0, 1].map(dy => new Vector(dx, dy)));
+    });
+
+    return singleMoves;
+  }
+
   move(environment) {
     let bestDistance = Infinity;
     let bestTarget = null;
@@ -33,13 +43,7 @@ class Zombie {
       return noMove;
     }
 
-    let singleMoves = [];
-
-    [-1, 0, 1].forEach(function(dx) {
-      singleMoves = singleMoves.concat([-1, 0, 1].map(dy => new Vector(dx, dy)));
-    });
-
-    const freeMoves = singleMoves.filter(function(move) {
+    const freeMoves = this._moves.filter(function(move) {
       if (move.distance == 0) {
         return true;
       } else {
