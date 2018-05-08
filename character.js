@@ -17,14 +17,6 @@ class Zombie {
 
     const targets = environment.filter(t => t.character.living);
 
-    function inBitingRange(offset) {
-      return Math.abs(offset.dx) < 2 && Math.abs(offset.dy) < 2;
-    }
-
-    if (targets.some(target => inBitingRange(target.offset))) {
-      return noMove;
-    }
-
     targets.forEach(function(target) {
       if (target.offset.distance < bestDistance) {
         bestDistance = target.offset.distance;
@@ -32,38 +24,42 @@ class Zombie {
       }
     });
 
+    if (bestDistance <= 2) {
+      // Biting range: no more than 1 away in either direction
+      return noMove;
+    }
+
     if (bestTarget === null) {
       return noMove;
     }
 
-    let moves;
+    let singleMoves = [];
 
-    const bestX = Math.sign(bestTarget.offset.dx);
-    const bestY = Math.sign(bestTarget.offset.dy);
-
-    if (bestX == 0) {
-      moves = [0, -1, 1].map(dx => new Vector(dx, bestY));
-    }
-    else if (bestY == 0) {
-      moves = [0, -1, 1].map(dy => new Vector(bestX, dy));
-    }
-    else {
-      moves = [
-        new Vector(bestX, bestY),
-        new Vector(0, bestY),
-        new Vector(bestX, 0)
-      ];
-    }
-
-    moves = moves.filter(function(move) {
-      return !environment.some(t => t.offset.equals(move));
+    [-1, 0, 1].forEach(function(dx) {
+      singleMoves = singleMoves.concat([-1, 0, 1].map(dy => new Vector(dx, dy)));
     });
 
-    if (moves.length > 0) {
-      return moves[0];
-    } else {
-      return noMove;
+    const freeMoves = singleMoves.filter(function(move) {
+      if (move.distance == 0) {
+        return true;
+      } else {
+        return !environment.some(t => t.offset.equals(move));
+      }
+    });
+
+    function compareMoves(moveA, moveB) {
+      const distA = bestTarget.offset.sub(moveA).distance;
+      const distB = bestTarget.offset.sub(moveB).distance;
+
+      if (distA !== distB) {
+        return distA - distB;
+      }
+      return moveA.distance - moveB.distance;
     }
+
+    const sortedMoves = freeMoves.sort(compareMoves);
+
+    return sortedMoves[0];
   }
 }
 

@@ -12,7 +12,7 @@ class Vector {
   }
 
   get distance() {
-    return Math.abs(this.dx) + Math.abs(this.dy);
+    return Math.pow(this.dx, 2) + Math.pow(this.dy, 2);
   }
 
   equals(other) {

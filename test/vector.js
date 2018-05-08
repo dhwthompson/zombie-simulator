@@ -36,24 +36,24 @@ describe('Vector', () => {
       assert.equal(v.distance, 0);
     });
 
-    it('returns the Manhattan distance', () => {
+    it('returns the squared Euclidean distance', () => {
       const v = new Vector(2, 1);
-      assert.equal(v.distance, 3);
+      assert.equal(v.distance, 5);
     });
 
     it('deals with a negative x offset', () => {
       const v = new Vector(-2, 1);
-      assert.equal(v.distance, 3);
+      assert.equal(v.distance, 5);
     });
 
     it('deals with a negative y offset', () => {
       const v = new Vector(2, -1);
-      assert.equal(v.distance, 3);
+      assert.equal(v.distance, 5);
     });
 
     it('deals with two negative offsets', () => {
       const v = new Vector(-2, -1);
-      assert.equal(v.distance, 3);
+      assert.equal(v.distance, 5);
     });
   });
 
