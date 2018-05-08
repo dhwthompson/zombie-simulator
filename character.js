@@ -25,11 +25,17 @@ class Zombie {
       return { offset: new Vector(envRecord.dx, envRecord.dy), character: envRecord.character};
     });
 
-    const targets = environment.filter(t => t.character.living);
+    const obstacles = environment
+      .filter(t => t.character !== this)
+      .map(envRecord => envRecord.offset);
+
+    const targets = environment
+      .filter(t => t.character.living)
+      .map(envRecord => envRecord.offset);
 
     targets.forEach(function(target) {
-      if (target.offset.distance < bestDistance) {
-        bestDistance = target.offset.distance;
+      if (target.distance < bestDistance) {
+        bestDistance = target.distance;
         bestTarget = target;
       }
     });
@@ -44,16 +50,12 @@ class Zombie {
     }
 
     const freeMoves = this._moves.filter(function(move) {
-      if (move.distance == 0) {
-        return true;
-      } else {
-        return !environment.some(t => t.offset.equals(move));
-      }
+      return !obstacles.some(o => o.equals(move));
     });
 
     function compareMoves(moveA, moveB) {
-      const distA = bestTarget.offset.sub(moveA).distance;
-      const distB = bestTarget.offset.sub(moveB).distance;
+      const distA = bestTarget.sub(moveA).distance;
+      const distB = bestTarget.sub(moveB).distance;
 
       if (distA !== distB) {
         return distA - distB;
