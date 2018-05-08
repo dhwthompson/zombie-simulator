@@ -28,13 +28,13 @@ class Zombie {
       .filter(t => t.character.living)
       .map(envRecord => envRecord.offset);
 
-    let bestTarget = Vector.Infinite;
-
-    targets.forEach(function(target) {
-      if (target.distance < bestTarget.distance) {
-        bestTarget = target;
+    const bestTarget = targets.reduce(function(best, target) {
+      if (target.distance < best.distance) {
+        return target;
+      } else {
+        return best;
       }
-    });
+    }, Vector.Infinite);
 
     if (bestTarget.distance <= 2) {
       // Biting range: no more than 1 away in either direction
