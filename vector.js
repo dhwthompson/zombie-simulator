@@ -1,4 +1,7 @@
 class Vector {
+
+  static get Infinite() { return new Vector(Infinity, Infinity); }
+
   constructor(dx, dy) {
     if (dx === undefined) {
       throw new Error('Missing x offset');

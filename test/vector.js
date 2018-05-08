@@ -84,4 +84,27 @@ describe('Vector', () => {
       assert.deepEqual([result.dx, result.dy], [1, 3]);
     });
   });
+
+  describe('.Infinite', () => {
+    it('has infinite x distance', () => {
+      assert.equal(Vector.Infinite.dx, Infinity);
+    });
+    it('has infinite y distance', () => {
+      assert.equal(Vector.Infinite.dy, Infinity);
+    });
+    it('has infinite distance', () => {
+      assert.equal(Vector.Infinite.distance, Infinity);
+    });
+
+    it('returns itself when added', () => {
+      const v = new Vector(1, 1);
+
+      assert(Vector.Infinite.add(v).equals(Vector.Infinite));
+    });
+    it('returns itself when added', () => {
+      const v = new Vector(1, 1);
+
+      assert(Vector.Infinite.sub(v).equals(Vector.Infinite));
+    });
+  });
 });

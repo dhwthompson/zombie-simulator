@@ -16,11 +16,6 @@ class Zombie {
   }
 
   move(environment) {
-    let bestDistance = Infinity;
-    let bestTarget = null;
-
-    const noMove = new Vector(0, 0);
-
     environment = environment.map(function(envRecord) {
       return { offset: new Vector(envRecord.dx, envRecord.dy), character: envRecord.character};
     });
@@ -33,20 +28,17 @@ class Zombie {
       .filter(t => t.character.living)
       .map(envRecord => envRecord.offset);
 
+    let bestTarget = Vector.Infinite;
+
     targets.forEach(function(target) {
-      if (target.distance < bestDistance) {
-        bestDistance = target.distance;
+      if (target.distance < bestTarget.distance) {
         bestTarget = target;
       }
     });
 
-    if (bestDistance <= 2) {
+    if (bestTarget.distance <= 2) {
       // Biting range: no more than 1 away in either direction
-      return noMove;
-    }
-
-    if (bestTarget === null) {
-      return noMove;
+      return new Vector(0, 0);
     }
 
     const freeMoves = this._moves.filter(function(move) {
