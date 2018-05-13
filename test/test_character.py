@@ -72,6 +72,13 @@ class TestZombie:
                        (Vector(1, 0), Zombie())]
         assert zombie.move(environment) == Vector(0, 1)
 
+    def test_map_limits(self):
+        zombie = Zombie()
+        environment = [(Vector(0, 1), Zombie()),
+                       (Vector(0, 2), Human())]
+        limits = (Vector(0, -2), Vector(3, 1))
+        assert zombie.move(environment, limits) == Vector(0, 0)
+
 
 class TestHuman:
     def test_immobile(self):

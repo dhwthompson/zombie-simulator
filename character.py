@@ -6,7 +6,7 @@ class Human:
 
     living = True
 
-    def move(self, environment):
+    def move(self, environment, limits=None):
         return Vector(0, 0)
 
 
@@ -14,7 +14,7 @@ class Zombie:
 
     living = False
 
-    def move(self, environment):
+    def move(self, environment, limits=None):
         target_vectors = [t[0] for t in environment if t[1].living]
         obstacles = [t[0] for t in environment]
 
@@ -27,6 +27,9 @@ class Zombie:
 
         moves = [Vector(dx, dy) for dx in [-1, 0, 1] for dy in [-1, 0, 1]]
         moves = [m for m in moves if m == Vector(0, 0) or m not in obstacles]
+        if limits:
+            moves = [m for m in moves if limits[0].dx <= m.dx < limits[1].dx and
+                                         limits[0].dy <= m.dy < limits[1].dy]
 
         def move_rank(move):
             distance_after_move = (best_vector - move).distance

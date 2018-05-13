@@ -37,3 +37,14 @@ def test_zombie_non_collision():
     assert zombie in cells
     assert zombie2 in cells
     assert human in cells
+
+def test_world_boundaries():
+    """Make sure zombies can't move off the map."""
+    characters = {
+            (0, 0): Zombie(),
+            (1, 0): Zombie(),
+            (2, 0): Human()
+    }
+
+    world = World(3, 1, characters)
+    assert world.tick().rows == world.rows
