@@ -1,6 +1,7 @@
 from os import environ
 import re
 import shutil
+import sys
 from time import sleep
 
 from character import Population
@@ -45,4 +46,4 @@ try:
         world = world.tick()
         renderer = Renderer(world)
 except KeyboardInterrupt:
-    pass
+    sys.exit(1)
