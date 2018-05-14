@@ -2,7 +2,7 @@ import math
 
 import pytest
 
-from vector import Vector
+from vector import BoundingBox, Vector
 
 class TestVector:
     def test_no_arg_constructor(self):
@@ -62,3 +62,36 @@ class TestVector:
 
     def test_infinite_subtraction(self):
         assert Vector.INFINITE - Vector(1, 2) == Vector.INFINITE
+
+
+class TestBoundingBox:
+
+    def test_takes_two_vectors(self):
+        BoundingBox(Vector(0, 0), Vector(1, 1))
+
+    def test_empty_box(self):
+        box = BoundingBox(Vector(0, 0), Vector(0, 0))
+        assert Vector(1, 1) not in box
+
+    def test_negative_box(self):
+        box = BoundingBox(Vector(0, 0), Vector(-1, -1))
+        assert Vector(0, 0) not in box
+
+    def test_vector_containment(self):
+        box = BoundingBox(Vector(0, 0), Vector(1, 1))
+        assert Vector(0, 0) in box
+
+    def test_exclusive_upper_bound(self):
+        box = BoundingBox(Vector(0, 0), Vector(1, 1))
+        assert Vector(1, 1) not in box
+
+    @pytest.mark.parametrize('coords', [(0, 1), (1, 0), (-1, 0), (0, -1)])
+    def test_single_dimension_containment(self, coords):
+        box = BoundingBox(Vector(0, 0), Vector(1, 1))
+        assert Vector(*coords) not in box
+
+
+class TestUnlimitedBoundingBox:
+    @pytest.mark.parametrize('coords', [(0, 100), (100, 0), (-1000, 0), (10000, -1)])
+    def test_contains_everything(self, coords):
+        assert Vector(*coords) in BoundingBox.UNLIMITED
