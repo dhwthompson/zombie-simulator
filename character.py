@@ -16,7 +16,7 @@ class Zombie:
 
     def move(self, environment, limits=BoundingBox.UNLIMITED):
         target_vectors = [t[0] for t in environment if t[1].living]
-        obstacles = [t[0] for t in environment]
+        obstacles = [t[0] for t in environment if t[1] != self]
 
         best_vector = min(target_vectors,
                           key=lambda v: v.distance,
@@ -26,7 +26,7 @@ class Zombie:
             return Vector(0, 0)
 
         moves = [Vector(dx, dy) for dx in [-1, 0, 1] for dy in [-1, 0, 1]]
-        moves = [m for m in moves if m == Vector(0, 0) or m not in obstacles]
+        moves = [m for m in moves if m not in obstacles]
         moves = [m for m in moves if m in limits]
 
         def move_rank(move):
