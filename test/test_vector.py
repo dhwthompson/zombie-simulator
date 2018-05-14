@@ -25,6 +25,12 @@ class TestVector:
     def test_zero_distance(self):
         assert Vector(0, 0).distance == 0
 
+    def test_zero_falsey(self):
+        assert not Vector(0, 0)
+
+    def test_non_zero_truthy(self):
+        assert Vector(1, 1)
+
     @pytest.mark.parametrize('dx,dy', [(2, 1), (-2, 1), (2, -1), (-2, -1)])
     def test_non_zero_distance(self, dx, dy):
         assert Vector(dx, dy).distance == 5
