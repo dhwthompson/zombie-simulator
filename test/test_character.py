@@ -59,10 +59,12 @@ class TestZombie:
         """
         zombie = Zombie()
 
-        contents = lambda v: zombie if v == Vector(0, 0) else Zombie()
+        def env_contents(vector):
+            return Zombie() if vector else zombie
+
         vectors = [Vector(dx, dy) for dx in [-1, 0, 1] for dy in [-1, 0, 1]]
         distant_human = [(Vector(2, 2), Human())]
-        zombies_all_around = [(v, contents(v)) for v in vectors]
+        zombies_all_around = [(v, env_contents(v)) for v in vectors]
 
         assert zombie.move(distant_human + zombies_all_around) == Vector(0, 0)
 
