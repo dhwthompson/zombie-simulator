@@ -1,4 +1,4 @@
-from vector import Vector
+from vector import BoundingBox, Vector
 
 class World:
     def __init__(self, width, height, characters=None):
@@ -46,7 +46,10 @@ class World:
         world = self
         for (position, character) in self._characters.items():
             viewpoint = world.viewpoint(position)
-            move = character.move(viewpoint)
+            position_vector = Vector(*position)
+            limits = BoundingBox(Vector(0, 0) - position_vector,
+                                 Vector(self._width, self._height) - position_vector)
+            move = character.move(viewpoint, limits)
             world = world.with_character(
                     (position[0] + move.dx, position[1] + move.dy),
                     character
