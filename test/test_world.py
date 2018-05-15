@@ -5,6 +5,7 @@ import pytest
 from vector import Vector
 from world import World
 
+
 class TestWorld:
     def test_single_cell_world(self):
         assert World(1, 1).rows == [[None]]

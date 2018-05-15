@@ -2,6 +2,7 @@ from random import random
 
 from vector import BoundingBox, Vector
 
+
 class Human:
 
     living = True

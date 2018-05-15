@@ -4,6 +4,7 @@ import pytest
 
 from vector import BoundingBox, Vector
 
+
 class TestVector:
     def test_no_arg_constructor(self):
         with pytest.raises(TypeError) as exc:

@@ -8,6 +8,7 @@ from character import Population
 from renderer import Renderer
 from world import World
 
+
 def _get_world_size(size_string, default):
     if not size_string:
         return default
@@ -34,8 +35,10 @@ population = Population(HUMAN_DENSITY, ZOMBIE_CHANCE)
 world = World.populated_by(world_width, world_height, population)
 renderer = Renderer(world)
 
+
 def clear():
     print('\033[H\033[J', end='')
+
 
 try:
     while True:

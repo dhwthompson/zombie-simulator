@@ -1,6 +1,7 @@
 from character import Human, Zombie
 from world import World
 
+
 def test_zombies_approach_humans():
     zombie = Zombie()
     human = Human()
@@ -37,6 +38,7 @@ def test_zombie_non_collision():
     assert zombie in cells
     assert zombie2 in cells
     assert human in cells
+
 
 def test_world_boundaries():
     """Make sure zombies can't move off the map."""

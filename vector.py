@@ -1,6 +1,7 @@
 from collections import namedtuple
 import math
 
+
 class Vector(namedtuple('Vector', ['dx', 'dy'])):
 
     @property
@@ -29,6 +30,7 @@ class BoundingBox:
         dx_contains = self._lower.dx <= vector.dx < self._upper.dx
         dy_contains = self._lower.dy <= vector.dy < self._upper.dy
         return dx_contains and dy_contains
+
 
 BoundingBox.UNLIMITED = BoundingBox(Vector(-math.inf, -math.inf),
                                     Vector.INFINITE)

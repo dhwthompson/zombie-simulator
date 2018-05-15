@@ -1,5 +1,6 @@
 from vector import BoundingBox, Vector
 
+
 class World:
     def __init__(self, width, height, characters=None):
         self._width = width

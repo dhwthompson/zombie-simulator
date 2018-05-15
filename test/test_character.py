@@ -3,6 +3,7 @@ import pytest
 from character import Human, Population, Zombie
 from vector import Vector
 
+
 class TestZombie:
 
     def test_nothing_nearby(self):
@@ -85,6 +86,7 @@ class TestHuman:
     def test_immobile(self):
         human = Human()
         assert human.move([]) == Vector(0, 0)
+
 
 class TestPopulation:
 
