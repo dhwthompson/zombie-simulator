@@ -17,7 +17,7 @@ def _get_world_size(size_string, default):
         terminal_size = shutil.get_terminal_size()
         return (terminal_size.columns // 2, terminal_size.lines - 1)
 
-    size_match = re.match('(\d+)x(\d+)$', size_string)
+    size_match = re.match(r'(\d+)x(\d+)$', size_string)
 
     if size_match:
         return tuple([int(d) for d in size_match.groups()])
