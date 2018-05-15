@@ -8,7 +8,7 @@ class TestZombie:
 
     def test_nothing_nearby(self):
         zombie = Zombie()
-        assert zombie.move([]) == Vector(0, 0)
+        assert zombie.move([]) == Vector.ZERO
 
     @pytest.mark.parametrize('offset,expected',
             [[(2, 0), (1, 0)],
@@ -35,12 +35,12 @@ class TestZombie:
     def test_nearby_zombie(self):
         zombie = Zombie()
         environment = [(Vector(2, 2), Zombie())]
-        assert zombie.move(environment) == Vector(0, 0)
+        assert zombie.move(environment) == Vector.ZERO
 
     def test_close_human(self):
         zombie = Zombie()
         environment = [(Vector(1, 1), Human())]
-        assert zombie.move(environment) == Vector(0, 0)
+        assert zombie.move(environment) == Vector.ZERO
 
     def test_blocked_path(self):
         zombie = Zombie()
@@ -48,7 +48,7 @@ class TestZombie:
                        (Vector(1, 1), Zombie()),
                        (Vector(1, 0), Zombie()),
                        (Vector(0, 1), Zombie())]
-        assert zombie.move(environment) == Vector(0, 0)
+        assert zombie.move(environment) == Vector.ZERO
 
     def test_all_paths_blocked(self):
         """Test that zombies stay still when surrounded by other zombies.
@@ -66,7 +66,7 @@ class TestZombie:
         distant_human = [(Vector(2, 2), Human())]
         zombies_all_around = [(v, env_contents(v)) for v in vectors]
 
-        assert zombie.move(distant_human + zombies_all_around) == Vector(0, 0)
+        assert zombie.move(distant_human + zombies_all_around) == Vector.ZERO
 
     def test_alternate_path(self):
         zombie = Zombie()
@@ -81,13 +81,13 @@ class TestZombie:
                        (Vector(0, 2), Human())]
         limits = [Vector(dx, dy) for (dx, dy) in
                   [(0, 0), (0, 1), (0, 2)]]
-        assert zombie.move(environment, limits) == Vector(0, 0)
+        assert zombie.move(environment, limits) == Vector.ZERO
 
 
 class TestHuman:
     def test_immobile(self):
         human = Human()
-        assert human.move([]) == Vector(0, 0)
+        assert human.move([]) == Vector.ZERO
 
 
 class TestPopulation:

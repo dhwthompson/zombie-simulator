@@ -8,7 +8,7 @@ class Human:
     living = True
 
     def move(self, environment, limits=None):
-        return Vector(0, 0)
+        return Vector.ZERO
 
 
 class Zombie:
@@ -24,7 +24,7 @@ class Zombie:
                           default=Vector.INFINITE)
 
         if best_vector.distance <= 2:
-            return Vector(0, 0)
+            return Vector.ZERO
 
         moves = [Vector(dx, dy) for dx in [-1, 0, 1] for dy in [-1, 0, 1]]
         moves = [m for m in moves if m not in obstacles]

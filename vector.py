@@ -19,6 +19,7 @@ class Vector(namedtuple('Vector', ['dx', 'dy'])):
 
 
 Vector.INFINITE = Vector(math.inf, math.inf)
+Vector.ZERO = Vector(0, 0)
 
 
 class BoundingBox:

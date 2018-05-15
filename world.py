@@ -48,7 +48,7 @@ class World:
         for (position, character) in self._characters.items():
             viewpoint = world.viewpoint(position)
             position_vector = Vector(*position)
-            limits = BoundingBox(Vector(0, 0) - position_vector,
+            limits = BoundingBox(Vector.ZERO - position_vector,
                                  Vector(self._width, self._height) - position_vector)
             move = character.move(viewpoint, limits)
             world = world.with_character(

@@ -24,10 +24,10 @@ class TestVector:
         assert Vector(2, 6).dy == 6
 
     def test_zero_distance(self):
-        assert Vector(0, 0).distance == 0
+        assert Vector.ZERO.distance == 0
 
     def test_zero_falsey(self):
-        assert not Vector(0, 0)
+        assert not Vector.ZERO
 
     def test_non_zero_truthy(self):
         assert Vector(1, 1)
@@ -68,27 +68,27 @@ class TestVector:
 class TestBoundingBox:
 
     def test_takes_two_vectors(self):
-        BoundingBox(Vector(0, 0), Vector(1, 1))
+        BoundingBox(Vector.ZERO, Vector(1, 1))
 
     def test_empty_box(self):
-        box = BoundingBox(Vector(0, 0), Vector(0, 0))
+        box = BoundingBox(Vector.ZERO, Vector.ZERO)
         assert Vector(1, 1) not in box
 
     def test_negative_box(self):
-        box = BoundingBox(Vector(0, 0), Vector(-1, -1))
-        assert Vector(0, 0) not in box
+        box = BoundingBox(Vector.ZERO, Vector(-1, -1))
+        assert Vector.ZERO not in box
 
     def test_vector_containment(self):
-        box = BoundingBox(Vector(0, 0), Vector(1, 1))
-        assert Vector(0, 0) in box
+        box = BoundingBox(Vector.ZERO, Vector(1, 1))
+        assert Vector.ZERO in box
 
     def test_exclusive_upper_bound(self):
-        box = BoundingBox(Vector(0, 0), Vector(1, 1))
+        box = BoundingBox(Vector.ZERO, Vector(1, 1))
         assert Vector(1, 1) not in box
 
     @pytest.mark.parametrize('coords', [(0, 1), (1, 0), (-1, 0), (0, -1)])
     def test_single_dimension_containment(self, coords):
-        box = BoundingBox(Vector(0, 0), Vector(1, 1))
+        box = BoundingBox(Vector.ZERO, Vector(1, 1))
         assert Vector(*coords) not in box
 
 
