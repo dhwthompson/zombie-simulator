@@ -22,14 +22,21 @@ class World:
         return [self._row(y) for y in range(self._height)]
 
     def _row(self, y):
-        return [self._characters.get((x, y)) for x in range(self._width)]
+        return [self._character_at((x, y)) for x in range(self._width)]
+
+    def _character_at(self, position):
+        return self._characters.get(position)
+
+    @property
+    def _character_positions(self):
+        return self._characters.items()
 
     def with_character(self, position, character):
         if character is None:
             raise ValueError('Cannot add a null character')
 
         new_characters = dict([(pos, char) for (pos, char) in
-                self._characters.items() if char != character])
+                self._character_positions if char != character])
         if position in new_characters:
             message = 'Invalid move to occupied space {}'.format(position)
             raise ValueError(message)
@@ -38,14 +45,14 @@ class World:
 
     def viewpoint(self, origin):
         return set([(self._offset(position, origin), character)
-                    for position, character in self._characters.items()])
+                    for position, character in self._character_positions])
 
     def _offset(self, position, origin):
         return Vector(position[0] - origin[0], position[1] - origin[1])
 
     def tick(self):
         world = self
-        for (position, character) in self._characters.items():
+        for (position, character) in self._character_positions:
             viewpoint = world.viewpoint(position)
             position_vector = Vector(*position)
             limits = BoundingBox(Vector.ZERO - position_vector,
