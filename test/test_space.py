@@ -2,7 +2,7 @@ import math
 
 import pytest
 
-from vector import BoundingBox, Vector
+from space import BoundingBox, Vector
 
 
 class TestVector:

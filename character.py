@@ -1,6 +1,6 @@
 from random import random
 
-from vector import BoundingBox, Vector
+from space import BoundingBox, Vector
 
 
 class Human:

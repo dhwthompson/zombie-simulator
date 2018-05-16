@@ -2,7 +2,7 @@ from itertools import repeat
 
 import pytest
 
-from vector import Vector
+from space import Vector
 from world import World
 
 

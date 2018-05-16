@@ -1,4 +1,4 @@
-from vector import BoundingBox, Vector
+from space import BoundingBox, Vector
 
 
 class World:

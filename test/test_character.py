@@ -1,7 +1,7 @@
 import pytest
 
 from character import Human, Population, Zombie
-from vector import Vector
+from space import Vector
 
 
 class TestZombie:
