@@ -2,6 +2,15 @@ from collections import namedtuple
 import math
 
 
+class Point(namedtuple('Point', ['x', 'y'])):
+
+    def __add__(self, vector):
+        return Point(self.x + vector.dx, self.y + vector.dy)
+
+    def __sub__(self, point):
+        return Vector(self.x - point[0], self.y - point[1])
+
+
 class Vector(namedtuple('Vector', ['dx', 'dy'])):
 
     @property

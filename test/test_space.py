@@ -2,7 +2,42 @@ import math
 
 import pytest
 
-from space import BoundingBox, Vector
+from space import BoundingBox, Point, Vector
+
+
+class TestPoint:
+    def test_no_arg_constructor(self):
+        with pytest.raises(TypeError) as exc:
+            Point()
+
+    def test_single_arg_constructor(self):
+        with pytest.raises(TypeError):
+            Point(3)
+
+    def test_double_argument_constructor(self):
+        assert Point(2, 5) is not None
+
+    def test_x_coordinate(self):
+        assert Point(2, 5).x == 2
+
+    def test_y_coordinate(self):
+        assert Point(2, 5).y == 5
+
+    def test_vector_addition(self):
+        p = Point(2, 5) + Vector(1, 1)
+        assert (p.x, p.y) == (3, 6)
+
+    def test_point_addition_fails(self):
+        # Adding a point to a point doesn't make sense
+        with pytest.raises(AttributeError):
+            Point(2, 5) + Point(3, 2)
+
+    def test_point_subtraction(self):
+        v = Point(2, 5) - Point(3, 2)
+        assert (v.dx, v.dy) == Vector(-1, 3)
+
+    def test_point_equality(self):
+        assert Point(2, 3) == Point(2, 3)
 
 
 class TestVector:

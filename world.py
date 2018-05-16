@@ -1,4 +1,4 @@
-from space import BoundingBox, Vector
+from space import BoundingBox, Point, Vector
 
 
 class World:
@@ -29,7 +29,8 @@ class World:
 
     @property
     def _character_positions(self):
-        return self._characters.items()
+        return [(Point(*position), character)
+                for position, character in self._characters.items()]
 
     def with_character(self, position, character):
         if character is None:
@@ -44,22 +45,15 @@ class World:
         return World(self._width, self._height, new_characters)
 
     def viewpoint(self, origin):
-        return set([(self._offset(position, origin), character)
+        return set([(position - origin, character)
                     for position, character in self._character_positions])
-
-    def _offset(self, position, origin):
-        return Vector(position[0] - origin[0], position[1] - origin[1])
 
     def tick(self):
         world = self
         for (position, character) in self._character_positions:
             viewpoint = world.viewpoint(position)
-            position_vector = Vector(*position)
-            limits = BoundingBox(Vector.ZERO - position_vector,
-                                 Vector(self._width, self._height) - position_vector)
+            limits = BoundingBox(Point(0, 0) - position,
+                                 Point(self._width, self._height) - position)
             move = character.move(viewpoint, limits)
-            world = world.with_character(
-                    (position[0] + move.dx, position[1] + move.dy),
-                    character
-            )
+            world = world.with_character(position + move, character)
         return world
