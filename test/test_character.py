@@ -38,9 +38,14 @@ class TestZombie:
         assert zombie.move(environment) == Vector.ZERO
 
     def test_close_human(self):
+        """Check the zombie doesn't try to move onto or away from a human.
+
+        In future versions, this test will be replaced by biting logic."""
         zombie = Zombie()
         environment = [(Vector(1, 1), Human())]
-        assert zombie.move(environment) == Vector.ZERO
+
+        expected_moves = [Vector(0, 0), Vector(0, 1), Vector(1, 0)]
+        assert zombie.move(environment) in expected_moves
 
     def test_blocked_path(self):
         zombie = Zombie()
@@ -85,9 +90,16 @@ class TestZombie:
 
 
 class TestHuman:
+
     def test_immobile(self):
         human = Human()
         assert human.move([]) == Vector.ZERO
+
+    def test_runs_away_from_zombie(self):
+        human = Human()
+        environment = [(Vector(1, 1), Zombie())]
+
+        assert human.move(environment) == Vector(-2, -2)
 
 
 class TestPopulation:
