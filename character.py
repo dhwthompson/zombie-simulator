@@ -4,21 +4,7 @@ from random import random
 from space import BoundingBox, Vector
 
 
-class Human:
-
-    living = True
-
-    def move(self, environment, limits=None):
-        return Vector.ZERO
-
-
-class Zombie:
-
-    living = False
-
-    @property
-    def _movement_range(self):
-        return [Vector(dx, dy) for dx in [-1, 0, 1] for dy in [-1, 0, 1]]
+class Character:
 
     def move(self, environment, limits=BoundingBox.UNLIMITED):
         """Choose where to move next.
@@ -47,20 +33,50 @@ class Zombie:
                  and m not in self._obstacles(environment)]
         return moves
 
+    @property
+    def _movement_range(self):
+        coord_range = range(-self.speed, self.speed + 1)
+        return [Vector(dx, dy) for dx in coord_range for dy in coord_range]
+
     def _obstacles(self, environment):
         return [t[0] for t in environment if t[1] != self]
-
-    def _targets(self, environment):
-        return [t[0] for t in environment if t[1].living]
 
     def _target_vector(self, environment):
         return min(self._targets(environment),
                    key=lambda v: v.distance,
                    default=Vector.INFINITE)
 
+    def _targets(self, environment):
+        raise NotImplementedError
+
+    def _move_rank(self, target_vector, move):
+        raise NotImplementedError
+
+
+class Human(Character):
+
+    living = True
+    speed = 0
+
+    def _targets(self, environment):
+        return []
+
+    def _move_rank(self, target_vector, move):
+        return None
+
+
+class Zombie(Character):
+
+    living = False
+    speed = 1
+
+    def _targets(self, environment):
+        return [t[0] for t in environment if t[1].living]
+
     def _move_rank(self, target_vector, move):
         distance_after_move = (target_vector - move).distance
         return (distance_after_move, move.distance)
+
 
 class Population:
 
