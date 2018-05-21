@@ -21,6 +21,20 @@ class Zombie:
         return [Vector(dx, dy) for dx in [-1, 0, 1] for dy in [-1, 0, 1]]
 
     def move(self, environment, limits=BoundingBox.UNLIMITED):
+        """Choose where to move next.
+
+        Arguments:
+            environment: the character's current environment. This is currently
+                passed in as an iterable of (Vector, Character) pairs, which
+                isn't entirely ideal, but works well enough for the moment.
+            limits: any limits on the character's movement provided by the
+                edges of the world. This can be anything that reponds to the
+                `in` operator.
+
+        Return a Vector object representing this character's intended move. If
+        the character does not intend to (or cannot) move, return a zero
+        vector.
+        """
         target_vector = self._target_vector(environment)
 
         if target_vector.distance <= 2:
