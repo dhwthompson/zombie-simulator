@@ -90,9 +90,16 @@ class TestZombie:
 
 
 class TestHuman:
+
     def test_immobile(self):
         human = Human()
         assert human.move([]) == Vector.ZERO
+
+    def test_runs_away_from_zombie(self):
+        human = Human()
+        environment = [(Vector(1, 1), Zombie())]
+
+        assert human.move(environment) == Vector(-2, -2)
 
 
 class TestPopulation:

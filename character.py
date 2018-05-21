@@ -56,13 +56,14 @@ class Character:
 class Human(Character):
 
     living = True
-    speed = 0
+    speed = 2
 
     def _targets(self, environment):
-        return []
+        return [t[0] for t in environment if not t[1].living]
 
     def _move_rank(self, target_vector, move):
-        return None
+        distance_after_move = (target_vector - move).distance
+        return (-distance_after_move, move.distance)
 
 
 class Zombie(Character):
