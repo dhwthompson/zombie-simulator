@@ -1,3 +1,4 @@
+from functools import partial
 from random import random
 
 from space import BoundingBox, Vector
@@ -20,26 +21,37 @@ class Zombie:
         return [Vector(dx, dy) for dx in [-1, 0, 1] for dy in [-1, 0, 1]]
 
     def move(self, environment, limits=BoundingBox.UNLIMITED):
-        target_vectors = [t[0] for t in environment if t[1].living]
-        obstacles = [t[0] for t in environment if t[1] != self]
+        target_vector = self._target_vector(environment)
 
-        best_vector = min(target_vectors,
-                          key=lambda v: v.distance,
-                          default=Vector.INFINITE)
-
-        if best_vector.distance <= 2:
+        if target_vector.distance <= 2:
             return Vector.ZERO
 
-        moves = [m for m in self._movement_range
-                 if m in limits
-                 and m not in obstacles]
+        moves = self._available_moves(limits, environment)
 
-        def move_rank(move):
-            distance_after_move = (best_vector - move).distance
-            return (distance_after_move, move.distance)
+        move_rank = partial(self._move_rank, target_vector)
 
         return sorted(moves, key=move_rank)[0]
 
+    def _available_moves(self, limits, environment):
+        moves = [m for m in self._movement_range
+                 if m in limits
+                 and m not in self._obstacles(environment)]
+        return moves
+
+    def _obstacles(self, environment):
+        return [t[0] for t in environment if t[1] != self]
+
+    def _targets(self, environment):
+        return [t[0] for t in environment if t[1].living]
+
+    def _target_vector(self, environment):
+        return min(self._targets(environment),
+                   key=lambda v: v.distance,
+                   default=Vector.INFINITE)
+
+    def _move_rank(self, target_vector, move):
+        distance_after_move = (target_vector - move).distance
+        return (distance_after_move, move.distance)
 
 class Population:
 
