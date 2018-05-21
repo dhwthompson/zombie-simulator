@@ -36,12 +36,7 @@ class Zombie:
         vector.
         """
         target_vector = self._target_vector(environment)
-
-        if target_vector.distance <= 2:
-            return Vector.ZERO
-
         moves = self._available_moves(limits, environment)
-
         move_rank = partial(self._move_rank, target_vector)
 
         return sorted(moves, key=move_rank)[0]
