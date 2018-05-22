@@ -31,7 +31,7 @@ world_width, world_height = get_world_size(environ.get('WORLD_SIZE'),
 
 HUMAN_DENSITY = float(environ.get('DENSITY', 0.05))
 ZOMBIE_CHANCE = float(environ.get('ZOMBIE_CHANCE', 0.9))
-TICK_INTERVAL = 0.5
+TICK = float(environ.get('TICK', 0.5))
 
 population = Population(HUMAN_DENSITY, ZOMBIE_CHANCE)
 world = World.populated_by(world_width, world_height, population)
@@ -58,7 +58,7 @@ def clear():
 
 if __name__ == '__main__':
     try:
-        for _ in each_interval(TICK_INTERVAL):
+        for _ in each_interval(TICK):
             clear()
             for line in renderer.lines:
                 print(line)
