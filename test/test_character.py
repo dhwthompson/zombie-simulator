@@ -1,7 +1,7 @@
 import pytest
 
 from character import Human, Population, Zombie
-from space import Vector
+from space import BoundingBox, Vector
 
 
 class TestZombie:
@@ -100,6 +100,28 @@ class TestHuman:
         environment = [(Vector(1, 1), Zombie())]
 
         assert human.move(environment) == Vector(-2, -2)
+
+    def test_doesnt_run_away_from_humans(self):
+        human = Human()
+        environment = [(Vector(1, 1), Human())]
+
+        assert human.move(environment) == Vector.ZERO
+
+    def test_respects_world_limits(self):
+        human = Human()
+        environment = [(Vector(3, 3), Zombie())]
+        limits = BoundingBox(Vector(0, 0), Vector(5, 5))
+
+        assert human.move(environment, limits) == Vector.ZERO
+
+    def test_stopped_by_obstacles(self):
+        human = Human()
+        environment = [(Vector(-3, 0), Zombie()),
+                       (Vector(1, 0), Human()),
+                       (Vector(2, 0), Human())]
+        limits = BoundingBox(Vector(-3, 0), Vector(10, 1))
+
+        assert human.move(environment, limits) == Vector.ZERO
 
 
 class TestPopulation:
