@@ -2,7 +2,7 @@ from os import environ
 import re
 import shutil
 import sys
-from time import sleep
+import time
 
 from character import Population
 from renderer import Renderer
@@ -31,10 +31,25 @@ world_width, world_height = get_world_size(environ.get('WORLD_SIZE'),
 
 HUMAN_DENSITY = float(environ.get('DENSITY', 0.05))
 ZOMBIE_CHANCE = float(environ.get('ZOMBIE_CHANCE', 0.9))
+TICK_INTERVAL = 0.5
 
 population = Population(HUMAN_DENSITY, ZOMBIE_CHANCE)
 world = World.populated_by(world_width, world_height, population)
 renderer = Renderer(world)
+
+def each_interval(interval, current_time=time.time, sleep=time.sleep):
+    """Yield at regular intervals.
+
+    This generator waits at least `interval` seconds between each value it
+    yields. If it has been more than `interval` seconds since the last yielded
+    value, it will yield the next one immediately, but will not "race" to catch
+    up.
+    """
+    while True:
+        next_tick = current_time() + interval
+        yield
+        sleep_time = max(next_tick - current_time(), 0)
+        sleep(sleep_time)
 
 
 def clear():
@@ -43,11 +58,10 @@ def clear():
 
 if __name__ == '__main__':
     try:
-        while True:
+        for _ in each_interval(TICK_INTERVAL):
             clear()
             for line in renderer.lines:
                 print(line)
-            sleep(0.2)
             world = world.tick()
             renderer = Renderer(world)
     except KeyboardInterrupt:
