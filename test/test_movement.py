@@ -1,5 +1,31 @@
+from hypothesis import given
+from hypothesis import strategies as st
+
 from character import Human, Zombie
 from world import World
+
+@st.composite
+def worlds(draw, inhabitants=st.one_of(st.builds(Human), st.builds(Zombie))):
+    dimensions = st.integers(min_value=1, max_value=100)
+    x, y = draw(dimensions), draw(dimensions)
+    points = st.tuples(st.integers(min_value=0, max_value=x-1),
+                       st.integers(min_value=0, max_value=y-1))
+    characters = draw(st.dictionaries(points, inhabitants))
+    return World(x, y, characters)
+
+
+@given(worlds())
+def test_tick_returns_a_world(world):
+    assert isinstance(world.tick(), World)
+
+
+@given(worlds())
+def test_tick_preserves_characters(world):
+    old_characters = set(sum(world.rows, []))
+    new_world = world.tick()
+    new_characters = set(sum(new_world.rows, []))
+
+    assert old_characters == new_characters
 
 
 def test_zombies_approach_humans():
@@ -18,35 +44,3 @@ def test_zombies_approach_humans():
     assert world.rows == [[None, None, None],
                           [None, zombie, None],
                           [None, None, human]]
-
-
-def test_zombie_non_collision():
-    """Make sure the tick can't take two zombies onto the same spot."""
-    zombie, zombie2, human = Zombie(), Zombie(), Human()
-    characters = {
-            (1, 0): zombie,
-            (2, 0): zombie2,
-            (2, 2): human
-    }
-
-    world = World(3, 3, characters)
-
-    world = world.tick()
-
-    cells = sum(world.rows, [])
-
-    assert zombie in cells
-    assert zombie2 in cells
-    assert human in cells
-
-
-def test_world_boundaries():
-    """Make sure zombies can't move off the map."""
-    characters = {
-            (0, 0): Zombie(),
-            (1, 0): Zombie(),
-            (2, 0): Human()
-    }
-
-    world = World(3, 1, characters)
-    assert world.tick().rows == world.rows
