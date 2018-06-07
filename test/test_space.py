@@ -1,8 +1,14 @@
 import math
 
+from hypothesis import assume, example, given
+from hypothesis import strategies as st
 import pytest
 
 from space import BoundingBox, Point, Vector
+
+
+points = st.builds(Point, st.integers(), st.integers())
+vectors = st.builds(Vector, st.integers(), st.integers())
 
 
 class TestPoint:
@@ -14,30 +20,31 @@ class TestPoint:
         with pytest.raises(TypeError):
             Point(3)
 
-    def test_double_argument_constructor(self):
-        assert Point(2, 5) is not None
+    @given(st.integers(), st.integers())
+    def test_accepts_two_coordinates(self, x, y):
+        point = Point(x, y)
+        assert point.x == x
+        assert point.y == y
 
-    def test_x_coordinate(self):
-        assert Point(2, 5).x == 2
+    @given(points, vectors)
+    def test_vector_addition(self, point, vector):
+        point_sum = point + vector
+        assert isinstance(point_sum, Point)
+        assert point_sum.x == point.x + vector.dx
+        assert point_sum.y == point.y + vector.dy
 
-    def test_y_coordinate(self):
-        assert Point(2, 5).y == 5
+    @given(points)
+    def test_point_equality(self, point):
+        assert point == point
 
-    def test_vector_addition(self):
-        p = Point(2, 5) + Vector(1, 1)
-        assert (p.x, p.y) == (3, 6)
+    @given(points, vectors)
+    def test_addition_then_subtraction(self, point, vector):
+        assert point + vector - point == vector
 
     def test_point_addition_fails(self):
         # Adding a point to a point doesn't make sense
         with pytest.raises(AttributeError):
             Point(2, 5) + Point(3, 2)
-
-    def test_point_subtraction(self):
-        v = Point(2, 5) - Point(3, 2)
-        assert (v.dx, v.dy) == Vector(-1, 3)
-
-    def test_point_equality(self):
-        assert Point(2, 3) == Point(2, 3)
 
 
 class TestVector:
@@ -49,23 +56,23 @@ class TestVector:
         with pytest.raises(TypeError):
             Vector(3)
 
-    def test_double_argument_constructor(self):
-        assert Vector(2, 5) is not None
-
-    def test_dx(self):
-        assert Vector(2, 6).dx == 2
-
-    def test_dy(self):
-        assert Vector(2, 6).dy == 6
+    @given(st.integers(), st.integers())
+    def test_accepts_two_coordinates(self, dx, dy):
+        vector = Vector(dx, dy)
+        assert vector.dx == dx
+        assert vector.dy == dy
 
     def test_zero_distance(self):
         assert Vector.ZERO.distance == 0
 
-    def test_zero_falsey(self):
-        assert not Vector.ZERO
+    @given(vectors)
+    def test_vector_distance(self, vector):
+        assert vector.distance >= 0
 
-    def test_non_zero_truthy(self):
-        assert Vector(1, 1)
+    @given(vectors)
+    @example(Vector.ZERO)
+    def test_truthiness(self, vector):
+        assert bool(vector) == (vector.distance > 0)
 
     @pytest.mark.parametrize('dx,dy', [(2, 1), (-2, 1), (2, -1), (-2, -1)])
     def test_non_zero_distance(self, dx, dy):
@@ -77,13 +84,16 @@ class TestVector:
     def test_value_inequality(self):
         assert Vector(2, 5) != Vector(2, 3)
 
-    def test_addition(self):
-        v = Vector(2, 5) + Vector(1, 3)
-        assert (v.dx, v.dy) == (3, 8)
+    @given(vectors, vectors)
+    def test_addition(self, vector_a, vector_b):
+        vector_sum = vector_a + vector_b
+        assert vector_sum.dx == vector_a.dx + vector_b.dx
+        assert vector_sum.dy == vector_a.dy + vector_b.dy
 
-    def test_subtraction(self):
-        v = Vector(2, 5) - Vector(1, 3)
-        assert (v.dx, v.dy) == (1, 2)
+    @given(vectors, vectors)
+    def test_addition_then_subtraction(self, vector_a, vector_b):
+        assert vector_a + vector_b - vector_b == vector_a
+        assert vector_a + vector_b - vector_a == vector_b
 
     def test_infinite_dimensions(self):
         v = Vector.INFINITE
@@ -93,11 +103,13 @@ class TestVector:
         v = Vector.INFINITE
         assert v.distance == math.inf
 
-    def test_infinite_addition(self):
-        assert Vector.INFINITE + Vector(1, 2) == Vector.INFINITE
+    @given(vectors)
+    def test_infinite_addition(self, vector):
+        assert Vector.INFINITE + vector == Vector.INFINITE
 
-    def test_infinite_subtraction(self):
-        assert Vector.INFINITE - Vector(1, 2) == Vector.INFINITE
+    @given(vectors)
+    def test_infinite_subtraction(self, vector):
+        assert Vector.INFINITE - vector == Vector.INFINITE
 
 
 class TestBoundingBox:
@@ -113,21 +125,14 @@ class TestBoundingBox:
         box = BoundingBox(Vector.ZERO, Vector(-1, -1))
         assert Vector.ZERO not in box
 
-    def test_vector_containment(self):
+    @given(vectors)
+    def test_vector_containment(self, vector):
         box = BoundingBox(Vector.ZERO, Vector(1, 1))
-        assert Vector.ZERO in box
-
-    def test_exclusive_upper_bound(self):
-        box = BoundingBox(Vector.ZERO, Vector(1, 1))
-        assert Vector(1, 1) not in box
-
-    @pytest.mark.parametrize('coords', [(0, 1), (1, 0), (-1, 0), (0, -1)])
-    def test_single_dimension_containment(self, coords):
-        box = BoundingBox(Vector.ZERO, Vector(1, 1))
-        assert Vector(*coords) not in box
+        assert (vector in box) == (vector == vector.ZERO)
 
 
 class TestUnlimitedBoundingBox:
-    @pytest.mark.parametrize('coords', [(0, 100), (100, 0), (-1000, 0), (10000, -1)])
-    def test_contains_everything(self, coords):
-        assert Vector(*coords) in BoundingBox.UNLIMITED
+
+    @given(vectors)
+    def test_contains_everything(self, vector):
+        assert vector in BoundingBox.UNLIMITED

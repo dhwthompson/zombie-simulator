@@ -41,6 +41,9 @@ class BoundingBox:
         dy_contains = self._lower.dy <= vector.dy < self._upper.dy
         return dx_contains and dy_contains
 
+    def __repr__(self):
+        return 'BoundingBox({}, {})'.format(self._lower, self._upper)
+
 
 BoundingBox.UNLIMITED = BoundingBox(Vector(-math.inf, -math.inf),
                                     Vector.INFINITE)

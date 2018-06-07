@@ -1,1 +1,2 @@
 pytest==3.5.1
+hypothesis==3.57.0
