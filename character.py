@@ -1,7 +1,58 @@
-from functools import partial
 import random
 
 from space import BoundingBox, Vector
+
+
+class TargetVectors:
+
+    def __init__(self, environment):
+        self._environment = environment
+
+    @property
+    def humans(self):
+        return [e[0] for e in self._environment if e[1].living]
+
+    @property
+    def zombies(self):
+        return [e[0] for e in self._environment if not e[1].living]
+
+
+class Obstacles:
+
+    def __init__(self, environment, myself):
+        self._obstacles = [e[0] for e in environment if e[1] != myself]
+
+    def __contains__(self, vector):
+        return vector in self._obstacles
+
+
+def nearest(vectors):
+    return min(vectors, key=lambda v: v.distance, default=Vector.INFINITE)
+
+
+def combine(*functions):
+    """Given two move-ranking functions, combine them to make a tuple function."""
+    return lambda move: tuple(f(move) for f in functions)
+
+
+class MinimiseDistance:
+    def __init__(self, target):
+        self._target = target
+
+    def __call__(self, move):
+        return (self._target - move).distance
+
+
+class MaximiseDistance:
+    def __init__(self, target):
+        self._target = target
+
+    def __call__(self, move):
+        return -(self._target - move).distance
+
+
+def move_shortest_distance(move):
+    return move.distance
 
 
 class Character:
@@ -21,16 +72,18 @@ class Character:
         the character does not intend to (or cannot) move, return a zero
         vector.
         """
-        target_vector = self._target_vector(environment)
-        moves = self._available_moves(limits, environment)
-        move_rank = partial(self._move_rank, target_vector)
+        target_vectors = TargetVectors(environment)
+        obstacles = Obstacles(environment, myself=self)
 
-        return sorted(moves, key=move_rank)[0]
+        moves = self._available_moves(limits, obstacles)
+        move_rank = self._move_rank_for(target_vectors)
 
-    def _available_moves(self, limits, environment):
+        return min(moves, key=move_rank)
+
+    def _available_moves(self, limits, obstacles):
         moves = [m for m in self._movement_range
                  if m in limits
-                 and m not in self._obstacles(environment)]
+                 and m not in obstacles]
         return moves
 
     @property
@@ -38,18 +91,7 @@ class Character:
         coord_range = range(-self.speed, self.speed + 1)
         return [Vector(dx, dy) for dx in coord_range for dy in coord_range]
 
-    def _obstacles(self, environment):
-        return [t[0] for t in environment if t[1] != self]
-
-    def _target_vector(self, environment):
-        return min(self._targets(environment),
-                   key=lambda v: v.distance,
-                   default=Vector.INFINITE)
-
-    def _targets(self, environment):
-        raise NotImplementedError
-
-    def _move_rank(self, target_vector, move):
+    def _move_rank_for(self, target_vectors):
         raise NotImplementedError
 
 
@@ -58,12 +100,10 @@ class Human(Character):
     living = True
     speed = 2
 
-    def _targets(self, environment):
-        return [t[0] for t in environment if not t[1].living]
-
-    def _move_rank(self, target_vector, move):
-        distance_after_move = (target_vector - move).distance
-        return (-distance_after_move, move.distance)
+    def _move_rank_for(self, target_vectors):
+        nearest_zombie = nearest(target_vectors.zombies)
+        return combine(MaximiseDistance(nearest_zombie),
+                       move_shortest_distance)
 
 
 class Zombie(Character):
@@ -71,12 +111,10 @@ class Zombie(Character):
     living = False
     speed = 1
 
-    def _targets(self, environment):
-        return [t[0] for t in environment if t[1].living]
-
-    def _move_rank(self, target_vector, move):
-        distance_after_move = (target_vector - move).distance
-        return (distance_after_move, move.distance)
+    def _move_rank_for(self, target_vectors):
+        nearest_human = nearest(target_vectors.humans)
+        return combine(MinimiseDistance(nearest_human),
+                       move_shortest_distance)
 
 
 class Population:
