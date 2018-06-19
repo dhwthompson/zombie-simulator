@@ -28,36 +28,30 @@ class TestWorld:
         world = World(2, 2, {(1, 1): character})
         assert world.rows == [[None, None], [None, character]]
 
-    def test_add_character(self):
-        character = object()
-        world = World(2, 2).with_character((1, 1), character)
-        assert world.rows == [[None, None], [None, character]]
-
-    def test_add_character_does_not_mutate(self):
-        character = object()
-        world = World(2, 2)
-        _ = world.with_character((1, 1), character)
-        assert world.rows == [[None, None], [None, None]]
-
     def test_moving_existing_character(self):
         character = object()
         world = World(2, 2, {(0, 0): character})
-        world = world.with_character((1, 1), character)
+        world = world.move_character(character, (1, 1))
         assert world.rows == [[None, None], [None, character]]
 
     def test_non_moving_character(self):
         moving_char = object()
         non_moving_char = object()
         world = World(2, 2, {(0, 0): moving_char, (1, 1): non_moving_char})
-        world = world.with_character((1, 0), moving_char)
+        world = world.move_character(moving_char, (1, 0))
 
         assert world.rows == [[None, moving_char], [None, non_moving_char]]
+
+    def test_moving_non_existent_character(self):
+        world = World(2, 2, {(0, 0): object(), (1, 1): object()})
+        with pytest.raises(ValueError):
+            world.move_character(object(), (1, 0))
 
     def test_move_to_same_position(self):
         character = object()
         other_char = object()
         world = World(2, 2, {(0, 0): character, (1, 1): other_char})
-        new_world = world.with_character((0, 0), character)
+        new_world = world.move_character(character, (0, 0))
         assert new_world.rows == world.rows
 
     def test_moving_character_onto_another(self):
@@ -65,12 +59,7 @@ class TestWorld:
         other_char = object()
         world = World(2, 2, {(0, 0): character, (1, 1): other_char})
         with pytest.raises(ValueError):
-            world.with_character((1, 1), character)
-
-    def test_add_null_character(self):
-        world = World(2, 2)
-        with pytest.raises(ValueError):
-            world.with_character((1, 1), None)
+            world.move_character(character, (1, 1))
 
     def test_empty_viewpoint(self):
         world = World(2, 2)

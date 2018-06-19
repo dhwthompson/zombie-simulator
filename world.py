@@ -17,22 +17,28 @@ class World:
     def _character_at(self, position):
         return self._characters.get(position)
 
+    def _contains(self, character):
+        return character in self._characters.values()
+
     @property
     def _character_positions(self):
         return [(Point(*position), character)
                 for position, character in self._characters.items()]
 
-    def with_character(self, position, character):
-        if character is None:
-            raise ValueError('Cannot add a null character')
+    def move_character(self, character, new_position):
+        if not self._contains(character):
+            raise ValueError('Attempt to move non-existent character '
+                             '{}'.format(character))
+        if self._character_at(new_position) == character:
+            return self
+        if self._character_at(new_position) is not None:
+            raise ValueError('Invalid move to occupied space '
+                             '{}'.format(new_position))
 
-        new_characters = dict([(pos, char) for (pos, char) in
-                self._character_positions if char != character])
-        if position in new_characters:
-            message = 'Invalid move to occupied space {}'.format(position)
-            raise ValueError(message)
-        new_characters.update({position: character})
-        return World(self._width, self._height, new_characters)
+        new_positions = [(new_position if char == character else pos, char)
+                         for (pos, char) in self._character_positions]
+
+        return World(self._width, self._height, new_positions)
 
     def viewpoint(self, origin):
         return set([(position - origin, character)
@@ -45,7 +51,7 @@ class World:
             limits = BoundingBox(Point(0, 0) - position,
                                  Point(self._width, self._height) - position)
             move = character.move(viewpoint, limits)
-            world = world.with_character(position + move, character)
+            world = world.move_character(character, position + move)
         return world
 
 
