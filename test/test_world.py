@@ -13,14 +13,12 @@ world_dimensions = st.integers(min_value=0, max_value=50)
 
 
 class TestWorld:
-    def test_single_cell_world(self):
-        assert World(1, 1).rows == [[None]]
 
-    def test_single_row_world(self):
-        assert World(3, 1).rows == [[None, None, None]]
-
-    def test_multi_row_world(self):
-        assert World(2, 2).rows == [[None, None], [None, None]]
+    @given(width=world_dimensions, height=world_dimensions)
+    @example(0, 0)
+    @example(1, 1)
+    def test_world_dimensions(self, width, height):
+        assert World(width, height).rows == [[None] * width] * height
 
     def test_explicitly_empty_world(self):
         assert World(2, 2, {}).rows == [[None, None], [None, None]]
