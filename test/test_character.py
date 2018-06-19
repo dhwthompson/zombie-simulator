@@ -142,6 +142,14 @@ class TestHuman:
         zombie_vector = environment[0][0]
         assert (zombie_vector - move).distance > zombie_vector.distance
 
+    @given(st.lists(st.tuples(vectors, zombies), min_size=1))
+    def test_runs_away_from_zombies(self, environment):
+        assume(not any(e[0] == Vector.ZERO for e in environment))
+        move = Human().move(environment)
+        min_distance_before = min(e[0].distance for e in environment)
+        min_distance_after = min((e[0] - move).distance for e in environment)
+        assert min_distance_after >= min_distance_before
+
     @given(st.lists(st.tuples(vectors, characters)))
     def test_moves_up_to_speed(self, environment):
         human = Human()

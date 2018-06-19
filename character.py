@@ -41,12 +41,13 @@ class MinimiseDistance:
         return (self._target - move).distance
 
 
-class MaximiseDistance:
-    def __init__(self, target):
-        self._target = target
+class MaximiseShortestDistance:
+    def __init__(self, targets):
+        self._targets = targets if targets else [Vector.INFINITE]
 
     def __call__(self, move):
-        return -(self._target - move).distance
+        distances_after_move = [(t - move).distance for t in self._targets]
+        return -min(distances_after_move)
 
 
 def move_shortest_distance(move):
@@ -99,8 +100,7 @@ class Human(Character):
     speed = 2
 
     def _move_rank_for(self, target_vectors):
-        nearest_zombie = nearest(target_vectors.zombies)
-        return combine(MaximiseDistance(nearest_zombie),
+        return combine(MaximiseShortestDistance(target_vectors.zombies),
                        move_shortest_distance)
 
 
