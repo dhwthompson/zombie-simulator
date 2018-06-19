@@ -7,16 +7,6 @@ class World:
         self._height = height
         self._characters = dict(characters or {})
 
-    @classmethod
-    def populated_by(cls, width, height, populator):
-        world = World(width, height)
-        for y in range(height):
-            for x in range(width):
-                character = next(populator)
-                if character:
-                    world = world.with_character((x, y), character)
-        return world
-
     @property
     def rows(self):
         return [self._row(y) for y in range(self._height)]
@@ -57,3 +47,24 @@ class World:
             move = character.move(viewpoint, limits)
             world = world.with_character(position + move, character)
         return world
+
+
+class WorldBuilder:
+
+    def __init__(self, width, height, population):
+        grid = self._grid(width, height)
+
+        starting_positions = [(point, character)
+                              for point, character in zip(grid, population)
+                              if character is not None]
+
+        self._world = World(width, height, starting_positions)
+
+    def _grid(self, width, height):
+        for y in range(height):
+            for x in range(width):
+                yield Point(x, y)
+
+    @property
+    def world(self):
+        return self._world

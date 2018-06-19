@@ -7,7 +7,7 @@ import time
 from character import Human, Zombie
 from population import Population
 from renderer import Renderer
-from world import World
+from world import WorldBuilder
 
 
 def get_world_size(size_string, get_terminal_size, default):
@@ -36,7 +36,7 @@ TICK = float(environ.get('TICK', 0.5))
 
 population = Population((DENSITY * (1 - ZOMBIE_CHANCE), Human),
                         (DENSITY * ZOMBIE_CHANCE, Zombie))
-world = World.populated_by(world_width, world_height, population)
+world = WorldBuilder(world_width, world_height, population).world
 renderer = Renderer(world)
 
 def each_interval(interval, current_time=time.time, sleep=time.sleep):

@@ -1,9 +1,15 @@
 from itertools import repeat
 
+from hypothesis import example, given
+from hypothesis import strategies as st
+
 import pytest
 
 from space import Vector
-from world import World
+from world import World, WorldBuilder
+
+
+world_dimensions = st.integers(min_value=0, max_value=50)
 
 
 class TestWorld:
@@ -87,17 +93,19 @@ class TestWorld:
         assert (Vector(1, 0), char1) in viewpoint
         assert (Vector(2, -1), char2) in viewpoint
 
+
+class TestWorldBuilder:
+
     def test_populated_world(self):
-        populator = iter(['foo', 'bar', 'baz', 'boop'])
-        world = World.populated_by(2, 2, populator)
-        assert world.rows == [['foo', 'bar'], ['baz', 'boop']]
+        population = iter(['foo', 'bar', 'baz', 'boop'])
+        builder = WorldBuilder(2, 2, population)
+        assert builder.world.rows == [['foo', 'bar'], ['baz', 'boop']]
 
-    def test_populated_world_dimensions(self):
-        populator = repeat(None)
-        world = World.populated_by(5, 4, populator)
-        assert world.rows == [[None] * 5] * 4
+    @given(world_dimensions, world_dimensions, st.builds(object))
+    def test_constant_population(self, width, height, denizen):
+        builder = WorldBuilder(width, height, repeat(denizen))
+        assert builder.world.rows == [[denizen] * width] * height
 
-    def test_null_population(self):
-        populator = repeat(None)
-        world = World.populated_by(2, 2, populator)
-        assert world.rows == [[None, None], [None, None]]
+    @given(st.iterables(elements=st.one_of(st.integers(), st.just(None)), min_size=25))
+    def test_integer_population(self, population):
+        builder = WorldBuilder(5, 5, population)
