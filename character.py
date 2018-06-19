@@ -1,5 +1,3 @@
-import random
-
 from space import BoundingBox, Vector
 
 
@@ -115,25 +113,3 @@ class Zombie(Character):
         nearest_human = nearest(target_vectors.humans)
         return combine(MinimiseDistance(nearest_human),
                        move_shortest_distance)
-
-
-class Population:
-
-    def __init__(self, density, zombie_chance, random_source=random.random):
-        self._density = density
-        self._zombie_chance = zombie_chance
-        self._random = random_source
-
-    def __iter__(self):
-        return self
-
-    def _factory_for(self, random_value):
-        if random_value < self._density * self._zombie_chance:
-            return Zombie
-        if random_value < self._density:
-            return Human
-        return lambda: None
-
-    def __next__(self):
-        factory = self._factory_for(self._random())
-        return factory()

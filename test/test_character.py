@@ -1,10 +1,7 @@
-from collections import Counter
-import pytest
-
 from hypothesis import assume, given
 from hypothesis import strategies as st
 
-from character import Human, Population, Zombie
+from character import Human, Zombie
 from space import BoundingBox, Vector
 
 vectors = st.builds(Vector, st.integers(), st.integers())
@@ -167,42 +164,3 @@ class TestHuman:
         human = Human()
         environment = [(Vector.ZERO, human)]
         assert human.move([]) == Vector.ZERO
-
-
-class TestPopulation:
-
-    def test_empty_population(self):
-        population = Population(0, 0)
-        generated = [next(population) for _ in range(100)]
-
-        assert all(g is None for g in generated)
-
-    def test_empty_zombie_population(self):
-        population = Population(0, 1)
-        generated = [next(population) for _ in range(100)]
-
-        assert all(g is None for g in generated)
-
-    def test_human_population(self):
-        population = Population(1, 0)
-        generated = [next(population) for _ in range(100)]
-
-        assert all(isinstance(g, Human) for g in generated)
-
-    def test_zombie_population(self):
-        population = Population(1, 1)
-
-        generated = [next(population) for _ in range(100)]
-
-        assert all(isinstance(g, Zombie) for g in generated)
-
-    def test_random_source(self):
-        uniform = [0.0, 0.2, 0.4, 0.6, 0.8]
-        population = Population(density=0.8,
-                                zombie_chance=0.5,
-                                random_source=uniform.pop)
-
-        generated = [next(population) for _ in range(5)]
-        population_counts = Counter(type(g) for g in generated)
-
-        assert population_counts == Counter({Human: 2, Zombie: 2, type(None): 1})

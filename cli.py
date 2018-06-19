@@ -4,7 +4,8 @@ import shutil
 import sys
 import time
 
-from character import Population
+from character import Human, Zombie
+from population import Population
 from renderer import Renderer
 from world import World
 
@@ -29,11 +30,12 @@ world_width, world_height = get_world_size(environ.get('WORLD_SIZE'),
                                            shutil.get_terminal_size,
                                            default=(60, 30))
 
-HUMAN_DENSITY = float(environ.get('DENSITY', 0.05))
+DENSITY = float(environ.get('DENSITY', 0.05))
 ZOMBIE_CHANCE = float(environ.get('ZOMBIE_CHANCE', 0.9))
 TICK = float(environ.get('TICK', 0.5))
 
-population = Population(HUMAN_DENSITY, ZOMBIE_CHANCE)
+population = Population((DENSITY * (1 - ZOMBIE_CHANCE), Human),
+                        (DENSITY * ZOMBIE_CHANCE, Zombie))
 world = World.populated_by(world_width, world_height, population)
 renderer = Renderer(world)
 
