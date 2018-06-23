@@ -11,6 +11,23 @@ class Point(namedtuple('Point', ['x', 'y'])):
         return Vector(self.x - point[0], self.y - point[1])
 
 
+class Area:
+    def __init__(self, lower, upper):
+        self._lower = lower
+        self._upper = upper
+
+    def __contains__(self, point):
+        x_contains = self._lower.x <= point.x < self._upper.x
+        y_contains = self._lower.y <= point.y < self._upper.y
+        return x_contains and y_contains
+
+    def __repr__(self):
+        return 'Area({}, {})'.format(self._lower, self._upper)
+
+    def from_origin(self, origin):
+        return BoundingBox(self._lower - origin, self._upper - origin)
+
+
 class Vector(namedtuple('Vector', ['dx', 'dy'])):
 
     @property

@@ -4,11 +4,13 @@ from hypothesis import assume, example, given
 from hypothesis import strategies as st
 import pytest
 
-from space import BoundingBox, Point, Vector
+from space import Area, BoundingBox, Point, Vector
 
 
 points = st.builds(Point, st.integers(), st.integers())
 vectors = st.builds(Vector, st.integers(), st.integers())
+
+areas = st.builds(Area, points, points)
 
 
 class TestPoint:
@@ -45,6 +47,56 @@ class TestPoint:
         # Adding a point to a point doesn't make sense
         with pytest.raises(AttributeError):
             Point(2, 5) + Point(3, 2)
+
+
+class TestArea:
+
+    def test_no_arg_constructor(self):
+        with pytest.raises(TypeError) as exc:
+            Area()
+
+    def test_single_arg_constructor(self):
+        with pytest.raises(TypeError):
+            Area(Point(1, 3))
+
+    @given(points, points)
+    def test_two_point_constructor(self, point_a, point_b):
+        Area(point_a, point_b)
+
+    @given(points, points)
+    def test_contains_lower_bound(self, lower, upper):
+        assume(upper.x > lower.x and upper.y > lower.y)
+        assert lower in Area(lower, upper)
+
+    @given(points, points)
+    def test_excludes_upper_bound(self, lower, upper):
+        assert upper not in Area(lower, upper)
+
+    @given(points, points)
+    def test_includes_midpoint(self, lower, upper):
+        assume(upper.x > lower.x and upper.y > lower.y)
+        midpoint = Point((lower.x + upper.x) // 2, (lower.y + upper.y) // 2)
+        assert midpoint in Area(lower, upper)
+
+    def test_excludes_on_x_coordinate(self):
+        area = Area(Point(0, 0), Point(3, 3))
+        assert Point(4, 1) not in area
+
+    def test_excludes_on_y_coordinate(self):
+        area = Area(Point(0, 0), Point(3, 3))
+        assert Point(1, 4) not in area
+
+    @given(points, points, points)
+    def test_from_origin_type(self, lower, upper, origin):
+        area = Area(lower, upper)
+        assert isinstance(area.from_origin(origin), BoundingBox)
+
+    @given(areas, points, points)
+    @example(Area(Point(0, 0), Point(2, 2)), Point(0, 0), Point(1, 1))
+    def test_from_origin_containment(self, area, origin, point):
+        from_origin = area.from_origin(origin)
+
+        assert (point in area) == ((point - origin) in from_origin)
 
 
 class TestVector:

@@ -1,13 +1,20 @@
 from collections import Counter
 
-from space import BoundingBox, Point, Vector
+from space import Area, Point
 
 
 class World:
+
     def __init__(self, width, height, characters):
+        self._area = Area(Point(0, 0), Point(width, height))
         self._width = width
         self._height = height
         self._roster = Roster.for_value(characters)
+
+        bad_positions = [p for p, _ in self._roster if p not in self._area]
+        if bad_positions:
+            raise ValueError('Off-world characters at '
+                             '{}'.format(bad_positions))
 
     @property
     def rows(self):
@@ -39,8 +46,7 @@ class World:
         world = self
         for (position, character) in self._roster:
             viewpoint = world.viewpoint(position)
-            limits = BoundingBox(Point(0, 0) - position,
-                                 Point(self._width, self._height) - position)
+            limits = self._area.from_origin(position)
             move = character.move(viewpoint, limits)
             world = world.move_character(character, position + move)
         return world
@@ -75,7 +81,6 @@ class Roster:
                       if count > 1]
         if duplicates:
             raise ValueError('{}: {}'.format(message, duplicates))
-
 
     def character_at(self, position):
         for p, char in self._positions:

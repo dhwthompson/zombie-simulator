@@ -74,7 +74,7 @@ class TestWorld:
 
     def test_viewpoint_multiple_characters(self):
         char1, char2 = object(), object()
-        world = World(2, 2, {(1, 1): char1, (2, 0): char2})
+        world = World(3, 3, {(1, 1): char1, (2, 0): char2})
         viewpoint = world.viewpoint((0, 1))
         assert len(viewpoint) == 2
         assert (Vector(1, 0), char1) in viewpoint
