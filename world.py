@@ -4,7 +4,7 @@ from space import BoundingBox, Point, Vector
 
 
 class World:
-    def __init__(self, width, height, characters=None):
+    def __init__(self, width, height, characters):
         self._width = width
         self._height = height
         self._roster = Roster.for_value(characters)
