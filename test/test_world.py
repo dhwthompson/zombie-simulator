@@ -1,14 +1,13 @@
-from itertools import repeat
-
 from hypothesis import example, given
 from hypothesis import strategies as st
 
 import pytest
 
-from space import Vector
-from world import World, WorldBuilder
+from space import Point, Vector
+from world import Roster, World, WorldBuilder
 
 
+points = st.builds(Point, st.integers(), st.integers())
 world_dimensions = st.integers(min_value=0, max_value=50)
 
 
@@ -81,6 +80,63 @@ class TestWorld:
         assert (Vector(2, -1), char2) in viewpoint
 
 
+def list_and_element(l):
+    """Given a list, return a strategy of that list and one of its elements.
+
+    This can be connected onto an existing list strategy using the `flatmap`
+    method.
+    """
+    return st.tuples(st.just(l), st.sampled_from(l))
+
+
+characters = st.builds(object)
+position_lists = st.lists(st.tuples(points, characters))
+
+
+def positions_unique(positions):
+    return len(set(p[0] for p in positions)) == len(positions)
+
+unique_position_lists = position_lists.filter(positions_unique)
+
+
+class TestRoster:
+
+    @given(unique_position_lists)
+    def test_takes_position_character_pairs(self, positions):
+        Roster(positions)
+
+    @given(unique_position_lists.flatmap(list_and_element))
+    def test_character_at_position(self, positions_and_item):
+        positions, (position, character) = positions_and_item
+
+        assert Roster(positions).character_at(position) == character
+
+    @given(points)
+    def test_rejects_duplicate_position(self, point):
+        positions = [(point, object()), (point, object())]
+        with pytest.raises(ValueError):
+            Roster(positions)
+
+    @given(characters)
+    def test_rejects_duplicate_character(self, character):
+        positions = [(Point(0, 0), character), (Point(1, 1), character)]
+        with pytest.raises(ValueError) as e:
+            Roster(positions)
+
+    def test_roster_for_dict(self):
+        character = object()
+        roster = Roster.for_value({(0, 1): character})
+        assert roster.character_at(Point(0, 1)) == character
+
+    def test_roster_for_nothing(self):
+        roster = Roster.for_value(None)
+        assert not list(roster)
+
+    def test_roster_for_itself(self):
+        roster = Roster([((0, 2), object())])
+        assert roster.for_value(roster) is roster
+
+
 class TestWorldBuilder:
 
     def test_populated_world(self):
@@ -88,11 +144,8 @@ class TestWorldBuilder:
         builder = WorldBuilder(2, 2, population)
         assert builder.world.rows == [['foo', 'bar'], ['baz', 'boop']]
 
-    @given(world_dimensions, world_dimensions, st.builds(object))
-    def test_constant_population(self, width, height, denizen):
-        builder = WorldBuilder(width, height, repeat(denizen))
-        assert builder.world.rows == [[denizen] * width] * height
-
-    @given(st.iterables(elements=st.one_of(st.integers(), st.just(None)), min_size=25))
+    @given(st.iterables(elements=st.one_of(st.integers(), st.just(None)),
+                        min_size=25,
+                        unique=True))
     def test_integer_population(self, population):
         builder = WorldBuilder(5, 5, population)
