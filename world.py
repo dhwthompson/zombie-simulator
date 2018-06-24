@@ -27,19 +27,8 @@ class World:
         return [self._roster.character_at((x, y)) for x in range(self._width)]
 
     def move_character(self, character, new_position):
-        if character not in self._roster:
-            raise ValueError('Attempt to move non-existent character '
-                             '{}'.format(character))
-        if self._roster.character_at(new_position) == character:
-            return self
-        if self._roster.character_at(new_position) is not None:
-            raise ValueError('Invalid move to occupied space '
-                             '{}'.format(new_position))
-
-        new_positions = [(new_position if char == character else pos, char)
-                         for (pos, char) in self._roster]
-
-        return World(self._width, self._height, new_positions)
+        new_roster = Move(character, new_position).next_roster(self._roster)
+        return World(self._width, self._height, new_roster)
 
     def viewpoint(self, origin):
         return set([(position - origin, character)
@@ -53,6 +42,30 @@ class World:
             move = character.move(viewpoint, limits)
             world = world.move_character(character, position + move)
         return world
+
+
+class Move:
+
+    def __init__(self, character, new_position):
+        self._character = character
+        self._new_position = new_position
+
+    def next_roster(self, roster):
+        character = self._character
+        new_position = self._new_position
+
+        if character not in roster:
+            raise ValueError('Attempt to move non-existent character '
+                             '{}'.format(character))
+        if roster.character_at(new_position) == character:
+            return roster
+        if roster.character_at(new_position) is not None:
+            raise ValueError('Invalid move of {} to occupied space '
+                             '{}'.format(character, new_position))
+
+        new_positions = [(new_position if char == character else pos, char)
+                         for (pos, char) in roster]
+        return Roster(new_positions)
 
 
 class Roster:

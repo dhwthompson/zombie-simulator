@@ -1,10 +1,10 @@
-from hypothesis import example, given
+from hypothesis import assume, example, given
 from hypothesis import strategies as st
 
 import pytest
 
 from space import Point, Vector
-from world import Roster, World, WorldBuilder
+from world import Move, Roster, World, WorldBuilder
 
 
 points = st.builds(Point, st.integers(), st.integers())
@@ -136,6 +136,40 @@ class TestRoster:
     def test_roster_for_itself(self):
         roster = Roster([((0, 2), object())])
         assert roster.for_value(roster) is roster
+
+
+class TestMove:
+
+    @given(unique_position_lists.flatmap(list_and_element))
+    def test_zero_move_preserves_roster(self, positions_and_item):
+        positions, (old_position, character) = positions_and_item
+        roster = Roster(positions)
+        assert Move(character, old_position).next_roster(roster) == roster
+
+    @given(unique_position_lists.flatmap(list_and_element), points)
+    def test_character_moves(self, positions_and_item, new_position):
+        positions, (_, character) = positions_and_item
+        assume(not any(pos == new_position for pos, _ in positions))
+        roster = Roster(positions)
+        move = Move(character, new_position)
+
+        next_roster = move.next_roster(roster)
+
+        assert next_roster.character_at(new_position) == character
+
+    def test_move_to_occupied_position(self):
+        a, b = object(), object()
+        roster = Roster([(Point(0, 0), a), (Point(1, 1), b)])
+        move = Move(b, Point(0, 0))
+        with pytest.raises(ValueError):
+            move.next_roster(roster)
+
+    def test_move_of_non_existent_character(self):
+        a, b = object(), object()
+        roster = Roster([(Point(0, 0), a)])
+        move = Move(b, Point(0, 0))
+        with pytest.raises(ValueError):
+            move.next_roster(roster)
 
 
 class TestWorldBuilder:
