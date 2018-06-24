@@ -16,6 +16,9 @@ class World:
             raise ValueError('Off-world characters at '
                              '{}'.format(bad_positions))
 
+    def __repr__(self):
+        return 'World({}, {}, {})'.format(self._width, self._height, self._roster)
+
     @property
     def rows(self):
         return [self._row(y) for y in range(self._height)]
@@ -94,6 +97,9 @@ class Roster:
 
     def __iter__(self):
         return iter(self._positions)
+
+    def __repr__(self):
+        return 'Roster({})'.format(self._positions)
 
 
 class WorldBuilder:
