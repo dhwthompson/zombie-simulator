@@ -33,6 +33,12 @@ def environments(characters=characters, min_size=None, max_size=None):
 
 class TestZombie:
 
+    def test_not_living(self):
+        assert not Zombie().living
+
+    def test_undead(self):
+        assert Zombie().undead
+
     @given(environments())
     def test_move_returns_a_vector(self, environment):
         zombie = Zombie()
@@ -129,6 +135,12 @@ class TestZombie:
 
 class TestHuman:
 
+    def test_living(self):
+        assert Human().living
+
+    def test_not_undead(self):
+        assert not Human().undead
+
     @given(environments())
     def test_move_returns_vector(self, environment):
         assert isinstance(Human().move(environment), Vector)
@@ -175,3 +187,9 @@ class TestHuman:
         human = Human()
         environment = [(Vector.ZERO, human)]
         assert human.move([]) == Vector.ZERO
+
+    def test_killed_human_is_dead(self):
+        assert not Human().killed().living
+
+    def test_killed_human_is_not_undead(self):
+        assert not Human().killed().undead
