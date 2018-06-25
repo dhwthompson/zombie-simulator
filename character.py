@@ -123,6 +123,9 @@ class Human(Character):
         return combine(MaximiseShortestDistance(target_vectors.zombies),
                        move_shortest_distance)
 
+    def attack(self, environment):
+        return None
+
     def killed(self):
         return Human(state=CharacterState.DEAD)
 
@@ -137,3 +140,8 @@ class Zombie(Character):
         nearest_human = nearest(target_vectors.humans)
         return combine(MinimiseDistance(nearest_human),
                        move_shortest_distance)
+
+    def attack(self, environment):
+        for offset, character in environment:
+            if character.living and offset.distance < 4:
+                return character

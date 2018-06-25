@@ -1,4 +1,4 @@
-from hypothesis import assume, given
+from hypothesis import assume, example, given
 from hypothesis import strategies as st
 
 from character import CharacterState, Human, Zombie
@@ -132,6 +132,22 @@ class TestZombie:
                        (Vector(1, 0), Zombie())]
         assert zombie.move(environment) == Vector(0, 1)
 
+    @given(st.lists(st.tuples(vectors(max_offset=1), humans), min_size=1, max_size=1))
+    def test_attack(self, environment):
+        zombie = Zombie()
+        human = environment[0][1]
+
+        assert zombie.attack(environment) == human
+
+    @given(environments(characters=humans))
+    @example([(Vector(2, 0), Human())])
+    def test_targets_out_of_range(self, environment):
+        biting_range = BoundingBox(Vector(-1, -1), Vector(2, 2))
+        assume(all(e[0] not in biting_range for e in environment))
+        zombie = Zombie()
+
+        assert zombie.attack(environment) is None
+
 
 class TestHuman:
 
@@ -198,3 +214,7 @@ class TestHuman:
     def test_dead_humans_stay_still(self, environment):
         human = Human(state=CharacterState.DEAD)
         assert human.move(environment) == Vector.ZERO
+
+    @given(environments())
+    def test_never_attacks(self, environment):
+        assert Human().attack(environment) is None
