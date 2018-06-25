@@ -4,7 +4,13 @@ from hypothesis import strategies as st
 from character import Human, Zombie
 from space import BoundingBox, Vector
 
-vectors = st.builds(Vector, st.integers(), st.integers())
+def vectors(max_offset=None):
+    if max_offset is not None:
+        coordinates = st.integers(min_value=-max_offset, max_value=max_offset)
+    else:
+        coordinates = st.integers()
+    return st.builds(Vector, dx=coordinates, dy=coordinates)
+
 humans = st.builds(Human)
 zombies = st.builds(Zombie)
 characters = st.one_of(humans, zombies)
@@ -18,48 +24,50 @@ containing_boxes = st.builds(BoundingBox,
                                        st.integers(min_value=1),
                                        st.integers(min_value=1)))
 
+def environments(characters=characters, min_size=None, max_size=None):
+    all_envs = st.lists(st.tuples(vectors(), characters),
+                        min_size=min_size,
+                        max_size=max_size)
+    return all_envs.filter(lambda e: not any(pos == Vector.ZERO for pos, _ in e))
+
 
 class TestZombie:
 
-    @given(st.lists(st.tuples(vectors, characters)))
+    @given(environments())
     def test_move_returns_a_vector(self, environment):
         zombie = Zombie()
 
         assert isinstance(zombie.move(environment), Vector)
 
-    @given(st.lists(st.tuples(vectors, humans), min_size=1, max_size=1))
+    @given(environments(characters=humans, min_size=1, max_size=1))
     def test_never_moves_away_from_human(self, environment):
-        assume(environment[0][0] != Vector.ZERO)
         move = Zombie().move(environment)
         assert (environment[0][0] - move).distance <= environment[0][0].distance
 
-    @given(st.lists(st.tuples(vectors, humans), min_size=1, max_size=1))
+    @given(environments(characters=humans, min_size=1, max_size=1))
     def test_move_approaches_single_human(self, environment):
         assume(environment[0][0].distance > 1)
         move = Zombie().move(environment)
         assert (environment[0][0] - move).distance < environment[0][0].distance
 
-    @given(st.lists(st.tuples(vectors, characters)))
+    @given(environments())
     def test_does_not_move_onto_occupied_space(self, environment):
         move = Zombie().move(environment)
         assert move not in [e[0] for e in environment]
 
-    @given(st.lists(st.tuples(vectors, characters)))
+    @given(environments())
     def test_moves_up_to_one_space(self, environment):
         zombie = Zombie()
         move = zombie.move(environment)
         assert abs(move.dx) <= zombie.speed
         assert abs(move.dy) <= zombie.speed
 
-    @given(st.lists(st.tuples(vectors, zombies)))
+    @given(environments(characters=zombies))
     def test_ignores_zombies(self, environment):
-        assume(not any(e[0] == Vector.ZERO for e in environment))
         assert Zombie().move(environment) == Vector.ZERO
 
-    @given(environment=st.lists(st.tuples(vectors, characters)),
-           limits=containing_boxes)
+    @given(environment=environments(), limits=containing_boxes)
     def test_respects_limits(self, environment, limits):
-        assume(not any(e[0] == Vector.ZERO for e in environment))
         move = Zombie().move(environment, limits)
         assert move in limits
 
@@ -121,46 +129,41 @@ class TestZombie:
 
 class TestHuman:
 
-    @given(st.lists(st.tuples(vectors, characters)))
+    @given(environments())
     def test_move_returns_vector(self, environment):
         assert isinstance(Human().move(environment), Vector)
 
-    @given(st.lists(st.tuples(vectors, humans)))
+    @given(environments(characters=humans))
     def test_ignores_humans(self, environment):
-        assume(not any(e[0] == Vector.ZERO for e in environment))
         assert Human().move(environment) == Vector.ZERO
 
-    @given(st.lists(st.tuples(vectors, characters)))
+    @given(environments())
     def test_does_not_move_into_occupied_space(self, environment):
-        assume(not any(e[0] == Vector.ZERO for e in environment))
         move = Human().move(environment)
         assert not any(e[0] == move for e in environment)
 
-    @given(st.lists(st.tuples(vectors, zombies), min_size=1, max_size=1))
+    @given(environments(characters=zombies, min_size=1, max_size=1))
     def test_runs_away_from_zombie(self, environment):
         move = Human().move(environment)
         zombie_vector = environment[0][0]
         assert (zombie_vector - move).distance > zombie_vector.distance
 
-    @given(st.lists(st.tuples(vectors, zombies), min_size=1))
+    @given(environments(characters=zombies, min_size=1))
     def test_runs_away_from_zombies(self, environment):
-        assume(not any(e[0] == Vector.ZERO for e in environment))
         move = Human().move(environment)
         min_distance_before = min(e[0].distance for e in environment)
         min_distance_after = min((e[0] - move).distance for e in environment)
         assert min_distance_after >= min_distance_before
 
-    @given(st.lists(st.tuples(vectors, characters)))
+    @given(environments())
     def test_moves_up_to_speed(self, environment):
         human = Human()
         move = human.move(environment)
         assert abs(move.dx) <= human.speed
         assert abs(move.dy) <= human.speed
 
-    @given(environment=st.lists(st.tuples(vectors, characters)),
-           limits=containing_boxes)
+    @given(environment=environments(), limits=containing_boxes)
     def test_respects_limits(self, environment, limits):
-        assume(not any(e[0] == Vector.ZERO for e in environment))
         move = Human().move(environment, limits)
         assert move in limits
 
