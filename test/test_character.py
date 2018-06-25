@@ -1,7 +1,7 @@
 from hypothesis import assume, given
 from hypothesis import strategies as st
 
-from character import Human, Zombie
+from character import CharacterState, Human, Zombie
 from space import BoundingBox, Vector
 
 def vectors(max_offset=None):
@@ -193,3 +193,8 @@ class TestHuman:
 
     def test_killed_human_is_not_undead(self):
         assert not Human().killed().undead
+
+    @given(environments())
+    def test_dead_humans_stay_still(self, environment):
+        human = Human(state=CharacterState.DEAD)
+        assert human.move(environment) == Vector.ZERO

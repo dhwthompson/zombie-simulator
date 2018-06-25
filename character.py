@@ -103,6 +103,9 @@ class Character:
 
     @property
     def _movement_range(self):
+        if self._state == CharacterState.DEAD:
+            return [Vector.ZERO]
+
         coord_range = range(-self.speed, self.speed + 1)
         return [Vector(dx, dy) for dx in coord_range for dy in coord_range]
 
