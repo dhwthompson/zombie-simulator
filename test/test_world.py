@@ -28,6 +28,10 @@ class TestWorld:
         world = World(2, 2, {(1, 1): character})
         assert world.rows == [[None, None], [None, character]]
 
+    def test_character_out_of_bounds(self):
+        with pytest.raises(ValueError):
+            World(2, 2, {(2, 2): object()})
+
     def test_moving_existing_character(self):
         character = object()
         world = World(2, 2, {(0, 0): character})
