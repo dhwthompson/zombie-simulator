@@ -204,11 +204,11 @@ class TestHuman:
         environment = [(Vector.ZERO, human)]
         assert human.move([]) == Vector.ZERO
 
-    def test_killed_human_is_dead(self):
-        assert not Human().killed().living
+    def test_attacked_human_is_dead(self):
+        assert not Human().attacked().living
 
-    def test_killed_human_is_not_undead(self):
-        assert not Human().killed().undead
+    def test_attacked_human_is_not_undead(self):
+        assert not Human().attacked().undead
 
     @given(environments())
     def test_dead_humans_stay_still(self, environment):

@@ -126,7 +126,7 @@ class Human(Character):
     def attack(self, environment):
         return None
 
-    def killed(self):
+    def attacked(self):
         return Human(state=CharacterState.DEAD)
 
 
