@@ -31,7 +31,7 @@ world_width, world_height = get_world_size(environ.get('WORLD_SIZE'),
                                            default=(60, 30))
 
 DENSITY = float(environ.get('DENSITY', 0.05))
-ZOMBIE_CHANCE = float(environ.get('ZOMBIE_CHANCE', 0.9))
+ZOMBIE_CHANCE = float(environ.get('ZOMBIE_CHANCE', 0.2))
 TICK = float(environ.get('TICK', 0.5))
 
 population = Population((DENSITY * (1 - ZOMBIE_CHANCE), Human),
