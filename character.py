@@ -1,3 +1,5 @@
+from enum import Enum
+
 from space import BoundingBox, Vector
 
 
@@ -12,7 +14,7 @@ class TargetVectors:
 
     @property
     def zombies(self):
-        return [e[0] for e in self._environment if not e[1].living]
+        return [e[0] for e in self._environment if e[1].undead]
 
 
 class Obstacles:
@@ -54,7 +56,21 @@ def move_shortest_distance(move):
     return move.distance
 
 
+CharacterState = Enum('CharacterState', ['LIVING', 'DEAD', 'UNDEAD'])
+
+
 class Character:
+
+    def __init__(self, state=None):
+        self._state = state or self.starting_state
+
+    @property
+    def living(self):
+        return self._state == CharacterState.LIVING
+
+    @property
+    def undead(self):
+        return self._state == CharacterState.UNDEAD
 
     def move(self, environment, limits=BoundingBox.UNLIMITED):
         """Choose where to move next.
@@ -87,6 +103,9 @@ class Character:
 
     @property
     def _movement_range(self):
+        if self._state == CharacterState.DEAD:
+            return [Vector.ZERO]
+
         coord_range = range(-self.speed, self.speed + 1)
         return [Vector(dx, dy) for dx in coord_range for dy in coord_range]
 
@@ -96,20 +115,33 @@ class Character:
 
 class Human(Character):
 
-    living = True
+    starting_state = CharacterState.LIVING
+
     speed = 2
 
     def _move_rank_for(self, target_vectors):
         return combine(MaximiseShortestDistance(target_vectors.zombies),
                        move_shortest_distance)
 
+    def attack(self, environment):
+        return None
+
+    def attacked(self):
+        return Human(state=CharacterState.DEAD)
+
 
 class Zombie(Character):
 
-    living = False
+    starting_state = CharacterState.UNDEAD
+
     speed = 1
 
     def _move_rank_for(self, target_vectors):
         nearest_human = nearest(target_vectors.humans)
         return combine(MinimiseDistance(nearest_human),
                        move_shortest_distance)
+
+    def attack(self, environment):
+        for offset, character in environment:
+            if character.living and offset.distance < 4:
+                return character

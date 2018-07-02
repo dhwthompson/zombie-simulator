@@ -1,5 +1,6 @@
 from hypothesis import given
 from hypothesis import strategies as st
+import pytest
 
 from character import Human, Zombie
 from world import World
@@ -14,20 +15,31 @@ def worlds(draw, inhabitants=st.one_of(st.builds(Human), st.builds(Zombie))):
     return World(x, y, characters)
 
 
+@pytest.mark.integration
 @given(worlds())
 def test_tick_returns_a_world(world):
     assert isinstance(world.tick(), World)
 
 
+@pytest.mark.integration
 @given(worlds())
-def test_tick_preserves_characters(world):
-    old_characters = set(sum(world.rows, []))
+def test_characters_preserved(world):
+    assert len(sum(world.rows, [])) == len(sum(world.tick().rows, []))
+
+
+@pytest.mark.integration
+@given(worlds())
+def test_tick_keeps_zombies(world):
+    old_zombies = set(z for z in sum(world.rows, [])
+                      if z and z.undead)
     new_world = world.tick()
-    new_characters = set(sum(new_world.rows, []))
+    new_zombies = set(z for z in sum(new_world.rows, [])
+                      if z and z.undead)
 
-    assert old_characters == new_characters
+    assert old_zombies == new_zombies
 
 
+@pytest.mark.integration
 def test_zombies_approach_humans():
     zombie = Zombie()
     human = Human()

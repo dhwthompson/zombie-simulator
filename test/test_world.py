@@ -4,7 +4,7 @@ from hypothesis import strategies as st
 import pytest
 
 from space import Point, Vector
-from world import Move, Roster, World, WorldBuilder
+from world import Attack, Move, Roster, World, WorldBuilder
 
 
 points = st.builds(Point, st.integers(), st.integers())
@@ -27,6 +27,10 @@ class TestWorld:
         character = object()
         world = World(2, 2, {(1, 1): character})
         assert world.rows == [[None, None], [None, character]]
+
+    def test_character_out_of_bounds(self):
+        with pytest.raises(ValueError):
+            World(2, 2, {(2, 2): object()})
 
     def test_moving_existing_character(self):
         character = object()
@@ -170,6 +174,52 @@ class TestMove:
         move = Move(b, Point(0, 0))
         with pytest.raises(ValueError):
             move.next_roster(roster)
+
+
+class Target:
+
+    def __init__(self, attack_result):
+        self._attack_result = attack_result
+
+    def attacked(self):
+        return self._attack_result
+
+
+class TestAttack:
+
+    def test_fails_if_target_not_in_roster(self):
+        attacker, target = object(), object()
+        roster = Roster([(Point(0, 0), attacker)])
+        attack = Attack(attacker, target)
+        with pytest.raises(ValueError):
+            attack.next_roster(roster)
+
+    def test_fails_if_attacker_not_in_roster(self):
+        attacker, target = object(), object()
+
+        roster = Roster([(Point(0, 0), target)])
+        attack = Attack(attacker, target)
+        with pytest.raises(ValueError):
+            attack.next_roster(roster)
+
+    def test_attacks_target(self):
+        attacker = object()
+        attacked = object()
+        target = Target(attacked)
+
+        roster = Roster([(Point(0, 0), attacker), (Point(1, 1), target)])
+        attack = Attack(attacker, target)
+        new_roster = attack.next_roster(roster)
+        assert new_roster.character_at(Point(1, 1)) is attacked
+
+    def test_preserves_attacker(self):
+        attacker = object()
+        target = Target(object())
+
+        roster = Roster([(Point(0, 0), attacker), (Point(1, 1), target)])
+        attack = Attack(attacker, target)
+        new_roster = attack.next_roster(roster)
+        assert new_roster.character_at(Point(0, 0)) is attacker
 
 
 class TestWorldBuilder:

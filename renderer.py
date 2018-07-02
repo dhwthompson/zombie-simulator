@@ -14,5 +14,7 @@ class Renderer:
             return '. '
         if character.living:
             return '\U0001F468 '
-        else:
+        elif character.undead:
             return '\U0001F9DF '
+        else:
+            return '\U0001F480 '

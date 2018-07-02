@@ -1,7 +1,7 @@
-from hypothesis import assume, given
+from hypothesis import assume, example, given
 from hypothesis import strategies as st
 
-from character import Human, Zombie
+from character import CharacterState, Human, Zombie
 from space import BoundingBox, Vector
 
 def vectors(max_offset=None):
@@ -32,6 +32,12 @@ def environments(characters=characters, min_size=None, max_size=None):
 
 
 class TestZombie:
+
+    def test_not_living(self):
+        assert not Zombie().living
+
+    def test_undead(self):
+        assert Zombie().undead
 
     @given(environments())
     def test_move_returns_a_vector(self, environment):
@@ -126,8 +132,30 @@ class TestZombie:
                        (Vector(1, 0), Zombie())]
         assert zombie.move(environment) == Vector(0, 1)
 
+    @given(st.lists(st.tuples(vectors(max_offset=1), humans), min_size=1, max_size=1))
+    def test_attack(self, environment):
+        zombie = Zombie()
+        human = environment[0][1]
+
+        assert zombie.attack(environment) == human
+
+    @given(environments(characters=humans))
+    @example([(Vector(2, 0), Human())])
+    def test_targets_out_of_range(self, environment):
+        biting_range = BoundingBox(Vector(-1, -1), Vector(2, 2))
+        assume(all(e[0] not in biting_range for e in environment))
+        zombie = Zombie()
+
+        assert zombie.attack(environment) is None
+
 
 class TestHuman:
+
+    def test_living(self):
+        assert Human().living
+
+    def test_not_undead(self):
+        assert not Human().undead
 
     @given(environments())
     def test_move_returns_vector(self, environment):
@@ -175,3 +203,18 @@ class TestHuman:
         human = Human()
         environment = [(Vector.ZERO, human)]
         assert human.move([]) == Vector.ZERO
+
+    def test_attacked_human_is_dead(self):
+        assert not Human().attacked().living
+
+    def test_attacked_human_is_not_undead(self):
+        assert not Human().attacked().undead
+
+    @given(environments())
+    def test_dead_humans_stay_still(self, environment):
+        human = Human(state=CharacterState.DEAD)
+        assert human.move(environment) == Vector.ZERO
+
+    @given(environments())
+    def test_never_attacks(self, environment):
+        assert Human().attack(environment) is None

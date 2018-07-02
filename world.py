@@ -34,13 +34,25 @@ class World:
         return set([(position - origin, character)
                     for position, character in self._roster])
 
+    def _next_action(self, character, position, viewpoint, limits):
+        target = character.attack(viewpoint)
+        if target:
+            return Attack(character, target)
+        else:
+            move_vector = character.move(viewpoint, limits)
+            return Move(character, position + move_vector)
+
     def tick(self):
         world = self
         for (position, character) in self._roster:
+            if character not in world._roster:
+                continue
             viewpoint = world.viewpoint(position)
             limits = self._area.from_origin(position)
-            move = character.move(viewpoint, limits)
-            world = world.move_character(character, position + move)
+            action = self._next_action(character, position,
+                                       viewpoint, limits)
+            new_roster = action.next_roster(world._roster)
+            world = World(self._width, self._height, new_roster)
         return world
 
 
@@ -64,6 +76,28 @@ class Move:
                              '{}'.format(character, new_position))
 
         new_positions = [(new_position if char == character else pos, char)
+                         for (pos, char) in roster]
+        return Roster(new_positions)
+
+
+class Attack:
+
+    def __init__(self, attacker, target):
+        self._attacker = attacker
+        self._target = target
+
+    def next_roster(self, roster):
+        attacker = self._attacker
+        target = self._target
+
+        if attacker not in roster:
+            raise ValueError('Attack by non-existent character '
+                             '{}'.format(attacker))
+        if target not in roster:
+            raise ValueError('Attack on non-existent character '
+                             '{}'.format(target))
+
+        new_positions = [(pos, char.attacked() if char == target else char)
                          for (pos, char) in roster]
         return Roster(new_positions)
 

@@ -4,7 +4,7 @@ from renderer import Renderer
 
 
 World = namedtuple('World', ['rows'])
-Character = namedtuple('Character', ['living'])
+Character = namedtuple('Character', ['living', 'undead'])
 
 
 class TestRenderer:
@@ -25,13 +25,19 @@ class TestRenderer:
         assert renderer.lines == ['. . . . . ', '. . . . . ', '. . . . . ']
 
     def test_human(self):
-        human = Character(living=True)
+        human = Character(living=True, undead=False)
         world = World([[None, human, None]])
         renderer = Renderer(world)
         assert renderer.lines == ['. \U0001F468 . ']
 
+    def test_dead_human(self):
+        dead_human = Character(living=False, undead=False)
+        world = World([[None, dead_human, None]])
+        renderer = Renderer(world)
+        assert renderer.lines == ['. \U0001F480 . ']
+
     def test_zombie(self):
-        zombie = Character(living=False)
+        zombie = Character(living=False, undead=True)
         world = World([[None, zombie, None]])
         renderer = Renderer(world)
         assert renderer.lines == ['. \U0001F9DF . ']
