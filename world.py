@@ -26,10 +26,6 @@ class World:
     def _row(self, y):
         return [self._roster.character_at((x, y)) for x in range(self._width)]
 
-    def move_character(self, character, new_position):
-        new_roster = Move(character, new_position).next_roster(self._roster)
-        return World(self._width, self._height, new_roster)
-
     def viewpoint(self, origin):
         return set([(position - origin, character)
                     for position, character in self._roster])

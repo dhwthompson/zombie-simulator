@@ -32,39 +32,6 @@ class TestWorld:
         with pytest.raises(ValueError):
             World(2, 2, {(2, 2): object()})
 
-    def test_moving_existing_character(self):
-        character = object()
-        world = World(2, 2, {(0, 0): character})
-        world = world.move_character(character, (1, 1))
-        assert world.rows == [[None, None], [None, character]]
-
-    def test_non_moving_character(self):
-        moving_char = object()
-        non_moving_char = object()
-        world = World(2, 2, {(0, 0): moving_char, (1, 1): non_moving_char})
-        world = world.move_character(moving_char, (1, 0))
-
-        assert world.rows == [[None, moving_char], [None, non_moving_char]]
-
-    def test_moving_non_existent_character(self):
-        world = World(2, 2, {(0, 0): object(), (1, 1): object()})
-        with pytest.raises(ValueError):
-            world.move_character(object(), (1, 0))
-
-    def test_move_to_same_position(self):
-        character = object()
-        other_char = object()
-        world = World(2, 2, {(0, 0): character, (1, 1): other_char})
-        new_world = world.move_character(character, (0, 0))
-        assert new_world.rows == world.rows
-
-    def test_moving_character_onto_another(self):
-        character = object()
-        other_char = object()
-        world = World(2, 2, {(0, 0): character, (1, 1): other_char})
-        with pytest.raises(ValueError):
-            world.move_character(character, (1, 1))
-
     def test_empty_viewpoint(self):
         world = World(2, 2, characters=None)
         assert len(world.viewpoint((1, 1))) == 0
@@ -174,6 +141,12 @@ class TestMove:
         move = Move(b, Point(0, 0))
         with pytest.raises(ValueError):
             move.next_roster(roster)
+
+    def test_move_preserves_non_moving_character(self):
+        a, b = object(), object()
+        roster = Roster([(Point(0, 0), a), (Point(1, 1), b)])
+        move = Move(a, Point(0, 1))
+        assert move.next_roster(roster).character_at(Point(1, 1)) is b
 
 
 class Target:
