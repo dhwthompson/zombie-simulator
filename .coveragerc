@@ -1,0 +1,10 @@
+[run]
+source=.
+omit=
+  .direnv/*
+  test/*
+
+[report]
+exclude_lines=
+  def __repr__
+  raise NotImplementedError
