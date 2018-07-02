@@ -68,6 +68,28 @@ class Move:
         return Roster(new_positions)
 
 
+class Attack:
+
+    def __init__(self, attacker, target):
+        self._attacker = attacker
+        self._target = target
+
+    def next_roster(self, roster):
+        attacker = self._attacker
+        target = self._target
+
+        if attacker not in roster:
+            raise ValueError('Attack by non-existent character '
+                             '{}'.format(attacker))
+        if target not in roster:
+            raise ValueError('Attack on non-existent character '
+                             '{}'.format(target))
+
+        new_positions = [(pos, char.attacked() if char == target else char)
+                         for (pos, char) in roster]
+        return Roster(new_positions)
+
+
 class Roster:
 
     @classmethod
