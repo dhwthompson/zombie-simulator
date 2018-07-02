@@ -20,12 +20,19 @@ def test_tick_returns_a_world(world):
 
 
 @given(worlds())
-def test_tick_preserves_characters(world):
-    old_characters = set(sum(world.rows, []))
-    new_world = world.tick()
-    new_characters = set(sum(new_world.rows, []))
+def test_characters_preserved(world):
+    assert len(sum(world.rows, [])) == len(sum(world.tick().rows, []))
 
-    assert old_characters == new_characters
+
+@given(worlds())
+def test_tick_keeps_zombies(world):
+    old_zombies = set(z for z in sum(world.rows, [])
+                      if z and z.undead)
+    new_world = world.tick()
+    new_zombies = set(z for z in sum(new_world.rows, [])
+                      if z and z.undead)
+
+    assert old_zombies == new_zombies
 
 
 def test_zombies_approach_humans():

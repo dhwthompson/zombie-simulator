@@ -34,13 +34,25 @@ class World:
         return set([(position - origin, character)
                     for position, character in self._roster])
 
+    def _next_action(self, character, position, viewpoint, limits):
+        target = character.attack(viewpoint)
+        if target:
+            return Attack(character, target)
+        else:
+            move_vector = character.move(viewpoint, limits)
+            return Move(character, position + move_vector)
+
     def tick(self):
         world = self
         for (position, character) in self._roster:
+            if character not in world._roster:
+                continue
             viewpoint = world.viewpoint(position)
             limits = self._area.from_origin(position)
-            move = character.move(viewpoint, limits)
-            world = world.move_character(character, position + move)
+            action = self._next_action(character, position,
+                                       viewpoint, limits)
+            new_roster = action.next_roster(world._roster)
+            world = World(self._width, self._height, new_roster)
         return world
 
 
