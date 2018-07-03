@@ -8,6 +8,7 @@ from world import Attack, Move, Roster, World, WorldBuilder
 
 
 points = st.builds(Point, st.integers(), st.integers())
+vectors = st.builds(Vector, st.integers(), st.integers())
 world_dimensions = st.integers(min_value=0, max_value=50)
 
 
@@ -121,16 +122,17 @@ class TestMove:
 
     @given(unique_position_lists.flatmap(list_and_element))
     def test_zero_move_preserves_roster(self, positions_and_item):
-        positions, (old_position, character) = positions_and_item
-        roster = Roster(positions)
-        assert Move(character, old_position).next_roster(roster) == roster
-
-    @given(unique_position_lists.flatmap(list_and_element), points)
-    def test_character_moves(self, positions_and_item, new_position):
         positions, (_, character) = positions_and_item
+        roster = Roster(positions)
+        assert Move(character, Vector.ZERO).next_roster(roster) == roster
+
+    @given(unique_position_lists.flatmap(list_and_element), vectors)
+    def test_character_moves(self, positions_and_item, move_vector):
+        positions, (position, character) = positions_and_item
+        new_position = position + move_vector
         assume(not any(pos == new_position for pos, _ in positions))
         roster = Roster(positions)
-        move = Move(character, new_position)
+        move = Move(character, move_vector)
 
         next_roster = move.next_roster(roster)
 
@@ -139,21 +141,21 @@ class TestMove:
     def test_move_to_occupied_position(self):
         a, b = object(), object()
         roster = Roster([(Point(0, 0), a), (Point(1, 1), b)])
-        move = Move(b, Point(0, 0))
+        move = Move(b, Vector(-1, -1))
         with pytest.raises(ValueError):
             move.next_roster(roster)
 
     def test_move_of_non_existent_character(self):
         a, b = object(), object()
         roster = Roster([(Point(0, 0), a)])
-        move = Move(b, Point(0, 0))
+        move = Move(b, Vector(1, 1))
         with pytest.raises(ValueError):
             move.next_roster(roster)
 
     def test_move_preserves_non_moving_character(self):
         a, b = object(), object()
         roster = Roster([(Point(0, 0), a), (Point(1, 1), b)])
-        move = Move(a, Point(0, 1))
+        move = Move(a, Vector(0, 1))
         assert move.next_roster(roster).character_at(Point(1, 1)) is b
 
 

@@ -30,13 +30,13 @@ class World:
         return set([(position - origin, character)
                     for position, character in self._roster])
 
-    def _next_action(self, character, position, viewpoint, limits):
+    def _next_action(self, character, viewpoint, limits):
         target = character.attack(viewpoint)
         if target:
             return Attack(character, target)
         else:
             move_vector = character.move(viewpoint, limits)
-            return Move(character, position + move_vector)
+            return Move(character, move_vector)
 
     def tick(self):
         world = self
@@ -45,8 +45,7 @@ class World:
                 continue
             viewpoint = world.viewpoint(position)
             limits = self._area.from_origin(position)
-            action = self._next_action(character, position,
-                                       viewpoint, limits)
+            action = self._next_action(character, viewpoint, limits)
             new_roster = action.next_roster(world._roster)
             world = World(self._width, self._height, new_roster)
         return world
@@ -54,21 +53,21 @@ class World:
 
 class Move:
 
-    def __init__(self, character, new_position):
+    def __init__(self, character, move_vector):
         self._character = character
-        self._new_position = new_position
+        self._move_vector = move_vector
 
     def next_roster(self, roster):
+        if not self._move_vector:
+            return roster
+
         character = self._character
-        new_position = self._new_position
 
         if character not in roster:
             raise ValueError('Attempt to move non-existent character '
                              '{}'.format(character))
-        if roster.character_at(new_position) == character:
-            return roster
 
-        new_positions = [(new_position if char == character else pos, char)
+        new_positions = [(pos + self._move_vector if char == character else pos, char)
                          for (pos, char) in roster]
         return Roster(new_positions)
 
