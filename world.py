@@ -67,9 +67,6 @@ class Move:
                              '{}'.format(character))
         if roster.character_at(new_position) == character:
             return roster
-        if roster.character_at(new_position) is not None:
-            raise ValueError('Invalid move of {} to occupied space '
-                             '{}'.format(character, new_position))
 
         new_positions = [(new_position if char == character else pos, char)
                          for (pos, char) in roster]
