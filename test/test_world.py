@@ -95,6 +95,14 @@ class TestRoster:
         with pytest.raises(ValueError) as e:
             Roster(positions)
 
+    @given(unique_position_lists)
+    def test_value_equality(self, positions):
+        assert Roster(positions) == Roster(list(positions))
+
+    @given(unique_position_lists)
+    def test_order_indifference(self, positions):
+        assert Roster(positions) == Roster(reversed(positions))
+
     def test_roster_for_dict(self):
         character = object()
         roster = Roster.for_value({(0, 1): character})

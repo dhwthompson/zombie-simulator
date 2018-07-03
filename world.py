@@ -144,6 +144,9 @@ class Roster:
     def __repr__(self):
         return 'Roster({})'.format(self._positions)
 
+    def __eq__(self, other):
+        return sorted(self._positions) == sorted(other._positions)
+
 
 class WorldBuilder:
 
