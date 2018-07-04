@@ -7,8 +7,6 @@ from space import Point, Vector
 from world import Attack, Move, Roster, World, WorldBuilder
 
 
-points = st.builds(Point, st.integers(), st.integers())
-vectors = st.builds(Vector, st.integers(), st.integers())
 world_dimensions = st.integers(min_value=0, max_value=50)
 
 
@@ -63,7 +61,7 @@ def list_and_element(l):
 
 
 characters = st.builds(object)
-position_lists = st.lists(st.tuples(points, characters))
+position_lists = st.lists(st.tuples(st.from_type(Point), characters))
 
 
 def positions_unique(positions):
@@ -84,7 +82,7 @@ class TestRoster:
 
         assert Roster(positions).character_at(position) == character
 
-    @given(points)
+    @given(st.from_type(Point))
     def test_rejects_duplicate_position(self, point):
         positions = [(point, object()), (point, object())]
         with pytest.raises(ValueError):
@@ -126,7 +124,7 @@ class TestMove:
         roster = Roster(positions)
         assert Move(character, Vector.ZERO).next_roster(roster) == roster
 
-    @given(unique_position_lists.flatmap(list_and_element), vectors)
+    @given(unique_position_lists.flatmap(list_and_element), st.from_type(Vector))
     def test_character_moves(self, positions_and_item, move_vector):
         positions, (position, character) = positions_and_item
         new_position = position + move_vector

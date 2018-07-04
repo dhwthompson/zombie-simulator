@@ -7,10 +7,8 @@ import pytest
 from space import Area, BoundingBox, Point, UnlimitedBoundingBox, Vector
 
 
-points = st.builds(Point, st.integers(), st.integers())
-vectors = st.builds(Vector, st.integers(), st.integers())
-
-areas = st.builds(Area, points, points)
+points = st.from_type(Point)
+vectors = st.from_type(Vector)
 
 
 class TestPoint:
@@ -91,7 +89,7 @@ class TestArea:
         area = Area(lower, upper)
         assert isinstance(area.from_origin(origin), BoundingBox)
 
-    @given(areas, points, points)
+    @given(st.from_type(Area), points, points)
     @example(Area(Point(0, 0), Point(2, 2)), Point(0, 0), Point(1, 1))
     def test_from_origin_containment(self, area, origin, point):
         from_origin = area.from_origin(origin)

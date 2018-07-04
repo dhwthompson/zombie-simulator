@@ -1,8 +1,11 @@
-from collections import namedtuple
 import math
+from typing import NamedTuple
 
 
-class Point(namedtuple('Point', ['x', 'y'])):
+class Point(NamedTuple):
+
+    x: int
+    y: int
 
     def __add__(self, vector):
         return Point(self.x + vector.dx, self.y + vector.dy)
@@ -12,7 +15,8 @@ class Point(namedtuple('Point', ['x', 'y'])):
 
 
 class Area:
-    def __init__(self, lower, upper):
+
+    def __init__(self, lower: Point, upper: Point):
         self._lower = lower
         self._upper = upper
 
@@ -28,7 +32,10 @@ class Area:
         return BoundingBox(self._lower - origin, self._upper - origin)
 
 
-class Vector(namedtuple('Vector', ['dx', 'dy'])):
+class Vector(NamedTuple):
+
+    dx: int
+    dy: int
 
     @property
     def distance(self):
@@ -48,7 +55,8 @@ Vector.ZERO = Vector(0, 0)
 
 
 class BoundingBox:
-    def __init__(self, lower, upper):
+
+    def __init__(self, lower: Vector, upper: Vector):
         self._lower = lower
         self._upper = upper
 
