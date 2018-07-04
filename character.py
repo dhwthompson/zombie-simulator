@@ -1,6 +1,6 @@
 from enum import Enum
 
-from space import BoundingBox, Vector
+from space import BoundingBox, UnlimitedBoundingBox, Vector
 
 
 class TargetVectors:
@@ -27,12 +27,18 @@ class Obstacles:
 
 
 def nearest(vectors):
-    return min(vectors, key=lambda v: v.distance, default=Vector.INFINITE)
+    return min(vectors, key=lambda v: v.distance, default=None)
 
 
 def combine(*functions):
     """Given two move-ranking functions, combine them to make a tuple function."""
     return lambda move: tuple(f(move) for f in functions)
+
+
+class NullStrategy:
+
+    def __call__(self, move):
+        return 0
 
 
 class MinimiseDistance:
@@ -45,7 +51,9 @@ class MinimiseDistance:
 
 class MaximiseShortestDistance:
     def __init__(self, targets):
-        self._targets = targets if targets else [Vector.INFINITE]
+        if not targets:
+            raise ValueError('Cannot maximise distance from no targets')
+        self._targets = targets
 
     def __call__(self, move):
         distances_after_move = [(t - move).distance for t in self._targets]
@@ -72,7 +80,7 @@ class Character:
     def undead(self):
         return self._state == CharacterState.UNDEAD
 
-    def move(self, environment, limits=BoundingBox.UNLIMITED):
+    def move(self, environment, limits=UnlimitedBoundingBox()):
         """Choose where to move next.
 
         Arguments:
@@ -120,8 +128,12 @@ class Human(Character):
     speed = 2
 
     def _move_rank_for(self, target_vectors):
-        return combine(MaximiseShortestDistance(target_vectors.zombies),
-                       move_shortest_distance)
+        if target_vectors.zombies:
+            main_strategy = MaximiseShortestDistance(target_vectors.zombies)
+        else:
+            main_strategy = NullStrategy()
+
+        return combine(main_strategy, move_shortest_distance)
 
     def attack(self, environment):
         return None
@@ -137,9 +149,9 @@ class Zombie(Character):
     speed = 1
 
     def _move_rank_for(self, target_vectors):
-        nearest_human = nearest(target_vectors.humans)
-        return combine(MinimiseDistance(nearest_human),
-                       move_shortest_distance)
+        target = nearest(target_vectors.humans)
+        main_strategy = MinimiseDistance(target) if target else NullStrategy()
+        return combine(main_strategy, move_shortest_distance)
 
     def attack(self, environment):
         for offset, character in environment:

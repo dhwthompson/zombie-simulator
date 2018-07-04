@@ -44,7 +44,6 @@ class Vector(namedtuple('Vector', ['dx', 'dy'])):
         return Vector(self.dx - other.dx, self.dy - other.dy)
 
 
-Vector.INFINITE = Vector(math.inf, math.inf)
 Vector.ZERO = Vector(0, 0)
 
 
@@ -62,5 +61,7 @@ class BoundingBox:
         return 'BoundingBox({}, {})'.format(self._lower, self._upper)
 
 
-BoundingBox.UNLIMITED = BoundingBox(Vector(-math.inf, -math.inf),
-                                    Vector.INFINITE)
+class UnlimitedBoundingBox:
+
+    def __contains__(self, vector):
+        return True

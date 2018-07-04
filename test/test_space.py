@@ -4,7 +4,7 @@ from hypothesis import assume, example, given
 from hypothesis import strategies as st
 import pytest
 
-from space import Area, BoundingBox, Point, Vector
+from space import Area, BoundingBox, Point, UnlimitedBoundingBox, Vector
 
 
 points = st.builds(Point, st.integers(), st.integers())
@@ -147,22 +147,6 @@ class TestVector:
         assert vector_a + vector_b - vector_b == vector_a
         assert vector_a + vector_b - vector_a == vector_b
 
-    def test_infinite_dimensions(self):
-        v = Vector.INFINITE
-        assert (v.dx, v.dy) == (math.inf, math.inf)
-
-    def test_infinite_distance(self):
-        v = Vector.INFINITE
-        assert v.distance == math.inf
-
-    @given(vectors)
-    def test_infinite_addition(self, vector):
-        assert Vector.INFINITE + vector == Vector.INFINITE
-
-    @given(vectors)
-    def test_infinite_subtraction(self, vector):
-        assert Vector.INFINITE - vector == Vector.INFINITE
-
 
 class TestBoundingBox:
 
@@ -187,4 +171,4 @@ class TestUnlimitedBoundingBox:
 
     @given(vectors)
     def test_contains_everything(self, vector):
-        assert vector in BoundingBox.UNLIMITED
+        assert vector in UnlimitedBoundingBox()
