@@ -3,7 +3,7 @@
 WORLD_SIZE ?= auto
 
 deps:
-	pip install -q -r requirements-dev.txt
+	pip install -q -r requirements.txt
 
 test: deps
 	pytest
