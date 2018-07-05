@@ -1,4 +1,4 @@
-.PHONY: deps test zombies
+.PHONY: deps test watch zombies
 
 WORLD_SIZE ?= auto
 
