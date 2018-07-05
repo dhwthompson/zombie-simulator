@@ -1,3 +1,4 @@
+from itertools import islice
 from os import environ
 import re
 import shutil
@@ -34,6 +35,11 @@ DENSITY = float(environ.get('DENSITY', 0.05))
 ZOMBIE_CHANCE = float(environ.get('ZOMBIE_CHANCE', 0.2))
 TICK = float(environ.get('TICK', 0.5))
 
+MAX_AGE = None
+
+if environ.get('MAX_AGE'):
+    MAX_AGE = int(environ.get('MAX_AGE'))
+
 population = Population((DENSITY * (1 - ZOMBIE_CHANCE), Human),
                         (DENSITY * ZOMBIE_CHANCE, Zombie))
 world = WorldBuilder(world_width, world_height, population).world
@@ -59,8 +65,12 @@ def clear():
 
 
 if __name__ == '__main__':
+    ticks = each_interval(TICK)
+    if MAX_AGE is not None:
+        ticks = islice(ticks, MAX_AGE)
+
     try:
-        for _ in each_interval(TICK):
+        for _ in ticks:
             clear()
             for line in renderer.lines:
                 print(line)
