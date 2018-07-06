@@ -110,7 +110,6 @@ class Roster:
     def __init__(self, character_positions):
         self._positions = [(Point(*position), character)
                            for position, character in character_positions]
-        position_counts = Counter(p[0] for p in self._positions)
 
         self._check_unique((p[0] for p in self._positions),
                            'Multiply-occupied points in roster')
