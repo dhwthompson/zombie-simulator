@@ -69,6 +69,10 @@ CharacterState = Enum('CharacterState', ['LIVING', 'DEAD', 'UNDEAD'])
 
 class Character:
 
+    _state_speeds = {CharacterState.LIVING: 2,
+                     CharacterState.DEAD: 0,
+                     CharacterState.UNDEAD: 1}
+
     def __init__(self, state=None):
         self._state = state or self.starting_state
 
@@ -79,6 +83,10 @@ class Character:
     @property
     def undead(self):
         return self._state == CharacterState.UNDEAD
+
+    @property
+    def speed(self):
+        return self._state_speeds[self._state]
 
     def move(self, environment, limits=UnlimitedBoundingBox()):
         """Choose where to move next.
@@ -111,9 +119,6 @@ class Character:
 
     @property
     def _movement_range(self):
-        if self._state == CharacterState.DEAD:
-            return [Vector.ZERO]
-
         coord_range = range(-self.speed, self.speed + 1)
         return [Vector(dx, dy) for dx in coord_range for dy in coord_range]
 
@@ -124,8 +129,6 @@ class Character:
 class Human(Character):
 
     starting_state = CharacterState.LIVING
-
-    speed = 2
 
     def _move_rank_for(self, target_vectors):
         if target_vectors.zombies:
@@ -145,8 +148,6 @@ class Human(Character):
 class Zombie(Character):
 
     starting_state = CharacterState.UNDEAD
-
-    speed = 1
 
     def _move_rank_for(self, target_vectors):
         target = nearest(target_vectors.humans)
