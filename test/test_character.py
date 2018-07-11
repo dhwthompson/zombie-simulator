@@ -1,6 +1,8 @@
 from hypothesis import assume, example, given
 from hypothesis import strategies as st
 
+import pytest
+
 from character import CharacterState, Human, Zombie
 from space import BoundingBox, Vector
 
@@ -27,88 +29,84 @@ def environments(characters=characters, min_size=None, max_size=None):
 
 class TestZombie:
 
-    def test_not_living(self):
-        assert not Zombie().living
+    @pytest.fixture
+    def zombie(self):
+        return Zombie()
 
-    def test_undead(self):
-        assert Zombie().undead
+    def test_not_living(self, zombie):
+        assert not zombie.living
+
+    def test_undead(self, zombie):
+        assert zombie.undead
 
     @given(environments())
-    def test_move_returns_a_vector(self, environment):
-        zombie = Zombie()
-
+    def test_move_returns_a_vector(self, zombie, environment):
         assert isinstance(zombie.move(environment), Vector)
 
     @given(environments(characters=humans, min_size=1, max_size=1))
-    def test_never_moves_away_from_human(self, environment):
-        move = Zombie().move(environment)
+    def test_never_moves_away_from_human(self, zombie, environment):
+        move = zombie.move(environment)
         assert (environment[0][0] - move).distance <= environment[0][0].distance
 
     @given(environments(characters=humans, min_size=1, max_size=1))
-    def test_move_approaches_single_human(self, environment):
+    def test_move_approaches_single_human(self, zombie, environment):
         assume(environment[0][0].distance > 1)
-        move = Zombie().move(environment)
+        move = zombie.move(environment)
         assert (environment[0][0] - move).distance < environment[0][0].distance
 
     @given(environments())
-    def test_does_not_move_onto_occupied_space(self, environment):
-        move = Zombie().move(environment)
+    def test_does_not_move_onto_occupied_space(self, zombie, environment):
+        move = zombie.move(environment)
         assert move not in [e[0] for e in environment]
 
     @given(environments())
-    def test_moves_up_to_one_space(self, environment):
-        zombie = Zombie()
+    def test_moves_up_to_one_space(self, zombie, environment):
         move = zombie.move(environment)
         assert abs(move.dx) <= zombie.speed
         assert abs(move.dy) <= zombie.speed
 
     @given(environments(characters=zombies))
-    def test_ignores_zombies(self, environment):
-        assert Zombie().move(environment) == Vector.ZERO
+    def test_ignores_zombies(self, zombie, environment):
+        assert zombie.move(environment) == Vector.ZERO
 
     @given(environment=environments(), limits=containing_boxes)
-    def test_respects_limits(self, environment, limits):
-        move = Zombie().move(environment, limits)
+    def test_respects_limits(self, zombie, environment, limits):
+        move = zombie.move(environment, limits)
         assert move in limits
 
-    def test_nothing_nearby(self):
-        zombie = Zombie()
+    def test_nothing_nearby(self, zombie):
         assert zombie.move([]) == Vector.ZERO
 
-    def test_nearest_human(self):
-        zombie = Zombie()
+    def test_nearest_human(self, zombie):
         environment = [(Vector(3, -3), Human()),
                        (Vector(2, 2), Human()),
                        (Vector(-3, 3), Human())]
 
         assert zombie.move(environment) == Vector(1, 1)
 
-    def test_close_human(self):
+    def test_close_human(self, zombie):
         """Check the zombie doesn't try to move onto or away from a human.
 
         In future versions, this test will be replaced by biting logic."""
-        zombie = Zombie()
         environment = [(Vector(1, 1), Human())]
 
         expected_moves = [Vector(0, 0), Vector(0, 1), Vector(1, 0)]
         assert zombie.move(environment) in expected_moves
 
-    def test_blocked_path(self):
-        zombie = Zombie()
+    def test_blocked_path(self, zombie):
         environment = [(Vector(2, 2), Human()),
                        (Vector(1, 1), Zombie()),
                        (Vector(1, 0), Zombie()),
                        (Vector(0, 1), Zombie())]
         assert zombie.move(environment) == Vector.ZERO
 
-    def test_all_paths_blocked(self):
+    def test_all_paths_blocked(self, zombie):
         """Test that zombies stay still when surrounded by other zombies.
 
         This effectively functions as a last check that zombies always have
         their own position as a fall-back, and don't register as blocking their
         own non-movement.
         """
-        zombie = Zombie()
 
         def env_contents(vector):
             return Zombie() if vector else zombie
@@ -119,90 +117,88 @@ class TestZombie:
 
         assert zombie.move(distant_human + zombies_all_around) == Vector.ZERO
 
-    def test_alternate_path(self):
-        zombie = Zombie()
+    def test_alternate_path(self, zombie):
         environment = [(Vector(2, 2), Human()),
                        (Vector(1, 1), Zombie()),
                        (Vector(1, 0), Zombie())]
         assert zombie.move(environment) == Vector(0, 1)
 
     @given(st.lists(st.tuples(vectors(max_offset=1), humans), min_size=1, max_size=1))
-    def test_attack(self, environment):
-        zombie = Zombie()
+    def test_attack(self, zombie, environment):
         human = environment[0][1]
 
         assert zombie.attack(environment) == human
 
     @given(environments(characters=humans))
     @example([(Vector(2, 0), Human())])
-    def test_targets_out_of_range(self, environment):
+    def test_targets_out_of_range(self, zombie, environment):
         biting_range = BoundingBox(Vector(-1, -1), Vector(2, 2))
         assume(all(e[0] not in biting_range for e in environment))
-        zombie = Zombie()
 
         assert zombie.attack(environment) is None
 
 
 class TestHuman:
 
-    def test_living(self):
-        assert Human().living
+    @pytest.fixture
+    def human(self):
+        return Human()
 
-    def test_not_undead(self):
-        assert not Human().undead
+    def test_living(self, human):
+        assert human.living
+
+    def test_not_undead(self, human):
+        assert not human.undead
 
     @given(environments())
-    def test_move_returns_vector(self, environment):
-        assert isinstance(Human().move(environment), Vector)
+    def test_move_returns_vector(self, human, environment):
+        assert isinstance(human.move(environment), Vector)
 
     @given(environments(characters=humans))
-    def test_ignores_humans(self, environment):
-        assert Human().move(environment) == Vector.ZERO
+    def test_ignores_humans(self, human, environment):
+        assert human.move(environment) == Vector.ZERO
 
     @given(environments())
-    def test_does_not_move_into_occupied_space(self, environment):
-        move = Human().move(environment)
+    def test_does_not_move_into_occupied_space(self, human, environment):
+        move = human.move(environment)
         assert not any(e[0] == move for e in environment)
 
     @given(environments(characters=zombies, min_size=1, max_size=1))
-    def test_runs_away_from_zombie(self, environment):
-        move = Human().move(environment)
+    def test_runs_away_from_zombie(self, human, environment):
+        move = human.move(environment)
         zombie_vector = environment[0][0]
         assert (zombie_vector - move).distance > zombie_vector.distance
 
     @given(environments(characters=zombies, min_size=1))
-    def test_runs_away_from_zombies(self, environment):
-        move = Human().move(environment)
+    def test_runs_away_from_zombies(self, human, environment):
+        move = human.move(environment)
         min_distance_before = min(e[0].distance for e in environment)
         min_distance_after = min((e[0] - move).distance for e in environment)
         assert min_distance_after >= min_distance_before
 
     @given(environments())
-    def test_moves_up_to_speed(self, environment):
-        human = Human()
+    def test_moves_up_to_speed(self, human, environment):
         move = human.move(environment)
         assert abs(move.dx) <= human.speed
         assert abs(move.dy) <= human.speed
 
     @given(environment=environments(), limits=containing_boxes)
-    def test_respects_limits(self, environment, limits):
-        move = Human().move(environment, limits)
+    def test_respects_limits(self, human, environment, limits):
+        move = human.move(environment, limits)
         assert move in limits
 
-    def test_does_not_move_in_empty_environment(self):
-        human = Human()
+    def test_does_not_move_in_empty_environment(self, human):
         assert human.move([]) == Vector.ZERO
 
-    def test_does_not_obstruct_self(self):
-        human = Human()
+    def test_does_not_obstruct_self(self, human):
         environment = [(Vector.ZERO, human)]
         assert human.move([]) == Vector.ZERO
 
-    def test_attacked_human_is_dead(self):
-        assert not Human().attacked().living
+    def test_attacked_human_is_dead(self, human):
+        assert not human.attacked().living
 
-    def test_attacked_human_is_not_undead(self):
-        assert not Human().attacked().undead
+    def test_attacked_human_is_not_undead(self, human):
+        assert not human.attacked().undead
 
     @given(environments())
     def test_dead_humans_stay_still(self, environment):
@@ -210,5 +206,5 @@ class TestHuman:
         assert human.move(environment) == Vector.ZERO
 
     @given(environments())
-    def test_never_attacks(self, environment):
-        assert Human().attack(environment) is None
+    def test_never_attacks(self, human, environment):
+        assert human.attack(environment) is None
