@@ -69,8 +69,12 @@ CharacterState = Enum('CharacterState', ['LIVING', 'DEAD', 'UNDEAD'])
 
 class Character:
 
-    def __init__(self, state=None):
-        self._state = state or self.starting_state
+    _state_speeds = {CharacterState.LIVING: 2,
+                     CharacterState.DEAD: 0,
+                     CharacterState.UNDEAD: 1}
+
+    def __init__(self, state):
+        self._state = state
 
     @property
     def living(self):
@@ -79,6 +83,10 @@ class Character:
     @property
     def undead(self):
         return self._state == CharacterState.UNDEAD
+
+    @property
+    def speed(self):
+        return self._state_speeds[self._state]
 
     def move(self, environment, limits=UnlimitedBoundingBox()):
         """Choose where to move next.
@@ -111,49 +119,45 @@ class Character:
 
     @property
     def _movement_range(self):
-        if self._state == CharacterState.DEAD:
-            return [Vector.ZERO]
-
         coord_range = range(-self.speed, self.speed + 1)
         return [Vector(dx, dy) for dx in coord_range for dy in coord_range]
 
     def _move_rank_for(self, target_vectors):
-        raise NotImplementedError
+        if self._state == CharacterState.LIVING:
+            if target_vectors.zombies:
+                main_strategy = MaximiseShortestDistance(target_vectors.zombies)
+            else:
+                main_strategy = NullStrategy()
 
+            return combine(main_strategy, move_shortest_distance)
 
-class Human(Character):
+        if self._state == CharacterState.DEAD:
+            return NullStrategy()
 
-    starting_state = CharacterState.LIVING
+        if self._state == CharacterState.UNDEAD:
+            target = nearest(target_vectors.humans)
+            main_strategy = MinimiseDistance(target) if target else NullStrategy()
+            return combine(main_strategy, move_shortest_distance)
 
-    speed = 2
-
-    def _move_rank_for(self, target_vectors):
-        if target_vectors.zombies:
-            main_strategy = MaximiseShortestDistance(target_vectors.zombies)
-        else:
-            main_strategy = NullStrategy()
-
-        return combine(main_strategy, move_shortest_distance)
+        raise Exception('Character in unknown state {}'.format(self._state))
 
     def attack(self, environment):
-        return None
+        if self._state == CharacterState.LIVING:
+            return None
+        if self._state == CharacterState.DEAD:
+            return None
+        if self._state == CharacterState.UNDEAD:
+            for offset, character in environment:
+                if character.living and offset.distance < 4:
+                    return character
 
     def attacked(self):
-        return Human(state=CharacterState.DEAD)
+        return Character(state=CharacterState.DEAD)
 
 
-class Zombie(Character):
+def default_human():
+    return Character(state=CharacterState.LIVING)
 
-    starting_state = CharacterState.UNDEAD
 
-    speed = 1
-
-    def _move_rank_for(self, target_vectors):
-        target = nearest(target_vectors.humans)
-        main_strategy = MinimiseDistance(target) if target else NullStrategy()
-        return combine(main_strategy, move_shortest_distance)
-
-    def attack(self, environment):
-        for offset, character in environment:
-            if character.living and offset.distance < 4:
-                return character
+def default_zombie():
+    return Character(state=CharacterState.UNDEAD)

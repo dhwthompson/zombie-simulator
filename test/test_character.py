@@ -3,7 +3,7 @@ from hypothesis import strategies as st
 
 import pytest
 
-from character import CharacterState, Human, Zombie
+from character import Character, CharacterState, default_human, default_zombie
 from space import BoundingBox, Vector
 
 def vectors(max_offset=None):
@@ -13,8 +13,8 @@ def vectors(max_offset=None):
         coordinates = st.integers()
     return st.builds(Vector, dx=coordinates, dy=coordinates)
 
-humans = st.builds(Human)
-zombies = st.builds(Zombie)
+humans = st.builds(default_human)
+zombies = st.builds(default_zombie)
 characters = st.one_of(humans, zombies)
 
 containing_boxes = (st.from_type(BoundingBox)
@@ -31,7 +31,7 @@ class TestZombie:
 
     @pytest.fixture
     def zombie(self):
-        return Zombie()
+        return default_zombie()
 
     def test_not_living(self, zombie):
         assert not zombie.living
@@ -78,9 +78,9 @@ class TestZombie:
         assert zombie.move([]) == Vector.ZERO
 
     def test_nearest_human(self, zombie):
-        environment = [(Vector(3, -3), Human()),
-                       (Vector(2, 2), Human()),
-                       (Vector(-3, 3), Human())]
+        environment = [(Vector(3, -3), default_human()),
+                       (Vector(2, 2), default_human()),
+                       (Vector(-3, 3), default_human())]
 
         assert zombie.move(environment) == Vector(1, 1)
 
@@ -88,16 +88,16 @@ class TestZombie:
         """Check the zombie doesn't try to move onto or away from a human.
 
         In future versions, this test will be replaced by biting logic."""
-        environment = [(Vector(1, 1), Human())]
+        environment = [(Vector(1, 1), default_human())]
 
         expected_moves = [Vector(0, 0), Vector(0, 1), Vector(1, 0)]
         assert zombie.move(environment) in expected_moves
 
     def test_blocked_path(self, zombie):
-        environment = [(Vector(2, 2), Human()),
-                       (Vector(1, 1), Zombie()),
-                       (Vector(1, 0), Zombie()),
-                       (Vector(0, 1), Zombie())]
+        environment = [(Vector(2, 2), default_human()),
+                       (Vector(1, 1), default_zombie()),
+                       (Vector(1, 0), default_zombie()),
+                       (Vector(0, 1), default_zombie())]
         assert zombie.move(environment) == Vector.ZERO
 
     def test_all_paths_blocked(self, zombie):
@@ -109,18 +109,18 @@ class TestZombie:
         """
 
         def env_contents(vector):
-            return Zombie() if vector else zombie
+            return default_zombie() if vector else zombie
 
         vectors = [Vector(dx, dy) for dx in [-1, 0, 1] for dy in [-1, 0, 1]]
-        distant_human = [(Vector(2, 2), Human())]
+        distant_human = [(Vector(2, 2), default_human())]
         zombies_all_around = [(v, env_contents(v)) for v in vectors]
 
         assert zombie.move(distant_human + zombies_all_around) == Vector.ZERO
 
     def test_alternate_path(self, zombie):
-        environment = [(Vector(2, 2), Human()),
-                       (Vector(1, 1), Zombie()),
-                       (Vector(1, 0), Zombie())]
+        environment = [(Vector(2, 2), default_human()),
+                       (Vector(1, 1), default_zombie()),
+                       (Vector(1, 0), default_zombie())]
         assert zombie.move(environment) == Vector(0, 1)
 
     @given(st.lists(st.tuples(vectors(max_offset=1), humans), min_size=1, max_size=1))
@@ -130,7 +130,7 @@ class TestZombie:
         assert zombie.attack(environment) == human
 
     @given(environments(characters=humans))
-    @example([(Vector(2, 0), Human())])
+    @example([(Vector(2, 0), default_human())])
     def test_targets_out_of_range(self, zombie, environment):
         biting_range = BoundingBox(Vector(-1, -1), Vector(2, 2))
         assume(all(e[0] not in biting_range for e in environment))
@@ -142,7 +142,7 @@ class TestHuman:
 
     @pytest.fixture
     def human(self):
-        return Human()
+        return default_human()
 
     def test_living(self, human):
         assert human.living
@@ -202,7 +202,7 @@ class TestHuman:
 
     @given(environments())
     def test_dead_humans_stay_still(self, environment):
-        human = Human(state=CharacterState.DEAD)
+        human = Character(state=CharacterState.DEAD)
         assert human.move(environment) == Vector.ZERO
 
     @given(environments())
