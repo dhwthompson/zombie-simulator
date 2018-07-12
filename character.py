@@ -141,13 +141,20 @@ class Character:
 
         raise Exception('Character in unknown state {}'.format(self._state))
 
+    def attack(self, environment):
+        if self._state == CharacterState.LIVING:
+            return None
+        if self._state == CharacterState.DEAD:
+            return None
+        if self._state == CharacterState.UNDEAD:
+            for offset, character in environment:
+                if character.living and offset.distance < 4:
+                    return character
+
 
 class Human(Character):
 
     starting_state = CharacterState.LIVING
-
-    def attack(self, environment):
-        return None
 
     def attacked(self):
         return Human(state=CharacterState.DEAD)
@@ -156,8 +163,3 @@ class Human(Character):
 class Zombie(Character):
 
     starting_state = CharacterState.UNDEAD
-
-    def attack(self, environment):
-        for offset, character in environment:
-            if character.living and offset.distance < 4:
-                return character
