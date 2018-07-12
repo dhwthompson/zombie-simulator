@@ -152,16 +152,12 @@ class Character:
                     return character
 
     def attacked(self):
-        return self.__class__(state=CharacterState.DEAD)
+        return Character(state=CharacterState.DEAD)
 
 
-class Human(Character):
-
-    def __init__(self, state=CharacterState.LIVING):
-        super().__init__(state=state)
+def default_human():
+    return Character(state=CharacterState.LIVING)
 
 
-class Zombie(Character):
-
-    def __init__(self, state=CharacterState.UNDEAD):
-        super().__init__(state=state)
+def default_zombie():
+    return Character(state=CharacterState.UNDEAD)

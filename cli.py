@@ -5,7 +5,7 @@ import shutil
 import sys
 import time
 
-from character import Human, Zombie
+from character import default_human, default_zombie
 from population import Population
 from renderer import Renderer
 from world import WorldBuilder
@@ -40,8 +40,8 @@ MAX_AGE = None
 if environ.get('MAX_AGE'):
     MAX_AGE = int(environ.get('MAX_AGE'))
 
-population = Population((DENSITY * (1 - ZOMBIE_CHANCE), Human),
-                        (DENSITY * ZOMBIE_CHANCE, Zombie))
+population = Population((DENSITY * (1 - ZOMBIE_CHANCE), default_human),
+                        (DENSITY * ZOMBIE_CHANCE, default_zombie))
 world = WorldBuilder(world_width, world_height, population).world
 renderer = Renderer(world)
 

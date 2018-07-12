@@ -2,11 +2,11 @@ from hypothesis import given, settings
 from hypothesis import strategies as st
 import pytest
 
-from character import Human, Zombie
+from character import default_human, default_zombie
 from world import World
 
 @st.composite
-def worlds(draw, inhabitants=st.one_of(st.builds(Human), st.builds(Zombie))):
+def worlds(draw, inhabitants=st.one_of(st.builds(default_human), st.builds(default_zombie))):
     dimensions = st.integers(min_value=1, max_value=100)
     x, y = draw(dimensions), draw(dimensions)
     points = st.tuples(st.integers(min_value=0, max_value=x-1),
@@ -44,8 +44,8 @@ def test_tick_keeps_zombies(world):
 
 @pytest.mark.integration
 def test_zombies_approach_humans():
-    zombie = Zombie()
-    human = Human()
+    zombie = default_zombie()
+    human = default_human()
 
     characters = {
             (0, 0): zombie,
