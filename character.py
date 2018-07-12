@@ -123,20 +123,28 @@ class Character:
         return [Vector(dx, dy) for dx in coord_range for dy in coord_range]
 
     def _move_rank_for(self, target_vectors):
-        raise NotImplementedError
+        if self._state == CharacterState.LIVING:
+            if target_vectors.zombies:
+                main_strategy = MaximiseShortestDistance(target_vectors.zombies)
+            else:
+                main_strategy = NullStrategy()
+
+            return combine(main_strategy, move_shortest_distance)
+
+        if self._state == CharacterState.DEAD:
+            return NullStrategy()
+
+        if self._state == CharacterState.UNDEAD:
+            target = nearest(target_vectors.humans)
+            main_strategy = MinimiseDistance(target) if target else NullStrategy()
+            return combine(main_strategy, move_shortest_distance)
+
+        raise Exception('Character in unknown state {}'.format(self._state))
 
 
 class Human(Character):
 
     starting_state = CharacterState.LIVING
-
-    def _move_rank_for(self, target_vectors):
-        if target_vectors.zombies:
-            main_strategy = MaximiseShortestDistance(target_vectors.zombies)
-        else:
-            main_strategy = NullStrategy()
-
-        return combine(main_strategy, move_shortest_distance)
 
     def attack(self, environment):
         return None
@@ -148,11 +156,6 @@ class Human(Character):
 class Zombie(Character):
 
     starting_state = CharacterState.UNDEAD
-
-    def _move_rank_for(self, target_vectors):
-        target = nearest(target_vectors.humans)
-        main_strategy = MinimiseDistance(target) if target else NullStrategy()
-        return combine(main_strategy, move_shortest_distance)
 
     def attack(self, environment):
         for offset, character in environment:
