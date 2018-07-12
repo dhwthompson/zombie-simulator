@@ -73,8 +73,8 @@ class Character:
                      CharacterState.DEAD: 0,
                      CharacterState.UNDEAD: 1}
 
-    def __init__(self, state=None):
-        self._state = state or self.starting_state
+    def __init__(self, state):
+        self._state = state
 
     @property
     def living(self):
@@ -154,7 +154,8 @@ class Character:
 
 class Human(Character):
 
-    starting_state = CharacterState.LIVING
+    def __init__(self, state=CharacterState.LIVING):
+        super().__init__(state=state)
 
     def attacked(self):
         return Human(state=CharacterState.DEAD)
@@ -162,4 +163,5 @@ class Human(Character):
 
 class Zombie(Character):
 
-    starting_state = CharacterState.UNDEAD
+    def __init__(self, state=CharacterState.UNDEAD):
+        super().__init__(state=state)
