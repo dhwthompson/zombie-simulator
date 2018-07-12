@@ -151,14 +151,14 @@ class Character:
                 if character.living and offset.distance < 4:
                     return character
 
+    def attacked(self):
+        return self.__class__(state=CharacterState.DEAD)
+
 
 class Human(Character):
 
     def __init__(self, state=CharacterState.LIVING):
         super().__init__(state=state)
-
-    def attacked(self):
-        return Human(state=CharacterState.DEAD)
 
 
 class Zombie(Character):
