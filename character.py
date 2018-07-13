@@ -24,27 +24,15 @@ class Obstacles:
         return vector in self._obstacles
 
 
-def nearest(vectors):
-    return min(vectors, key=lambda v: v.distance, default=None)
-
-
-def combine(*functions):
-    """Given two move-ranking functions, combine them to make a tuple function."""
-    return lambda move: tuple(f(move) for f in functions)
-
-
-class NullStrategy:
-
-    def __call__(self, move):
-        return 0
-
-
 class MinimiseDistance:
     def __init__(self, target):
         self._target = target
 
-    def __call__(self, move):
-        return (self._target - move).distance
+    def best_move(self, moves):
+        return min(moves, key=self._move_rank)
+
+    def _move_rank(self, move):
+        return ((self._target - move).distance, move.distance)
 
 
 class MaximiseShortestDistance:
@@ -53,24 +41,68 @@ class MaximiseShortestDistance:
             raise ValueError('Cannot maximise distance from no targets')
         self._targets = targets
 
-    def __call__(self, move):
+    def best_move(self, moves):
+        return min(moves, key=self._move_rank)
+
+    def _move_rank(self, move):
         distances_after_move = [(t - move).distance for t in self._targets]
-        return -min(distances_after_move)
+        return (-min(distances_after_move), move.distance)
 
 
-def move_shortest_distance(move):
-    return move.distance
+class MoveShortestDistance:
+
+    def best_move(self, moves):
+        return min(moves, key=self._move_rank)
+
+    def _move_rank(self, move):
+        return move.distance
+
+
+def nearest(vectors):
+    return min(vectors, key=lambda v: v.distance, default=None)
+
+
+def keep_away_from_zombies(target_vectors):
+    zombies = target_vectors.zombies
+
+    if zombies:
+        return MaximiseShortestDistance(zombies)
+    else:
+        return MoveShortestDistance()
+
+
+def stay_still(target_vectors):
+    # Assuming there will always be a zero move, this will take it
+    return MoveShortestDistance()
+
+
+def approach_closest_human(target_vectors):
+    humans = target_vectors.humans
+
+    if humans:
+        return MinimiseDistance(nearest(humans))
+    else:
+        return MoveShortestDistance()
 
 
 class CharacterState:
 
-    def __init__(self, speed):
+    def __init__(self, speed, movement_strategy):
         self.movement_range = BoundingBox.range(speed)
+        self.movement_strategy = movement_strategy
 
 
-CharacterState.LIVING = CharacterState(speed=2)
-CharacterState.DEAD = CharacterState(speed=0)
-CharacterState.UNDEAD = CharacterState(speed=1)
+CharacterState.LIVING = CharacterState(
+        speed=2,
+        movement_strategy=keep_away_from_zombies)
+
+CharacterState.DEAD = CharacterState(
+        speed=0,
+        movement_strategy=stay_still)
+
+CharacterState.UNDEAD = CharacterState(
+        speed=1,
+        movement_strategy=approach_closest_human)
 
 
 class Character:
@@ -105,34 +137,15 @@ class Character:
         obstacles = Obstacles(environment, myself=self)
 
         moves = self._available_moves(limits, obstacles)
-        move_rank = self._move_rank_for(target_vectors)
+        move_rank = self._state.movement_strategy(target_vectors)
 
-        return min(moves, key=move_rank)
+        return move_rank.best_move(moves)
 
     def _available_moves(self, limits, obstacles):
         moves = [m for m in self._state.movement_range
                  if m in limits
                  and m not in obstacles]
         return moves
-
-    def _move_rank_for(self, target_vectors):
-        if self._state == CharacterState.LIVING:
-            if target_vectors.zombies:
-                main_strategy = MaximiseShortestDistance(target_vectors.zombies)
-            else:
-                main_strategy = NullStrategy()
-
-            return combine(main_strategy, move_shortest_distance)
-
-        if self._state == CharacterState.DEAD:
-            return NullStrategy()
-
-        if self._state == CharacterState.UNDEAD:
-            target = nearest(target_vectors.humans)
-            main_strategy = MinimiseDistance(target) if target else NullStrategy()
-            return combine(main_strategy, move_shortest_distance)
-
-        raise Exception('Character in unknown state {}'.format(self._state))
 
     def attack(self, environment):
         if self._state == CharacterState.LIVING:
