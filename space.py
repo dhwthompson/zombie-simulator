@@ -60,10 +60,21 @@ class BoundingBox:
         self._lower = lower
         self._upper = upper
 
+    @classmethod
+    def range(cls, radius):
+        if radius < 0:
+            raise ValueError('Cannot have a negative range {}'.format(radius))
+        return cls(Vector(-radius, -radius), Vector(radius + 1, radius + 1))
+
     def __contains__(self, vector):
         dx_contains = self._lower.dx <= vector.dx < self._upper.dx
         dy_contains = self._lower.dy <= vector.dy < self._upper.dy
         return dx_contains and dy_contains
+
+    def __iter__(self):
+        for dy in range(self._lower.dy, self._upper.dy):
+            for dx in range(self._lower.dx, self._upper.dx):
+                yield Vector(dx, dy)
 
     def __repr__(self):
         return 'BoundingBox({}, {})'.format(self._lower, self._upper)

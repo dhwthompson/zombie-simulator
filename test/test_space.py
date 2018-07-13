@@ -146,6 +146,13 @@ class TestVector:
         assert vector_a + vector_b - vector_a == vector_b
 
 
+# When tests iterate over bounding boxes, anything much larger than this will
+# be too big to get through quickly
+small_vectors = st.builds(Vector,
+                          st.integers(min_value=-30, max_value=30),
+                          st.integers(min_value=-30, max_value=30))
+
+
 class TestBoundingBox:
 
     def test_takes_two_vectors(self):
@@ -163,6 +170,27 @@ class TestBoundingBox:
     def test_vector_containment(self, vector):
         box = BoundingBox(Vector.ZERO, Vector(1, 1))
         assert (vector in box) == (vector == vector.ZERO)
+
+    @given(st.builds(BoundingBox, small_vectors, small_vectors))
+    def test_iteration_covers_box(self, box):
+        for vector in box:
+            assert vector in box
+
+    @given(box=st.builds(BoundingBox, small_vectors, small_vectors), vector=vectors)
+    @example(BoundingBox(Vector(-2, -2), Vector(3, 3)), Vector(2, 3))
+    def test_iteration_is_limited_to_box(self, box, vector):
+        assume(vector not in box)
+        assert vector not in list(box)
+
+    @given(st.integers(min_value=0), vectors)
+    @example(radius=10, vector=Vector(10, 10))
+    @example(radius=0, vector=Vector(0, 0))
+    def test_range(self, radius, vector):
+        bounding_box = BoundingBox.range(radius)
+        if abs(vector.dx) <= radius and abs(vector.dy) <= radius:
+            assert vector in bounding_box
+        else:
+            assert vector not in bounding_box
 
 
 class TestUnlimitedBoundingBox:

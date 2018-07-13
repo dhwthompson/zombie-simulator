@@ -1,5 +1,3 @@
-from enum import Enum
-
 from space import BoundingBox, UnlimitedBoundingBox, Vector
 
 
@@ -64,14 +62,18 @@ def move_shortest_distance(move):
     return move.distance
 
 
-CharacterState = Enum('CharacterState', ['LIVING', 'DEAD', 'UNDEAD'])
+class CharacterState:
+
+    def __init__(self, speed):
+        self.movement_range = BoundingBox.range(speed)
+
+
+CharacterState.LIVING = CharacterState(speed=2)
+CharacterState.DEAD = CharacterState(speed=0)
+CharacterState.UNDEAD = CharacterState(speed=1)
 
 
 class Character:
-
-    _state_speeds = {CharacterState.LIVING: 2,
-                     CharacterState.DEAD: 0,
-                     CharacterState.UNDEAD: 1}
 
     def __init__(self, state):
         self._state = state
@@ -83,10 +85,6 @@ class Character:
     @property
     def undead(self):
         return self._state == CharacterState.UNDEAD
-
-    @property
-    def speed(self):
-        return self._state_speeds[self._state]
 
     def move(self, environment, limits=UnlimitedBoundingBox()):
         """Choose where to move next.
@@ -112,15 +110,10 @@ class Character:
         return min(moves, key=move_rank)
 
     def _available_moves(self, limits, obstacles):
-        moves = [m for m in self._movement_range
+        moves = [m for m in self._state.movement_range
                  if m in limits
                  and m not in obstacles]
         return moves
-
-    @property
-    def _movement_range(self):
-        coord_range = range(-self.speed, self.speed + 1)
-        return [Vector(dx, dy) for dx in coord_range for dy in coord_range]
 
     def _move_rank_for(self, target_vectors):
         if self._state == CharacterState.LIVING:

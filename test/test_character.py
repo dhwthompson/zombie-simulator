@@ -62,8 +62,8 @@ class TestZombie:
     @given(environments())
     def test_moves_up_to_one_space(self, zombie, environment):
         move = zombie.move(environment)
-        assert abs(move.dx) <= zombie.speed
-        assert abs(move.dy) <= zombie.speed
+        assert abs(move.dx) <= 1
+        assert abs(move.dy) <= 1
 
     @given(environments(characters=zombies))
     def test_ignores_zombies(self, zombie, environment):
@@ -177,10 +177,10 @@ class TestHuman:
         assert min_distance_after >= min_distance_before
 
     @given(environments())
-    def test_moves_up_to_speed(self, human, environment):
+    def test_moves_up_to_two_spaces(self, human, environment):
         move = human.move(environment)
-        assert abs(move.dx) <= human.speed
-        assert abs(move.dy) <= human.speed
+        assert abs(move.dx) <= 2
+        assert abs(move.dy) <= 2
 
     @given(environment=environments(), limits=containing_boxes)
     def test_respects_limits(self, human, environment, limits):
