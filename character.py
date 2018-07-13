@@ -3,16 +3,16 @@ from space import BoundingBox, UnlimitedBoundingBox, Vector
 
 class TargetVectors:
 
-    def __init__(self, environment):
-        self._environment = environment
+    def __init__(self, positions):
+        self._positions = positions
 
     @property
     def humans(self):
-        return [e[0] for e in self._environment if e[1].living]
+        return [pos for pos, char in self._positions if char.living]
 
     @property
     def zombies(self):
-        return [e[0] for e in self._environment if e[1].undead]
+        return [pos for pos, char in self._positions if char.undead]
 
 
 class Obstacles:
