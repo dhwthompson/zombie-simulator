@@ -1,9 +1,11 @@
-from hypothesis import assume, example, given
+from hypothesis import assume, example, given, note
 from hypothesis import strategies as st
 
 import pytest
 
 from character import Character, CharacterState, default_human, default_zombie
+from character import (MaximiseShortestDistance, MinimiseDistance,
+                       MoveShortestDistance, nearest)
 from space import BoundingBox, Vector
 
 def vectors(max_offset=None):
@@ -25,6 +27,108 @@ def environments(characters=characters, min_size=None, max_size=None):
                         min_size=min_size,
                         max_size=max_size)
     return all_envs.filter(lambda e: not any(pos == Vector.ZERO for pos, _ in e))
+
+
+class TestMinimiseDistance:
+
+    def test_fails_with_no_target(self):
+        with pytest.raises(ValueError):
+            MinimiseDistance(target=None)
+
+    @given(target=vectors(), moves=st.lists(vectors(), min_size=1))
+    def test_picks_from_available_moves(self, target, moves):
+        strategy = MinimiseDistance(target)
+        assert strategy.best_move(moves) in moves
+
+    @given(target=vectors(), moves=st.lists(vectors(), min_size=1))
+    def test_gets_as_close_to_target_as_possible(self, target, moves):
+        strategy = MinimiseDistance(target)
+
+        best_move = strategy.best_move(moves)
+
+        distance_after_move = (target - best_move).distance
+        assert all(distance_after_move <= (target - move).distance
+                   for move in moves)
+
+    def test_chooses_shortest_best_move(self):
+        target = Vector(1, 0)
+        strategy = MinimiseDistance(target)
+        moves = [Vector.ZERO, Vector(1, 1)]
+
+        assert strategy.best_move(moves) == Vector.ZERO
+        # To make sure we're not lucking out based on the order
+        assert strategy.best_move(reversed(moves)) == Vector.ZERO
+
+
+
+class TestMaximiseShortestDistance:
+
+    def test_fails_with_no_targets(self):
+        with pytest.raises(ValueError):
+            MaximiseShortestDistance(targets=[])
+
+    @given(targets=st.lists(vectors(), min_size=1),
+           moves=st.lists(vectors(), min_size=1))
+    def test_picks_from_available_moves(self, targets, moves):
+        strategy = MaximiseShortestDistance(targets)
+        assert strategy.best_move(moves) in moves
+
+    @given(targets=st.lists(vectors(), min_size=1),
+           moves=st.lists(vectors(), min_size=1))
+    def test_keeps_away_from_all_targets(self, targets, moves):
+        strategy = MaximiseShortestDistance(targets)
+
+        best_move = strategy.best_move(moves)
+
+        def distance_after_move(move):
+            return min((target - move).distance for target in targets)
+
+        best_move_distance = distance_after_move(best_move)
+        note(f'Best distance, after {best_move}: {best_move_distance}')
+
+        for move in moves:
+            move_distance = distance_after_move(move)
+            note(f'Distance after {move}: {move_distance}')
+
+        assert all(best_move_distance >= distance_after_move(move)
+                   for move in moves)
+
+    def test_chooses_shortest_best_move(self):
+        targets = [Vector(1, 2)]
+        strategy = MaximiseShortestDistance(targets)
+        moves = [Vector.ZERO, Vector(1, 0), Vector(2, 0)]
+
+        assert strategy.best_move(moves) == Vector.ZERO
+        # To make sure we're not lucking out based on the order
+        assert strategy.best_move(reversed(moves)) == Vector.ZERO
+
+
+class TestMoveShortestDistance:
+
+    def test_fails_with_no_moves(self):
+        strategy = MoveShortestDistance()
+        with pytest.raises(ValueError):
+            strategy.best_move([])
+
+    @given(st.lists(vectors(), min_size=1))
+    def test_takes_shortest_move(self, moves):
+        strategy = MoveShortestDistance()
+
+        best_move = strategy.best_move(moves)
+
+        assert all(best_move.distance <= m.distance for m in moves)
+
+
+class TestNearest:
+
+    def test_returns_none_with_no_vectors(self):
+        assert nearest([]) is None
+
+    @given(st.lists(vectors(), min_size=1))
+    def test_returns_shortest_vector(self, targets):
+        result = nearest(targets)
+
+        assert all(result.distance <= t.distance for t in targets)
 
 
 class TestZombie:

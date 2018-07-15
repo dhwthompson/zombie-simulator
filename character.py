@@ -26,6 +26,8 @@ class Obstacles:
 
 class MinimiseDistance:
     def __init__(self, target):
+        if target is None:
+            raise ValueError('Cannot set up strategy with no target')
         self._target = target
 
     def best_move(self, moves):
