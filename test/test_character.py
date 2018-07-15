@@ -7,6 +7,8 @@ from .strategies import list_and_element
 from character import Character, CharacterState, default_human, default_zombie
 from character import (MaximiseShortestDistance, MinimiseDistance,
                        MoveShortestDistance, nearest, Obstacles)
+from character import AttackTheLiving, NeverAttack
+from roster import Attack, Move
 from space import BoundingBox, Vector
 
 
@@ -148,6 +150,27 @@ class TestNearest:
         result = nearest(targets)
 
         assert all(result.distance <= t.distance for t in targets)
+
+
+class TestCharacter:
+
+    def test_move_action(self):
+        state = CharacterState(speed=2,
+                               attack_strategy=NeverAttack(),
+                               movement_strategy=lambda _: MinimiseDistance(Vector(3, 3)))
+        character = Character(state=state)
+        next_action = character.next_action([], BoundingBox.range(5))
+        assert next_action == Move(character, Vector(2, 2))
+
+    def test_attack_action(self):
+        state = CharacterState(speed=0,
+                               attack_strategy=AttackTheLiving(),
+                               movement_strategy=lambda: MoveShortestDistance())
+        character = Character(state=state)
+        target = default_human()
+        next_action = character.next_action([(Vector(1, 1), target)],
+                                            BoundingBox.range(5))
+        assert next_action == Attack(character, target)
 
 
 class TestZombie:

@@ -1,4 +1,4 @@
-from roster import Attack, Move, Roster
+from roster import Roster
 from space import Area, Point
 
 
@@ -29,14 +29,6 @@ class World:
         return set([(position - origin, character)
                     for position, character in self._roster])
 
-    def _next_action(self, character, viewpoint, limits):
-        target = character.attack(viewpoint)
-        if target:
-            return Attack(character, target)
-        else:
-            move_vector = character.move(viewpoint, limits)
-            return Move(character, move_vector)
-
     def tick(self):
         world = self
         for (position, character) in self._roster:
@@ -44,7 +36,7 @@ class World:
                 continue
             viewpoint = world.viewpoint(position)
             limits = self._area.from_origin(position)
-            action = self._next_action(character, viewpoint, limits)
+            action = character.next_action(viewpoint, limits)
             new_roster = action.next_roster(world._roster)
             world = World(self._width, self._height, new_roster)
         return world

@@ -72,6 +72,15 @@ class Move:
                          for (pos, char) in roster]
         return Roster(new_positions)
 
+    def __eq__(self, other):
+        return (isinstance(other, Move)
+                and self._character == other._character
+                and self._move_vector == other._move_vector)
+
+
+    def __repr__(self):
+        return f'Move({self._character}, {self._move_vector})'
+
 
 class Attack:
 
@@ -93,5 +102,13 @@ class Attack:
         new_positions = [(pos, char.attacked() if char == target else char)
                          for (pos, char) in roster]
         return Roster(new_positions)
+
+    def __eq__(self, other):
+        return (isinstance(other, Attack)
+                and self._attacker == other._attacker
+                and self._target == other._target)
+
+    def __repr__(self):
+        return f'Attack({self._attacker}, {self._target})'
 
 
