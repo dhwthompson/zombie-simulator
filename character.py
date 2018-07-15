@@ -87,24 +87,44 @@ def approach_closest_human(target_vectors):
         return MoveShortestDistance()
 
 
+class NeverAttack:
+
+    def attack(self, environment):
+        return None
+
+
+class AttackTheLiving:
+
+    _attack_range = BoundingBox.range(1)
+
+    def attack(self, environment):
+        for offset, character in environment:
+            if character.living and offset in self._attack_range:
+                return character
+
+
 class CharacterState:
 
-    def __init__(self, speed, movement_strategy):
+    def __init__(self, speed, movement_strategy, attack_strategy):
         self.movement_range = BoundingBox.range(speed)
         self.movement_strategy = movement_strategy
+        self.attack_strategy = attack_strategy
 
 
 CharacterState.LIVING = CharacterState(
         speed=2,
-        movement_strategy=keep_away_from_zombies)
+        movement_strategy=keep_away_from_zombies,
+        attack_strategy=NeverAttack())
 
 CharacterState.DEAD = CharacterState(
         speed=0,
-        movement_strategy=stay_still)
+        movement_strategy=stay_still,
+        attack_strategy=NeverAttack())
 
 CharacterState.UNDEAD = CharacterState(
         speed=1,
-        movement_strategy=approach_closest_human)
+        movement_strategy=approach_closest_human,
+        attack_strategy=AttackTheLiving())
 
 
 class Character:
@@ -150,14 +170,7 @@ class Character:
         return moves
 
     def attack(self, environment):
-        if self._state == CharacterState.LIVING:
-            return None
-        if self._state == CharacterState.DEAD:
-            return None
-        if self._state == CharacterState.UNDEAD:
-            for offset, character in environment:
-                if character.living and offset.distance < 4:
-                    return character
+        return self._state.attack_strategy.attack(environment)
 
     def attacked(self):
         return Character(state=CharacterState.DEAD)
