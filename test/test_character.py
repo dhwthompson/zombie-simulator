@@ -3,10 +3,12 @@ from hypothesis import strategies as st
 
 import pytest
 
+from .strategies import list_and_element
 from character import Character, CharacterState, default_human, default_zombie
 from character import (MaximiseShortestDistance, MinimiseDistance,
-                       MoveShortestDistance, nearest)
+                       MoveShortestDistance, nearest, Obstacles)
 from space import BoundingBox, Vector
+
 
 def vectors(max_offset=None):
     if max_offset is not None:
@@ -14,6 +16,7 @@ def vectors(max_offset=None):
     else:
         coordinates = st.integers()
     return st.builds(Vector, dx=coordinates, dy=coordinates)
+
 
 humans = st.builds(default_human)
 zombies = st.builds(default_zombie)
@@ -27,6 +30,22 @@ def environments(characters=characters, min_size=None, max_size=None):
                         min_size=min_size,
                         max_size=max_size)
     return all_envs.filter(lambda e: not any(pos == Vector.ZERO for pos, _ in e))
+
+
+class TestObstacles:
+
+    @given(environments())
+    @example([])
+    @example([(Vector.ZERO, object())])
+    def test_never_includes_zero_vector(self, environment):
+        assert Vector.ZERO not in Obstacles(environment)
+
+    @given(environments().flatmap(list_and_element))
+    def test_includes_entry(self, env_and_entry):
+        environment, (position, _) = env_and_entry
+        assume(position != Vector.ZERO)
+
+        assert position in Obstacles(environment)
 
 
 class TestMinimiseDistance:

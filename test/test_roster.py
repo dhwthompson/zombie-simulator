@@ -3,6 +3,7 @@ from hypothesis import strategies as st
 
 import pytest
 
+from .strategies import list_and_element
 from roster import Attack, Move, Roster
 from space import Point, Vector
 
@@ -13,15 +14,6 @@ def positions_unique(positions):
 characters = st.builds(object)
 position_lists = st.lists(st.tuples(st.from_type(Point), characters))
 unique_position_lists = position_lists.filter(positions_unique)
-
-
-def list_and_element(l):
-    """Given a list, return a strategy of that list and one of its elements.
-
-    This can be connected onto an existing list strategy using the `flatmap`
-    method.
-    """
-    return st.tuples(st.just(l), st.sampled_from(l))
 
 
 class TestRoster:

@@ -17,8 +17,8 @@ class TargetVectors:
 
 class Obstacles:
 
-    def __init__(self, environment, myself):
-        self._obstacles = [e[0] for e in environment if e[1] != myself]
+    def __init__(self, environment):
+        self._obstacles = [pos for pos, char in environment if pos != Vector.ZERO]
 
     def __contains__(self, vector):
         return vector in self._obstacles
@@ -136,7 +136,7 @@ class Character:
         vector.
         """
         target_vectors = TargetVectors(environment)
-        obstacles = Obstacles(environment, myself=self)
+        obstacles = Obstacles(environment)
 
         moves = self._available_moves(limits, obstacles)
         move_rank = self._state.movement_strategy(target_vectors)
