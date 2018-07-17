@@ -11,7 +11,7 @@ from character import Dead, Living, Undead
 from character import (MaximiseShortestDistance, MinimiseDistance,
                        MoveShortestDistance, Obstacles)
 from character import AttackTheLiving, NeverAttack
-from roster import Attack, Move
+from roster import Attack, Move, StateChange
 from space import BoundingBox, Vector
 
 
@@ -166,6 +166,9 @@ class TestLivingState:
     def test_never_attacks(self, environment):
         assert Living().attack_strategy.attack(environment) is None
 
+    def test_no_next_state(self):
+        assert Living().next_state is None
+
 
 class TestDeadState:
 
@@ -186,6 +189,12 @@ class TestDeadState:
     @given(environments())
     def test_never_attacks(self, environment):
         assert Living().attack_strategy.attack(environment) is None
+
+    def test_next_state_ages(self):
+        assert Dead(age=2).next_state == Dead(age=3)
+
+    def test_next_state_reanimates(self):
+        assert Dead(age=20).next_state == Undead()
 
 
 class TestUndeadState:
@@ -224,6 +233,9 @@ class TestUndeadState:
         assume(not any(pos.distance < 4 for pos, char in environment))
         assert Undead().attack_strategy.attack(environment) is None
 
+    def test_no_next_state(self):
+        assert Undead().next_state is None
+
 
 class TestCharacter:
 
@@ -245,6 +257,17 @@ class TestCharacter:
         next_action = character.next_action([(Vector(1, 1), target)],
                                             BoundingBox.range(5))
         assert next_action == Attack(character, target)
+
+    def test_state_change_action(self):
+        character = Character(state=Dead(age=20))
+        next_action = character.next_action([], BoundingBox.range(5))
+
+        assert next_action == StateChange(character, Undead())
+
+    def test_state_change(self):
+        character = Character(state=Dead())
+        assert not character.undead
+        assert character.with_state(Undead()).undead
 
 
 class TestZombie:

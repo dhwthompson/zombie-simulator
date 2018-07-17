@@ -1,4 +1,4 @@
-from roster import Attack, Move
+from roster import Attack, Move, StateChange
 from space import BoundingBox, UnlimitedBoundingBox, Vector
 
 
@@ -94,6 +94,7 @@ class Living:
     undead = False
     movement_range = BoundingBox.range(2)
     attack_strategy = NeverAttack()
+    next_state = None
 
     def movement_strategy(self, target_vectors):
         zombies = target_vectors.zombies
@@ -106,15 +107,29 @@ class Living:
 
 class Dead:
 
+    def __init__(self, age=0):
+        self._age = age
 
     living = False
     undead = False
     movement_range = [Vector.ZERO]
     attack_strategy = NeverAttack()
 
+    _resurrection_age = 20
+
     def movement_strategy(self, target_vectors):
         # Assuming there will always be a zero move, this will take it
         return MoveShortestDistance()
+
+    @property
+    def next_state(self):
+        if self._age >= self._resurrection_age:
+            return Undead()
+        else:
+            return Dead(self._age + 1)
+
+    def __eq__(self, other):
+        return isinstance(other, Dead) and self._age == other._age
 
 
 class Undead:
@@ -123,6 +138,7 @@ class Undead:
     undead = True
     movement_range = BoundingBox.range(1)
     attack_strategy = AttackTheLiving()
+    next_state = None
 
     def movement_strategy(self, target_vectors):
         humans = target_vectors.humans
@@ -134,6 +150,9 @@ class Undead:
 
     def _nearest(self, vectors):
         return min(vectors, key=lambda v: v.distance, default=None)
+
+    def __eq__(self, other):
+        return isinstance(other, Undead)
 
 
 class Character:
@@ -150,6 +169,9 @@ class Character:
         return self._state.undead
 
     def next_action(self, environment, limits):
+        new_state = self._state.next_state
+        if new_state:
+            return StateChange(self, new_state)
         target = self.attack(environment)
         if target:
             return Attack(self, target)

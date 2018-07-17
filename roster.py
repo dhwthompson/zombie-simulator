@@ -112,3 +112,27 @@ class Attack:
         return f'Attack({self._attacker}, {self._target})'
 
 
+class StateChange:
+
+    def __init__(self, character, new_state):
+        self._character = character
+        self._new_state = new_state
+
+    def next_roster(self, roster):
+        character = self._character
+
+        if character not in roster:
+            raise ValueError('Attempt to change non-existent character '
+                             '{}'.format(character))
+
+        new_positions = [(pos, char.with_state(self._new_state) if char == character else char)
+                         for (pos, char) in roster]
+        return Roster(new_positions)
+
+    def __eq__(self, other):
+        return (isinstance(other, StateChange)
+                and self._character == other._character
+                and self._new_state == other._new_state)
+
+    def __repr__(self):
+        return f'StateChange({self._character}, {self._new_state})'

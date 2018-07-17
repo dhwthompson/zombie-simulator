@@ -4,7 +4,7 @@ from hypothesis import strategies as st
 import pytest
 
 from .strategies import list_and_element
-from roster import Attack, Move, Roster
+from roster import Attack, Move, Roster, StateChange
 from space import Point, Vector
 
 
@@ -148,4 +148,34 @@ class TestAttack:
         new_roster = attack.next_roster(roster)
         assert new_roster.character_at(Point(0, 0)) is attacker
 
+
+class Character:
+
+    def __init__(self, state):
+        self.state = state
+
+    def with_state(self, state):
+        return Character(state=state)
+
+
+class TestStateChange:
+
+    def test_fails_if_character_not_in_roster(self):
+        character, state = object(), object()
+
+        state_change = StateChange(character, state)
+
+        roster = Roster([])
+
+        with pytest.raises(ValueError):
+            state_change.next_roster(roster)
+
+    def test_changes_character_state(self):
+        character, state = Character(state=None), object()
+        state_change = StateChange(character, state)
+        roster = Roster([(Point(0, 1), character)])
+
+        next_roster = state_change.next_roster(roster)
+
+        assert next_roster.character_at(Point(0, 1)).state == state
 
