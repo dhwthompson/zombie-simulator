@@ -37,6 +37,10 @@ class MinimiseDistance:
     def _move_rank(self, move):
         return ((self._target - move).distance, move.distance)
 
+    def __eq__(self, other):
+        return (isinstance(other, MinimiseDistance)
+                and self._target == other._target)
+
 
 class MaximiseShortestDistance:
     def __init__(self, targets):
@@ -51,6 +55,10 @@ class MaximiseShortestDistance:
         distances_after_move = [(t - move).distance for t in self._targets]
         return (-min(distances_after_move), move.distance)
 
+    def __eq__(self, other):
+        return (isinstance(other, MaximiseShortestDistance)
+                and self._targets == other._targets)
+
 
 class MoveShortestDistance:
 
@@ -60,32 +68,8 @@ class MoveShortestDistance:
     def _move_rank(self, move):
         return move.distance
 
-
-def nearest(vectors):
-    return min(vectors, key=lambda v: v.distance, default=None)
-
-
-def keep_away_from_zombies(target_vectors):
-    zombies = target_vectors.zombies
-
-    if zombies:
-        return MaximiseShortestDistance(zombies)
-    else:
-        return MoveShortestDistance()
-
-
-def stay_still(target_vectors):
-    # Assuming there will always be a zero move, this will take it
-    return MoveShortestDistance()
-
-
-def approach_closest_human(target_vectors):
-    humans = target_vectors.humans
-
-    if humans:
-        return MinimiseDistance(nearest(humans))
-    else:
-        return MoveShortestDistance()
+    def __eq__(self, other):
+        return isinstance(other, MoveShortestDistance)
 
 
 class NeverAttack:
@@ -104,28 +88,52 @@ class AttackTheLiving:
                 return character
 
 
-class CharacterState:
+class Living:
 
-    def __init__(self, speed, movement_strategy, attack_strategy):
-        self.movement_range = BoundingBox.range(speed)
-        self.movement_strategy = movement_strategy
-        self.attack_strategy = attack_strategy
+    living = True
+    undead = False
+    movement_range = BoundingBox.range(2)
+    attack_strategy = NeverAttack()
+
+    def movement_strategy(self, target_vectors):
+        zombies = target_vectors.zombies
+
+        if zombies:
+            return MaximiseShortestDistance(zombies)
+        else:
+            return MoveShortestDistance()
 
 
-CharacterState.LIVING = CharacterState(
-        speed=2,
-        movement_strategy=keep_away_from_zombies,
-        attack_strategy=NeverAttack())
+class Dead:
 
-CharacterState.DEAD = CharacterState(
-        speed=0,
-        movement_strategy=stay_still,
-        attack_strategy=NeverAttack())
 
-CharacterState.UNDEAD = CharacterState(
-        speed=1,
-        movement_strategy=approach_closest_human,
-        attack_strategy=AttackTheLiving())
+    living = False
+    undead = False
+    movement_range = [Vector.ZERO]
+    attack_strategy = NeverAttack()
+
+    def movement_strategy(self, target_vectors):
+        # Assuming there will always be a zero move, this will take it
+        return MoveShortestDistance()
+
+
+class Undead:
+
+    living = False
+    undead = True
+    movement_range = BoundingBox.range(1)
+    attack_strategy = AttackTheLiving()
+
+    def movement_strategy(self, target_vectors):
+        humans = target_vectors.humans
+
+        if humans:
+            return MinimiseDistance(self._nearest(humans))
+        else:
+            return MoveShortestDistance()
+
+    def _nearest(self, vectors):
+        return min(vectors, key=lambda v: v.distance, default=None)
 
 
 class Character:
@@ -135,11 +143,11 @@ class Character:
 
     @property
     def living(self):
-        return self._state == CharacterState.LIVING
+        return self._state.living
 
     @property
     def undead(self):
-        return self._state == CharacterState.UNDEAD
+        return self._state.undead
 
     def next_action(self, environment, limits):
         target = self.attack(environment)
@@ -180,13 +188,16 @@ class Character:
     def attack(self, environment):
         return self._state.attack_strategy.attack(environment)
 
+    def with_state(self, new_state):
+        return Character(state=new_state)
+
     def attacked(self):
-        return Character(state=CharacterState.DEAD)
+        return self.with_state(Dead())
 
 
 def default_human():
-    return Character(state=CharacterState.LIVING)
+    return Character(state=Living())
 
 
 def default_zombie():
-    return Character(state=CharacterState.UNDEAD)
+    return Character(state=Undead())

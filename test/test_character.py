@@ -1,12 +1,15 @@
+from collections import namedtuple
+
 from hypothesis import assume, example, given, note
 from hypothesis import strategies as st
 
 import pytest
 
 from .strategies import list_and_element
-from character import Character, CharacterState, default_human, default_zombie
+from character import Character, default_human, default_zombie
+from character import Dead, Living, Undead
 from character import (MaximiseShortestDistance, MinimiseDistance,
-                       MoveShortestDistance, nearest, Obstacles)
+                       MoveShortestDistance, Obstacles)
 from character import AttackTheLiving, NeverAttack
 from roster import Attack, Move
 from space import BoundingBox, Vector
@@ -140,33 +143,104 @@ class TestMoveShortestDistance:
         assert all(best_move.distance <= m.distance for m in moves)
 
 
-class TestNearest:
+class TestLivingState:
 
-    def test_returns_none_with_no_vectors(self):
-        assert nearest([]) is None
+    def test_is_living(self):
+        assert Living().living
+
+    def test_is_not_undead(self):
+        assert not Living().undead
+
+    def test_movement_strategy_without_zombies(self):
+        target_vectors = namedtuple('Targets', ['zombies'])([])
+        assert (Living().movement_strategy(target_vectors) ==
+                MoveShortestDistance())
 
     @given(st.lists(vectors(), min_size=1))
-    def test_returns_shortest_vector(self, targets):
-        result = nearest(targets)
+    def test_movement_strategy_with_zombies(self, zombie_vectors):
+        target_vectors = namedtuple('Targets', ['zombies'])(zombie_vectors)
+        assert (Living().movement_strategy(target_vectors) ==
+                MaximiseShortestDistance(zombie_vectors))
 
-        assert all(result.distance <= t.distance for t in targets)
+    @given(environments())
+    def test_never_attacks(self, environment):
+        assert Living().attack_strategy.attack(environment) is None
+
+
+class TestDeadState:
+
+    def test_is_not_living(self):
+        assert not Dead().living
+
+    def test_is_not_undead(self):
+        assert not Dead().undead
+
+    def test_cannot_move(self):
+        assert list(Dead().movement_range) == [Vector.ZERO]
+
+    def test_movement_strategy_exists(self):
+        # There's only ever one move, so we don't care *what* this is
+        strategy = Dead().movement_strategy(None)
+        assert strategy.best_move([Vector.ZERO]) == Vector.ZERO
+
+    @given(environments())
+    def test_never_attacks(self, environment):
+        assert Living().attack_strategy.attack(environment) is None
+
+
+class TestUndeadState:
+
+    def test_is_not_living(self):
+        assert not Undead().living
+
+    def test_is_not_undead(self):
+        assert Undead().undead
+
+    def test_movement_strategy_without_humans(self):
+        target_vectors = namedtuple('Targets', ['humans'])([])
+        assert (Undead().movement_strategy(target_vectors) ==
+                MoveShortestDistance())
+
+    @given(st.lists(vectors(), min_size=1))
+    @example([Vector(1, 1), Vector(-1, -1)])
+    @example([Vector(-1, -1), Vector(1, 1)])
+    def test_movement_strategy_with_humans(self, human_vectors):
+        # This test passes as a by-product of using the same `min` function,
+        # which will pick the same one of n equidistant targets. Not ideal,
+        # but good enough for now. There are explicit examples to catch this
+        # if and when it breaks.
+        closest_human = min(human_vectors, key=lambda v: v.distance)
+        target_vectors = namedtuple('Targets', ['humans'])(human_vectors)
+        assert (Undead().movement_strategy(target_vectors) ==
+                MinimiseDistance(closest_human))
+
+    def test_attacks_nearby_humans(self):
+        victim = default_human()
+        environment = [(Vector(1, 1), victim)]
+        assert Undead().attack_strategy.attack(environment) == victim
+
+    @given(environments(characters=humans))
+    def test_does_not_attack_distant_humans(self, environment):
+        assume(not any(pos.distance < 4 for pos, char in environment))
+        assert Undead().attack_strategy.attack(environment) is None
 
 
 class TestCharacter:
 
+    def test_livingness(self):
+        assert Character(state=Living()).living
+
+    def test_undeath(self):
+        assert Character(state=Undead()).undead
+
     def test_move_action(self):
-        state = CharacterState(speed=2,
-                               attack_strategy=NeverAttack(),
-                               movement_strategy=lambda _: MinimiseDistance(Vector(3, 3)))
-        character = Character(state=state)
-        next_action = character.next_action([], BoundingBox.range(5))
-        assert next_action == Move(character, Vector(2, 2))
+        character = Character(state=Undead())
+        environment = [(Vector(3, 3), default_human())]
+        next_action = character.next_action(environment, BoundingBox.range(5))
+        assert next_action == Move(character, Vector(1, 1))
 
     def test_attack_action(self):
-        state = CharacterState(speed=0,
-                               attack_strategy=AttackTheLiving(),
-                               movement_strategy=lambda: MoveShortestDistance())
-        character = Character(state=state)
+        character = Character(state=Undead())
         target = default_human()
         next_action = character.next_action([(Vector(1, 1), target)],
                                             BoundingBox.range(5))
@@ -178,12 +252,6 @@ class TestZombie:
     @pytest.fixture
     def zombie(self):
         return default_zombie()
-
-    def test_not_living(self, zombie):
-        assert not zombie.living
-
-    def test_undead(self, zombie):
-        assert zombie.undead
 
     @given(environments())
     def test_move_returns_a_vector(self, zombie, environment):
@@ -348,7 +416,7 @@ class TestHuman:
 
     @given(environments())
     def test_dead_humans_stay_still(self, environment):
-        human = Character(state=CharacterState.DEAD)
+        human = Character(state=Dead())
         assert human.move(environment) == Vector.ZERO
 
     @given(environments())
