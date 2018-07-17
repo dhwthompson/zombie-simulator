@@ -192,6 +192,10 @@ class TestBoundingBox:
         else:
             assert vector not in bounding_box
 
+    def test_invalid_range(self):
+        with pytest.raises(ValueError):
+            BoundingBox.range(-1)
+
 
 class TestUnlimitedBoundingBox:
 
