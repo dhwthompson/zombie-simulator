@@ -74,7 +74,9 @@ if __name__ == '__main__':
             clear()
             for line in renderer.lines:
                 print(line)
-            world = world.tick()
+            old_world, world = world, world.tick()
+            if old_world == world:
+                break
             renderer = Renderer(world)
     except KeyboardInterrupt:
         sys.exit(1)

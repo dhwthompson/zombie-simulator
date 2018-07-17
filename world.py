@@ -18,6 +18,12 @@ class World:
     def __repr__(self):
         return 'World({}, {}, {})'.format(self._width, self._height, self._roster)
 
+    def __eq__(self, other):
+        return (isinstance(other, World)
+                and self._width == other._width
+                and self._height == other._height
+                and self._roster == other._roster)
+
     @property
     def rows(self):
         return [self._row(y) for y in range(self._height)]
