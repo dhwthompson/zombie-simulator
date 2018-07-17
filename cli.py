@@ -33,7 +33,7 @@ world_width, world_height = get_world_size(environ.get('WORLD_SIZE'),
 
 DENSITY = float(environ.get('DENSITY', 0.05))
 ZOMBIE_CHANCE = float(environ.get('ZOMBIE_CHANCE', 0.2))
-TICK = float(environ.get('TICK', 0.5))
+TICK = float(environ.get('TICK', 0.1))
 
 MAX_AGE = None
 
