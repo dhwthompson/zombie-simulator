@@ -49,11 +49,17 @@ class MaximiseShortestDistance:
         self._targets = targets
 
     def best_move(self, moves):
-        return min(moves, key=self._move_rank)
+        max_range = max(m.distance for m in moves)
+        min_distance = min(t.distance for t in self._targets)
 
-    def _move_rank(self, move):
-        distances_after_move = [(t - move).distance for t in self._targets]
-        return (-min(distances_after_move), move.distance)
+        interesting_targets = [t for t in self._targets
+                               if t.distance - max_range <= min_distance + max_range]
+
+        def move_rank(move):
+            distances_after_move = [(t - move).distance for t in interesting_targets]
+            return (-min(distances_after_move), move.distance)
+
+        return min(moves, key=move_rank)
 
     def __eq__(self, other):
         return (isinstance(other, MaximiseShortestDistance)

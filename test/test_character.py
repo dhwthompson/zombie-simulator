@@ -124,7 +124,7 @@ class TestMaximiseShortestDistance:
 
         assert strategy.best_move(moves) == Vector.ZERO
         # To make sure we're not lucking out based on the order
-        assert strategy.best_move(reversed(moves)) == Vector.ZERO
+        assert strategy.best_move(list(reversed(moves))) == Vector.ZERO
 
 
 class TestMoveShortestDistance:
