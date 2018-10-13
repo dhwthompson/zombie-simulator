@@ -31,7 +31,7 @@ containing_boxes = (st.from_type(BoundingBox)
                     .filter(lambda box: Vector.ZERO in box))
 
 def environments(characters=characters, min_size=None, max_size=None):
-    all_envs = st.lists(st.tuples(vectors(), characters),
+    all_envs = st.lists(st.tuples(vectors(1000), characters),
                         min_size=min_size,
                         max_size=max_size)
     return all_envs.filter(lambda e: not any(pos == Vector.ZERO for pos, _ in e))
