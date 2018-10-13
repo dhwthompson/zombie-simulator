@@ -9,6 +9,7 @@ from space import Area, BoundingBox, Point, UnlimitedBoundingBox, Vector
 
 points = st.from_type(Point)
 vectors = st.from_type(Vector)
+non_huge_vectors = vectors.filter(lambda v: v.distance < 10000)
 
 
 class TestPoint:
@@ -126,7 +127,11 @@ class TestVector:
 
     @pytest.mark.parametrize('dx,dy', [(2, 1), (-2, 1), (2, -1), (-2, -1)])
     def test_non_zero_distance(self, dx, dy):
-        assert Vector(dx, dy).distance == 5
+        assert Vector(dx, dy).distance == math.sqrt(5)
+
+    @given(non_huge_vectors, non_huge_vectors)
+    def test_triangle_inequality(self, a, b):
+        assert (a + b).distance <= a.distance + b.distance
 
     def test_value_equality(self):
         assert Vector(2, 5) == Vector(2, 5)

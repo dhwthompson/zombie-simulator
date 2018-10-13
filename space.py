@@ -39,7 +39,7 @@ class Vector(NamedTuple):
 
     @property
     def distance(self):
-        return self.dx**2 + self.dy**2
+        return math.sqrt(self.dx**2 + self.dy**2)
 
     def __bool__(self):
         return bool(self.distance)
