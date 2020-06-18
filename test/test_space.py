@@ -12,6 +12,17 @@ vectors = st.from_type(Vector)
 non_huge_vectors = vectors.filter(lambda v: v.distance < 10000)
 
 
+# Generates tuples of Points such that all the second Point's components are
+# greater than the corresponding components of the first Point. When used as
+# arguments for an Area, these generate non-empty Areas.
+ordered_points = points.flatmap(
+        lambda v: st.tuples(
+            st.just(v),
+            st.builds(Point, x=st.integers(min_value=v.x+1),y=st.integers(min_value=v.y+1))
+        )
+)
+
+
 class TestPoint:
     def test_no_arg_constructor(self):
         with pytest.raises(TypeError) as exc:
@@ -62,18 +73,18 @@ class TestArea:
     def test_two_point_constructor(self, point_a, point_b):
         Area(point_a, point_b)
 
-    @given(points, points)
-    def test_contains_lower_bound(self, lower, upper):
-        assume(upper.x > lower.x and upper.y > lower.y)
+    @given(ordered_points)
+    def test_contains_lower_bound(self, points):
+        lower, upper = points
         assert lower in Area(lower, upper)
 
     @given(points, points)
     def test_excludes_upper_bound(self, lower, upper):
         assert upper not in Area(lower, upper)
 
-    @given(points, points)
-    def test_includes_midpoint(self, lower, upper):
-        assume(upper.x > lower.x and upper.y > lower.y)
+    @given(ordered_points)
+    def test_includes_midpoint(self, points):
+        lower, upper = points
         midpoint = Point((lower.x + upper.x) // 2, (lower.y + upper.y) // 2)
         assert midpoint in Area(lower, upper)
 

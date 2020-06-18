@@ -27,10 +27,13 @@ humans = st.builds(default_human)
 zombies = st.builds(default_zombie)
 characters = st.one_of(humans, zombies)
 
-containing_boxes = (st.from_type(BoundingBox)
-                    .filter(lambda box: Vector.ZERO in box))
+containing_boxes = st.builds(
+        BoundingBox,
+        lower=st.builds(Vector, dx=st.integers(max_value=0), dy=st.integers(max_value=0)),
+        upper=st.builds(Vector, dx=st.integers(min_value=1), dy=st.integers(min_value=1)),
+)
 
-def environments(characters=characters, min_size=None, max_size=None):
+def environments(characters=characters, min_size=0, max_size=None):
     all_envs = st.lists(st.tuples(vectors(1000), characters),
                         min_size=min_size,
                         max_size=max_size)
@@ -45,7 +48,7 @@ class TestObstacles:
     def test_never_includes_zero_vector(self, environment):
         assert Vector.ZERO not in Obstacles(environment)
 
-    @given(environments().flatmap(list_and_element))
+    @given(environments(min_size=1).flatmap(list_and_element))
     def test_includes_entry(self, env_and_entry):
         environment, (position, _) = env_and_entry
         assume(position != Vector.ZERO)
@@ -272,7 +275,7 @@ class TestCharacter:
 
 class TestZombie:
 
-    @pytest.fixture
+    @pytest.fixture(scope="session")
     def zombie(self):
         return default_zombie()
 
@@ -377,7 +380,7 @@ class TestZombie:
 
 class TestHuman:
 
-    @pytest.fixture
+    @pytest.fixture(scope="session")
     def human(self):
         return default_human()
 
