@@ -275,7 +275,7 @@ class TestCharacter:
 
 class TestZombie:
 
-    @pytest.fixture
+    @pytest.fixture(scope="session")
     def zombie(self):
         return default_zombie()
 
@@ -380,7 +380,7 @@ class TestZombie:
 
 class TestHuman:
 
-    @pytest.fixture
+    @pytest.fixture(scope="session")
     def human(self):
         return default_human()
 
