@@ -11,18 +11,23 @@ from space import Point, Vector
 def positions_unique(positions):
     return len(set(p[0] for p in positions)) == len(positions)
 
+
 characters = st.builds(object)
-position_lists = st.lists(st.tuples(st.from_type(Point), characters))
-unique_position_lists = position_lists.filter(positions_unique)
+
+def position_lists(min_size=0):
+    return st.lists(st.tuples(st.from_type(Point), characters), min_size=min_size)
+
+def unique_position_lists(min_size=0):
+    return position_lists(min_size=min_size).filter(positions_unique)
 
 
 class TestRoster:
 
-    @given(unique_position_lists)
+    @given(unique_position_lists())
     def test_takes_position_character_pairs(self, positions):
         Roster(positions)
 
-    @given(unique_position_lists.flatmap(list_and_element))
+    @given(unique_position_lists(min_size=1).flatmap(list_and_element))
     def test_character_at_position(self, positions_and_item):
         positions, (position, character) = positions_and_item
 
@@ -40,11 +45,11 @@ class TestRoster:
         with pytest.raises(ValueError) as e:
             Roster(positions)
 
-    @given(unique_position_lists)
+    @given(unique_position_lists())
     def test_value_equality(self, positions):
         assert Roster(positions) == Roster(list(positions))
 
-    @given(unique_position_lists)
+    @given(unique_position_lists())
     def test_order_indifference(self, positions):
         assert Roster(positions) == Roster(reversed(positions))
 
@@ -64,13 +69,13 @@ class TestRoster:
 
 class TestMove:
 
-    @given(unique_position_lists.flatmap(list_and_element))
+    @given(unique_position_lists(min_size=1).flatmap(list_and_element))
     def test_zero_move_preserves_roster(self, positions_and_item):
         positions, (_, character) = positions_and_item
         roster = Roster(positions)
         assert Move(character, Vector.ZERO).next_roster(roster) == roster
 
-    @given(unique_position_lists.flatmap(list_and_element), st.from_type(Vector))
+    @given(unique_position_lists(min_size=1).flatmap(list_and_element), st.from_type(Vector))
     def test_character_moves(self, positions_and_item, move_vector):
         positions, (position, character) = positions_and_item
         new_position = position + move_vector

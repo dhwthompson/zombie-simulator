@@ -48,7 +48,7 @@ class TestObstacles:
     def test_never_includes_zero_vector(self, environment):
         assert Vector.ZERO not in Obstacles(environment)
 
-    @given(environments().flatmap(list_and_element))
+    @given(environments(min_size=1).flatmap(list_and_element))
     def test_includes_entry(self, env_and_entry):
         environment, (position, _) = env_and_entry
         assume(position != Vector.ZERO)
