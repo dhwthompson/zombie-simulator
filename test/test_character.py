@@ -27,8 +27,11 @@ humans = st.builds(default_human)
 zombies = st.builds(default_zombie)
 characters = st.one_of(humans, zombies)
 
-containing_boxes = (st.from_type(BoundingBox)
-                    .filter(lambda box: Vector.ZERO in box))
+containing_boxes = st.builds(
+        BoundingBox,
+        lower=st.builds(Vector, dx=st.integers(max_value=0), dy=st.integers(max_value=0)),
+        upper=st.builds(Vector, dx=st.integers(min_value=1), dy=st.integers(min_value=1)),
+)
 
 def environments(characters=characters, min_size=None, max_size=None):
     all_envs = st.lists(st.tuples(vectors(1000), characters),
