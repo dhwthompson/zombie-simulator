@@ -33,7 +33,7 @@ containing_boxes = st.builds(
         upper=st.builds(Vector, dx=st.integers(min_value=1), dy=st.integers(min_value=1)),
 )
 
-def environments(characters=characters, min_size=None, max_size=None):
+def environments(characters=characters, min_size=0, max_size=None):
     all_envs = st.lists(st.tuples(vectors(1000), characters),
                         min_size=min_size,
                         max_size=max_size)
