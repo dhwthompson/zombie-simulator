@@ -2,3 +2,4 @@
 .hypothesis/
 .coverage
 htmlcov/
+tracing.json

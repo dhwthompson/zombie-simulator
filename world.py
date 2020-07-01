@@ -1,5 +1,6 @@
 from roster import Roster
 from space import Area, Point
+import tracing
 
 
 class World:
@@ -38,13 +39,16 @@ class World:
     def tick(self):
         world = self
         for (position, character) in self._roster:
-            if character not in world._roster:
-                continue
-            viewpoint = world.viewpoint(position)
-            limits = self._area.from_origin(position)
-            action = character.next_action(viewpoint, limits)
-            new_roster = action.next_roster(world._roster)
-            world = World(self._width, self._height, new_roster)
+            context = {"character_living":
+                character.living, "character_undead": character.undead}
+            with tracing.span("character_action", context):
+                if character not in world._roster:
+                    continue
+                viewpoint = world.viewpoint(position)
+                limits = self._area.from_origin(position)
+                action = character.next_action(viewpoint, limits)
+                new_roster = action.next_roster(world._roster)
+                world = World(self._width, self._height, new_roster)
         return world
 
 
