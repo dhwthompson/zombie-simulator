@@ -17,39 +17,32 @@ class Roster:
         return Roster(value)
 
     def __init__(self, character_positions):
-        self._positions = [(Point(*position), character)
-                           for position, character in character_positions]
+        self._positions = {}
+        seen_characters = set()
+        for position, character in character_positions:
+            point = Point(*position)
+            if point in self._positions:
+                raise ValueError(f"Multiple characters at position {position}")
+            if character in seen_characters:
+                raise ValueError(f"Character {character} in multiple places")
 
-        self._check_unique((p[0] for p in self._positions),
-                           'Multiply-occupied points in roster')
-
-        self._check_unique((p[1] for p in self._positions),
-                           'Characters in multiple places')
-
-    def _check_unique(self, collection, message):
-        duplicates = [item for item, count in Counter(collection).items()
-                      if count > 1]
-        if duplicates:
-            raise ValueError('{}: {}'.format(message, duplicates))
+            self._positions[point] = character
+            seen_characters.add(character)
 
     def character_at(self, position):
-        for p, char in self._positions:
-            if p == position:
-                return char
-        else:
-            return None
+        return self._positions.get(position)
 
     def __contains__(self, character):
-        return any(c == character for _, c in self._positions)
+        return character in self._positions.values()
 
     def __iter__(self):
-        return iter(self._positions)
+        return iter(self._positions.items())
 
     def __repr__(self):
         return 'Roster({})'.format(self._positions)
 
     def __eq__(self, other):
-        return sorted(self._positions) == sorted(other._positions)
+        return self._positions == other._positions
 
 
 class Move:
