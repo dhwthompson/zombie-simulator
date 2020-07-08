@@ -38,6 +38,9 @@ class Roster:
     def __iter__(self):
         return iter(self._positions.items())
 
+    def __len__(self):
+        return len(self._positions)
+
     def __repr__(self):
         return 'Roster({})'.format(self._positions)
 

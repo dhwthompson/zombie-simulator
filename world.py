@@ -33,8 +33,7 @@ class World:
         return [self._roster.character_at((x, y)) for x in range(self._width)]
 
     def viewpoint(self, origin):
-        return set([(position - origin, character)
-                    for position, character in self._roster])
+        return Viewpoint(origin, self._roster)
 
     def tick(self):
         world = self
@@ -50,6 +49,20 @@ class World:
                 new_roster = action.next_roster(world._roster)
                 world = World(self._width, self._height, new_roster)
         return world
+
+
+class Viewpoint:
+
+    def __init__(self, origin, roster):
+        self._origin = origin
+        self._roster = roster
+
+    def __iter__(self):
+        return iter((position - self._origin, character) for position, character in
+                self._roster)
+
+    def __len__(self):
+        return len(self._roster)
 
 
 class WorldBuilder:
