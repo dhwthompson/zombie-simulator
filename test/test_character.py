@@ -9,7 +9,7 @@ from .strategies import list_and_element
 from character import Character, default_human, default_zombie
 from character import Dead, Living, Undead
 from character import (MaximiseShortestDistance, MinimiseDistance,
-                       MoveShortestDistance, Obstacles)
+                       MoveShortestDistance, Obstacles, TargetVectors)
 from character import AttackTheLiving, NeverAttack
 from roster import Attack, Move, StateChange
 from space import BoundingBox, Vector
@@ -38,6 +38,20 @@ def environments(characters=characters, min_size=0, max_size=None):
                         min_size=min_size,
                         max_size=max_size)
     return all_envs.filter(lambda e: not any(pos == Vector.ZERO for pos, _ in e))
+
+
+class TestTargetVectors:
+
+    @given(environments(characters=humans, min_size=1).flatmap(list_and_element))
+    def test_nearest_human(self, env_and_entry):
+        environment, (position, character) = env_and_entry
+
+        nearest_human = TargetVectors(environment).nearest_human
+        assert nearest_human.distance <= position.distance
+
+    @given(environments(characters=zombies))
+    def test_no_humans(self, environment):
+        assert TargetVectors(environment).nearest_human is None
 
 
 class TestObstacles:
@@ -209,22 +223,15 @@ class TestUndeadState:
         assert Undead().undead
 
     def test_movement_strategy_without_humans(self):
-        target_vectors = namedtuple('Targets', ['humans'])([])
+        target_vectors = namedtuple('Targets', ['nearest_human'])(None)
         assert (Undead().movement_strategy(target_vectors) ==
                 MoveShortestDistance())
 
-    @given(st.lists(vectors(), min_size=1))
-    @example([Vector(1, 1), Vector(-1, -1)])
-    @example([Vector(-1, -1), Vector(1, 1)])
-    def test_movement_strategy_with_humans(self, human_vectors):
-        # This test passes as a by-product of using the same `min` function,
-        # which will pick the same one of n equidistant targets. Not ideal,
-        # but good enough for now. There are explicit examples to catch this
-        # if and when it breaks.
-        closest_human = min(human_vectors, key=lambda v: v.distance)
-        target_vectors = namedtuple('Targets', ['humans'])(human_vectors)
-        assert (Undead().movement_strategy(target_vectors) ==
-                MinimiseDistance(closest_human))
+
+    def test_movement_strategy_with_humans(self):
+        human = Vector(1, 1)
+        target_vectors = namedtuple('Targets', ['nearest_human'])(human)
+        assert(Undead().movement_strategy(target_vectors) == MinimiseDistance(human))
 
     def test_attacks_nearby_humans(self):
         victim = default_human()

@@ -12,6 +12,10 @@ class TargetVectors:
         return [pos for pos, char in self._positions if char.living]
 
     @property
+    def nearest_human(self):
+        return min(self.humans, key=lambda v: v.distance, default=None)
+
+    @property
     def zombies(self):
         return [pos for pos, char in self._positions if char.undead]
 
@@ -147,15 +151,11 @@ class Undead:
     next_state = None
 
     def movement_strategy(self, target_vectors):
-        humans = target_vectors.humans
-
-        if humans:
-            return MinimiseDistance(self._nearest(humans))
+        nearest_human = target_vectors.nearest_human
+        if nearest_human:
+            return MinimiseDistance(nearest_human)
         else:
             return MoveShortestDistance()
-
-    def _nearest(self, vectors):
-        return min(vectors, key=lambda v: v.distance, default=None)
 
     def __eq__(self, other):
         return isinstance(other, Undead)
