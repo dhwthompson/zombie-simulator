@@ -2,6 +2,10 @@ from roster import Attack, Move, StateChange
 from space import BoundingBox, UnlimitedBoundingBox, Vector
 
 
+def shortest(vectors):
+    return min(vectors, key=lambda v: v.distance)
+
+
 class TargetVectors:
 
     def __init__(self, positions):
@@ -70,18 +74,6 @@ class MaximiseShortestDistance:
                 and self._targets == other._targets)
 
 
-class MoveShortestDistance:
-
-    def best_move(self, moves):
-        return min(moves, key=self._move_rank)
-
-    def _move_rank(self, move):
-        return move.distance
-
-    def __eq__(self, other):
-        return isinstance(other, MoveShortestDistance)
-
-
 class NeverAttack:
 
     def attack(self, environment):
@@ -112,7 +104,7 @@ class Living:
         if zombies:
             return MaximiseShortestDistance(zombies).best_move(available_moves)
         else:
-            return MoveShortestDistance().best_move(available_moves)
+            return shortest(available_moves)
 
 
 class Dead:
@@ -156,7 +148,7 @@ class Undead:
         if nearest_human:
             return MinimiseDistance(nearest_human).best_move(available_moves)
         else:
-            return MoveShortestDistance().best_move(available_moves)
+            return shortest(available_moves)
 
     def __eq__(self, other):
         return isinstance(other, Undead)
