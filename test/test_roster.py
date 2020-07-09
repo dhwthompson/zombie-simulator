@@ -1,3 +1,5 @@
+from operator import itemgetter
+
 from hypothesis import assume, given
 from hypothesis import strategies as st
 
@@ -8,17 +10,14 @@ from roster import Attack, Move, Roster, StateChange
 from space import Point, Vector
 
 
-def positions_unique(positions):
-    return len(set(p[0] for p in positions)) == len(positions)
-
-
 characters = st.builds(object)
 
-def position_lists(min_size=0):
-    return st.lists(st.tuples(st.from_type(Point), characters), min_size=min_size)
+def position_lists(min_size=0, unique_by=None):
+    return st.lists(st.tuples(st.from_type(Point), characters),
+            min_size=min_size, unique_by=unique_by)
 
 def unique_position_lists(min_size=0):
-    return position_lists(min_size=min_size).filter(positions_unique)
+    return position_lists(min_size=min_size, unique_by=itemgetter(0))
 
 
 class TestRoster:
