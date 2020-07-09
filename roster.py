@@ -15,7 +15,7 @@ class Roster:
         if value is None:
             return Roster([])
 
-        return Roster(value)
+        raise TypeError('Expected Roster instance or dict-like value')
 
     def __init__(self, character_positions):
         self._positions = {}

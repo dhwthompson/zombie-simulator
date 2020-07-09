@@ -78,9 +78,9 @@ class WorldBuilder:
     def __init__(self, width, height, population):
         grid = self._grid(width, height)
 
-        starting_positions = [(point, character)
+        starting_positions = {point: character
                               for point, character in zip(grid, population)
-                              if character is not None]
+                              if character is not None}
 
         self._world = World(width, height, starting_positions)
 

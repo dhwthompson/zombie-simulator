@@ -8,3 +8,8 @@ def list_and_element(l):
     method.
     """
     return st.tuples(st.just(l), st.sampled_from(l))
+
+
+def dict_and_element(d):
+    """Given an ordered dict-like object, return that dict and a (k, v) pair."""
+    return st.tuples(st.just(d), st.sampled_from(d).map(lambda k: (k, d[k])))
