@@ -106,13 +106,13 @@ class Living:
     attack_strategy = NeverAttack()
     next_state = None
 
-    def movement_strategy(self, target_vectors):
+    def best_move(self, target_vectors, available_moves):
         zombies = target_vectors.zombies
 
         if zombies:
-            return MaximiseShortestDistance(zombies)
+            return MaximiseShortestDistance(zombies).best_move(available_moves)
         else:
-            return MoveShortestDistance()
+            return MoveShortestDistance().best_move(available_moves)
 
 
 class Dead:
@@ -127,9 +127,10 @@ class Dead:
 
     _resurrection_age = 20
 
-    def movement_strategy(self, target_vectors):
-        # Assuming there will always be a zero move, this will take it
-        return MoveShortestDistance()
+    def best_move(self, target_vectors, available_moves):
+        if Vector.ZERO not in available_moves:
+            raise ValueError('Zero move unavailable for dead character')
+        return Vector.ZERO
 
     @property
     def next_state(self):
@@ -150,12 +151,12 @@ class Undead:
     attack_strategy = AttackTheLiving()
     next_state = None
 
-    def movement_strategy(self, target_vectors):
+    def best_move(self, target_vectors, available_moves):
         nearest_human = target_vectors.nearest_human
         if nearest_human:
-            return MinimiseDistance(nearest_human)
+            return MinimiseDistance(nearest_human).best_move(available_moves)
         else:
-            return MoveShortestDistance()
+            return MoveShortestDistance().best_move(available_moves)
 
     def __eq__(self, other):
         return isinstance(other, Undead)
@@ -203,9 +204,7 @@ class Character:
         obstacles = Obstacles(environment)
 
         moves = self._available_moves(limits, obstacles)
-        move_rank = self._state.movement_strategy(target_vectors)
-
-        return move_rank.best_move(moves)
+        return self._state.best_move(target_vectors, moves)
 
     def _available_moves(self, limits, obstacles):
         moves = [m for m in self._state.movement_range

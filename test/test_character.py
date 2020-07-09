@@ -8,8 +8,7 @@ import pytest
 from .strategies import list_and_element
 from character import Character, default_human, default_zombie
 from character import Dead, Living, Undead
-from character import (MaximiseShortestDistance, MinimiseDistance,
-                       MoveShortestDistance, Obstacles, TargetVectors)
+from character import Obstacles, TargetVectors
 from character import AttackTheLiving, NeverAttack
 from roster import Attack, Move, StateChange
 from space import BoundingBox, Vector
@@ -70,96 +69,6 @@ class TestObstacles:
         assert position in Obstacles(environment)
 
 
-class TestMinimiseDistance:
-
-    def test_fails_with_no_target(self):
-        with pytest.raises(ValueError):
-            MinimiseDistance(target=None)
-
-    @given(target=vectors(), moves=st.lists(vectors(), min_size=1))
-    def test_picks_from_available_moves(self, target, moves):
-        strategy = MinimiseDistance(target)
-        assert strategy.best_move(moves) in moves
-
-    @given(target=vectors(), moves=st.lists(vectors(), min_size=1))
-    def test_gets_as_close_to_target_as_possible(self, target, moves):
-        strategy = MinimiseDistance(target)
-
-        best_move = strategy.best_move(moves)
-
-        distance_after_move = (target - best_move).distance
-        assert all(distance_after_move <= (target - move).distance
-                   for move in moves)
-
-    def test_chooses_shortest_best_move(self):
-        target = Vector(1, 0)
-        strategy = MinimiseDistance(target)
-        moves = [Vector.ZERO, Vector(1, 1)]
-
-        assert strategy.best_move(moves) == Vector.ZERO
-        # To make sure we're not lucking out based on the order
-        assert strategy.best_move(reversed(moves)) == Vector.ZERO
-
-
-
-class TestMaximiseShortestDistance:
-
-    def test_fails_with_no_targets(self):
-        with pytest.raises(ValueError):
-            MaximiseShortestDistance(targets=[])
-
-    @given(targets=st.lists(vectors(), min_size=1),
-           moves=st.lists(vectors(), min_size=1))
-    def test_picks_from_available_moves(self, targets, moves):
-        strategy = MaximiseShortestDistance(targets)
-        assert strategy.best_move(moves) in moves
-
-    @given(targets=st.lists(vectors(), min_size=1),
-           moves=st.lists(vectors(), min_size=1))
-    def test_keeps_away_from_all_targets(self, targets, moves):
-        strategy = MaximiseShortestDistance(targets)
-
-        best_move = strategy.best_move(moves)
-
-        def distance_after_move(move):
-            return min((target - move).distance for target in targets)
-
-        best_move_distance = distance_after_move(best_move)
-        note(f'Best distance, after {best_move}: {best_move_distance}')
-
-        for move in moves:
-            move_distance = distance_after_move(move)
-            note(f'Distance after {move}: {move_distance}')
-
-        assert all(best_move_distance >= distance_after_move(move)
-                   for move in moves)
-
-    def test_chooses_shortest_best_move(self):
-        targets = [Vector(1, 2)]
-        strategy = MaximiseShortestDistance(targets)
-        moves = [Vector.ZERO, Vector(1, 0), Vector(2, 0)]
-
-        assert strategy.best_move(moves) == Vector.ZERO
-        # To make sure we're not lucking out based on the order
-        assert strategy.best_move(list(reversed(moves))) == Vector.ZERO
-
-
-class TestMoveShortestDistance:
-
-    def test_fails_with_no_moves(self):
-        strategy = MoveShortestDistance()
-        with pytest.raises(ValueError):
-            strategy.best_move([])
-
-    @given(st.lists(vectors(), min_size=1))
-    def test_takes_shortest_move(self, moves):
-        strategy = MoveShortestDistance()
-
-        best_move = strategy.best_move(moves)
-
-        assert all(best_move.distance <= m.distance for m in moves)
-
-
 class TestLivingState:
 
     def test_is_living(self):
@@ -168,16 +77,35 @@ class TestLivingState:
     def test_is_not_undead(self):
         assert not Living().undead
 
-    def test_movement_strategy_without_zombies(self):
+    @given(moves=st.lists(vectors(), min_size=1))
+    def test_movement_without_zombies(self, moves):
         target_vectors = namedtuple('Targets', ['zombies'])([])
-        assert (Living().movement_strategy(target_vectors) ==
-                MoveShortestDistance())
+        assert (Living().best_move(target_vectors, moves) == min(moves, key=lambda v: v.distance))
 
-    @given(st.lists(vectors(), min_size=1))
-    def test_movement_strategy_with_zombies(self, zombie_vectors):
+    @given(zombie_vectors=st.lists(vectors(), min_size=1), moves=st.lists(vectors(), min_size=1))
+    def test_movement_with_zombies(self, zombie_vectors, moves):
         target_vectors = namedtuple('Targets', ['zombies'])(zombie_vectors)
-        assert (Living().movement_strategy(target_vectors) ==
-                MaximiseShortestDistance(zombie_vectors))
+        best_move = Living().best_move(target_vectors, moves)
+
+        def distance_after_move(move):
+            return min((zombie - move).distance for zombie in zombie_vectors)
+
+        best_move_distance = distance_after_move(best_move)
+        note(f'Best distance, after {best_move}: {best_move_distance}')
+
+        for move in moves:
+            move_distance = distance_after_move(move)
+            note(f'Distance after {move}: {move_distance}')
+
+        assert all(best_move_distance >= distance_after_move(move) for move in moves)
+
+    def test_chooses_shortest_best_move(self):
+        target_vectors = namedtuple('Targets', ['zombies'])([Vector(1, 2)])
+        moves = [Vector.ZERO, Vector(1, 0), Vector(2, 0)]
+
+        assert Living().best_move(target_vectors, moves) == Vector.ZERO
+        # To make sure we're not lucking out based on the order
+        assert Living().best_move(target_vectors, list(reversed(moves))) == Vector.ZERO
 
     @given(environments())
     def test_never_attacks(self, environment):
@@ -198,14 +126,18 @@ class TestDeadState:
     def test_cannot_move(self):
         assert list(Dead().movement_range) == [Vector.ZERO]
 
-    def test_movement_strategy_exists(self):
-        # There's only ever one move, so we don't care *what* this is
-        strategy = Dead().movement_strategy(None)
-        assert strategy.best_move([Vector.ZERO]) == Vector.ZERO
+    @given(environments(), st.lists(vectors(), min_size=1))
+    def test_never_moves(self, environment, moves):
+        target_vectors = TargetVectors(environment)
+
+        if Vector.ZERO not in moves:
+            moves = moves + [Vector.ZERO]
+
+        assert Dead().best_move(target_vectors, moves) == Vector.ZERO
 
     @given(environments())
     def test_never_attacks(self, environment):
-        assert Living().attack_strategy.attack(environment) is None
+        assert Dead().attack_strategy.attack(environment) is None
 
     def test_next_state_ages(self):
         assert Dead(age=2).next_state == Dead(age=3)
@@ -222,16 +154,18 @@ class TestUndeadState:
     def test_is_not_undead(self):
         assert Undead().undead
 
-    def test_movement_strategy_without_humans(self):
+    @given(moves=st.lists(vectors(), min_size=1))
+    def test_movement_without_humans(self, moves):
         target_vectors = namedtuple('Targets', ['nearest_human'])(None)
-        assert (Undead().movement_strategy(target_vectors) ==
-                MoveShortestDistance())
+        assert (Undead().best_move(target_vectors, moves) == min(moves, key=lambda v: v.distance))
 
-
-    def test_movement_strategy_with_humans(self):
-        human = Vector(1, 1)
+    @given(human=vectors(), moves=st.lists(vectors(), min_size=1))
+    def test_gets_as_close_to_target_as_possible(self, human, moves):
         target_vectors = namedtuple('Targets', ['nearest_human'])(human)
-        assert(Undead().movement_strategy(target_vectors) == MinimiseDistance(human))
+        best_move = Undead().best_move(target_vectors, moves)
+
+        distance_after_move = (human - best_move).distance
+        assert all(distance_after_move <= (human - move).distance for move in moves)
 
     def test_attacks_nearby_humans(self):
         victim = default_human()
