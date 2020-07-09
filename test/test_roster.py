@@ -1,6 +1,6 @@
 from operator import itemgetter
 
-from hypothesis import assume, given
+from hypothesis import assume, given, note
 from hypothesis import strategies as st
 
 import pytest
@@ -64,6 +64,39 @@ class TestRoster:
     def test_roster_for_itself(self):
         roster = Roster([((0, 2), object())])
         assert roster.for_value(roster) is roster
+
+    def test_no_nearest_character(self):
+        roster = Roster.for_value({(1, 1): object()})
+        assert roster.nearest_to(Point(1, 1)) is None
+
+    @given(unique_position_lists(min_size=2).flatmap(list_and_element))
+    def test_nearest_to(self, positions_and_item):
+        positions, (position, character) = positions_and_item
+        roster = Roster.for_value(positions)
+
+        nearest_position, nearest_character = roster.nearest_to(position)
+
+        assert nearest_position != position
+        assert nearest_character != character
+
+        best_distance = min((p - position).distance for p, c in positions if c != character)
+        assert best_distance == (nearest_position - position).distance
+
+    @given(st.lists(st.tuples(st.from_type(Point), st.integers()), min_size=2,
+        unique_by=(itemgetter(0), itemgetter(1))).flatmap(list_and_element))
+    def test_nearest_to_predicate(self, positions_and_item):
+        positions, (position, character) = positions_and_item
+        note(positions)
+        roster = Roster.for_value(positions)
+
+        def predicate(char):
+            return char % 2 == 0
+
+        assume(any(predicate(char) and char != character for (_, char) in positions))
+
+        nearest_position, nearest_character = roster.nearest_to(position, predicate)
+
+        assert nearest_character % 2 == 0
 
 
 class TestMove:

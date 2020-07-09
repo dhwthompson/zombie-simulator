@@ -1,4 +1,5 @@
 from collections import Counter
+import math
 
 from space import Point
 
@@ -31,6 +32,27 @@ class Roster:
 
     def character_at(self, position):
         return self._positions.get(position)
+
+    def nearest_to(self, origin, predicate=None):
+        min_distance = math.inf
+        best_position = None
+        closest_character = None
+        if predicate is None:
+            predicate = lambda item: True
+
+        for pos, char in self:
+            if pos == origin or not predicate(char):
+                continue
+            distance = (pos - origin).distance
+            if distance < min_distance:
+                min_distance = distance
+                best_position = pos
+                closest_character = char
+
+        if closest_character is None:
+            return None
+        else:
+            return (best_position, closest_character)
 
     def __contains__(self, character):
         return character in self._positions.values()
