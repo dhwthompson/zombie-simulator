@@ -8,20 +8,19 @@ def shortest(vectors):
 
 class TargetVectors:
 
-    def __init__(self, positions):
-        self._positions = positions
-
-    @property
-    def humans(self):
-        return [pos for pos, char in self._positions if char.living]
+    def __init__(self, viewpoint):
+        self._viewpoint = viewpoint
 
     @property
     def nearest_human(self):
-        return min(self.humans, key=lambda v: v.distance, default=None)
+        return self._viewpoint.nearest(lambda c: c.living)
 
     @property
-    def zombies(self):
-        return [pos for pos, char in self._positions if char.undead]
+    def nearest_zombie(self):
+        return self._viewpoint.nearest(lambda c: c.undead)
+
+    def from_offset(self, offset):
+        return TargetVectors(self._viewpoint.from_offset(offset))
 
 
 class Obstacles:
@@ -44,18 +43,9 @@ class Living:
         return None
 
     def best_move(self, target_vectors, available_moves):
-        zombies = target_vectors.zombies
-
-        if zombies:
-            max_range = max(m.distance for m in available_moves)
-            min_distance = min(z.distance for z in zombies)
-
-            interesting_targets = [z for z in zombies
-                                   if z.distance - max_range <= min_distance + max_range]
-
+        if target_vectors.nearest_zombie is not None:
             def move_rank(move):
-                distances_after_move = [(t - move).distance for t in interesting_targets]
-                return (-min(distances_after_move), move.distance)
+                return (-target_vectors.from_offset(move).nearest_zombie.distance, move.distance)
 
             return min(available_moves, key=move_rank)
         else:

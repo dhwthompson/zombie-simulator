@@ -64,6 +64,14 @@ class Viewpoint:
     def __len__(self):
         return len(self._roster)
 
+    def nearest(self, predicate):
+        nearest = self._roster.nearest_to(self._origin, predicate)
+        if nearest:
+            return nearest[0] - self._origin
+
+    def from_offset(self, offset):
+        return Viewpoint(self._origin + offset, self._roster)
+
 
 class WorldBuilder:
 
