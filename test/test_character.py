@@ -9,7 +9,6 @@ from .strategies import list_and_element
 from character import Character, default_human, default_zombie
 from character import Dead, Living, Undead
 from character import Obstacles, TargetVectors
-from character import AttackTheLiving, NeverAttack
 from roster import Attack, Move, StateChange
 from space import BoundingBox, Vector
 
@@ -109,7 +108,7 @@ class TestLivingState:
 
     @given(environments())
     def test_never_attacks(self, environment):
-        assert Living().attack_strategy.attack(environment) is None
+        assert Living().attack(environment) is None
 
     def test_no_next_state(self):
         assert Living().next_state is None
@@ -137,7 +136,7 @@ class TestDeadState:
 
     @given(environments())
     def test_never_attacks(self, environment):
-        assert Dead().attack_strategy.attack(environment) is None
+        assert Dead().attack(environment) is None
 
     def test_next_state_ages(self):
         assert Dead(age=2).next_state == Dead(age=3)
@@ -170,12 +169,12 @@ class TestUndeadState:
     def test_attacks_nearby_humans(self):
         victim = default_human()
         environment = [(Vector(1, 1), victim)]
-        assert Undead().attack_strategy.attack(environment) == victim
+        assert Undead().attack(environment) == victim
 
     @given(environments(characters=humans))
     def test_does_not_attack_distant_humans(self, environment):
         assume(not any(pos.distance < 4 for pos, char in environment))
-        assert Undead().attack_strategy.attack(environment) is None
+        assert Undead().attack(environment) is None
 
     def test_no_next_state(self):
         assert Undead().next_state is None

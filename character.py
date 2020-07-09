@@ -33,29 +33,15 @@ class Obstacles:
         return vector in self._obstacles
 
 
-class NeverAttack:
-
-    def attack(self, environment):
-        return None
-
-
-class AttackTheLiving:
-
-    _attack_range = BoundingBox.range(1)
-
-    def attack(self, environment):
-        for offset, character in environment:
-            if character.living and offset in self._attack_range:
-                return character
-
-
 class Living:
 
     living = True
     undead = False
     movement_range = BoundingBox.range(2)
-    attack_strategy = NeverAttack()
     next_state = None
+
+    def attack(self, environment):
+        return None
 
     def best_move(self, target_vectors, available_moves):
         zombies = target_vectors.zombies
@@ -84,9 +70,11 @@ class Dead:
     living = False
     undead = False
     movement_range = [Vector.ZERO]
-    attack_strategy = NeverAttack()
 
     _resurrection_age = 20
+
+    def attack(self, environment):
+        return None
 
     def best_move(self, target_vectors, available_moves):
         if Vector.ZERO not in available_moves:
@@ -109,8 +97,13 @@ class Undead:
     living = False
     undead = True
     movement_range = BoundingBox.range(1)
-    attack_strategy = AttackTheLiving()
+    attack_range = BoundingBox.range(1)
     next_state = None
+
+    def attack(self, environment):
+        for offset, character in environment:
+            if character.living and offset in self.attack_range:
+                return character
 
     def best_move(self, target_vectors, available_moves):
         nearest_human = target_vectors.nearest_human
@@ -177,7 +170,7 @@ class Character:
         return moves
 
     def attack(self, environment):
-        return self._state.attack_strategy.attack(environment)
+        return self._state.attack(environment)
 
     def with_state(self, new_state):
         return Character(state=new_state)
