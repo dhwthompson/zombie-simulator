@@ -33,47 +33,6 @@ class Obstacles:
         return vector in self._obstacles
 
 
-class MinimiseDistance:
-    def __init__(self, target):
-        if target is None:
-            raise ValueError('Cannot set up strategy with no target')
-        self._target = target
-
-    def best_move(self, moves):
-        return min(moves, key=self._move_rank)
-
-    def _move_rank(self, move):
-        return ((self._target - move).distance, move.distance)
-
-    def __eq__(self, other):
-        return (isinstance(other, MinimiseDistance)
-                and self._target == other._target)
-
-
-class MaximiseShortestDistance:
-    def __init__(self, targets):
-        if not targets:
-            raise ValueError('Cannot maximise distance from no targets')
-        self._targets = targets
-
-    def best_move(self, moves):
-        max_range = max(m.distance for m in moves)
-        min_distance = min(t.distance for t in self._targets)
-
-        interesting_targets = [t for t in self._targets
-                               if t.distance - max_range <= min_distance + max_range]
-
-        def move_rank(move):
-            distances_after_move = [(t - move).distance for t in interesting_targets]
-            return (-min(distances_after_move), move.distance)
-
-        return min(moves, key=move_rank)
-
-    def __eq__(self, other):
-        return (isinstance(other, MaximiseShortestDistance)
-                and self._targets == other._targets)
-
-
 class NeverAttack:
 
     def attack(self, environment):
@@ -102,7 +61,17 @@ class Living:
         zombies = target_vectors.zombies
 
         if zombies:
-            return MaximiseShortestDistance(zombies).best_move(available_moves)
+            max_range = max(m.distance for m in available_moves)
+            min_distance = min(z.distance for z in zombies)
+
+            interesting_targets = [z for z in zombies
+                                   if z.distance - max_range <= min_distance + max_range]
+
+            def move_rank(move):
+                distances_after_move = [(t - move).distance for t in interesting_targets]
+                return (-min(distances_after_move), move.distance)
+
+            return min(available_moves, key=move_rank)
         else:
             return shortest(available_moves)
 
@@ -146,7 +115,10 @@ class Undead:
     def best_move(self, target_vectors, available_moves):
         nearest_human = target_vectors.nearest_human
         if nearest_human:
-            return MinimiseDistance(nearest_human).best_move(available_moves)
+            def move_rank(move):
+                return ((nearest_human - move).distance, move.distance)
+
+            return min(available_moves, key=move_rank)
         else:
             return shortest(available_moves)
 
