@@ -10,25 +10,33 @@ class Roster:
     def for_value(cls, value):
         if isinstance(value, Roster):
             return value
-        if hasattr(value, 'items'):
-            return Roster(value.items())
         if value is None:
-            return Roster([])
+            return Roster({})
+        return Roster(value)
 
         raise TypeError('Expected Roster instance or dict-like value')
 
-    def __init__(self, character_positions):
+    def __init__(self, character_positions, _characters=None):
+        if _characters is not None:
+            # This only turns up when we're building up from an existing roster
+            self._positions = character_positions
+            self._characters = _characters
+        else:
+            self._build_positions(character_positions)
+
+    def _build_positions(self, character_positions):
         self._positions = {}
-        seen_characters = set()
-        for position, character in character_positions:
+        self._characters = set()
+
+        for position, character in character_positions.items():
             point = Point(*position)
             if point in self._positions:
                 raise ValueError(f"Multiple characters at position {position}")
-            if character in seen_characters:
+            if character in self._characters:
                 raise ValueError(f"Character {character} in multiple places")
 
             self._positions[point] = character
-            seen_characters.add(character)
+            self._characters.add(character)
 
     def character_at(self, position):
         return self._positions.get(position)
@@ -55,18 +63,23 @@ class Roster:
             return (best_position, closest_character)
 
     def move_character(self, old_position, new_position):
-        new_positions = [(new_position if pos == old_position else pos, char)
-                         for (pos, char) in self._positions.items()]
-        return Roster(new_positions)
+        positions = self._positions.copy()
+        if new_position in positions:
+            raise ValueError(f"Attempt to move to occupied position {new_position}")
+        positions[new_position] = positions.pop(old_position)
+        return Roster(positions, _characters=self._characters)
 
     def change_character(self, position, change):
-        new_positions = [(pos, change(char) if pos == position else char)
-                         for (pos, char) in self._positions.items()]
-        return Roster(new_positions)
+        positions = self._positions.copy()
+        old_character = positions[position]
+        new_character = change(positions[position])
+        positions[position] = new_character
 
+        new_characters = self._characters - set([old_character]) | set([new_character])
+        return Roster(positions, _characters=new_characters)
 
     def __contains__(self, character):
-        return character in self._positions.values()
+        return character in self._characters
 
     def __iter__(self):
         return iter(self._positions.items())
