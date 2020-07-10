@@ -12,8 +12,6 @@ class Roster:
             return value
         return Roster(value)
 
-        raise TypeError('Expected Roster instance or dict-like value')
-
     def __init__(self, character_positions, _characters=None):
         if _characters is not None:
             # This only turns up when we're building up from an existing roster
