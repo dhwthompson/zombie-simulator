@@ -7,22 +7,28 @@ from space import Point
 class Roster:
 
     @classmethod
-    def for_value(cls, value):
+    def for_value(cls, value, area=None):
         if isinstance(value, Roster):
             return value
-        return Roster(value)
 
-    def __init__(self, character_positions, _characters=None):
+        if area is None:
+            raise ValueError('Roster requires area parameter')
+
+        return Roster(value, area)
+
+    def __init__(self, character_positions, area, _characters=None):
         if _characters is not None:
             # This only turns up when we're building up from an existing roster
             self._positions = character_positions
+            self._area = area
             self._characters = _characters
         else:
-            self._build_positions(character_positions)
+            self._build_positions(character_positions, area)
 
-    def _build_positions(self, character_positions):
+    def _build_positions(self, character_positions, area):
         self._positions = {}
         self._characters = set()
+        self._area = area
 
         for position, character in character_positions.items():
             point = Point(*position)
@@ -63,7 +69,7 @@ class Roster:
         if new_position in positions:
             raise ValueError(f"Attempt to move to occupied position {new_position}")
         positions[new_position] = positions.pop(old_position)
-        return Roster(positions, _characters=self._characters)
+        return Roster(positions, self._area, _characters=self._characters)
 
     def change_character(self, position, change):
         positions = self._positions.copy()
@@ -72,7 +78,7 @@ class Roster:
         positions[position] = new_character
 
         new_characters = self._characters - set([old_character]) | set([new_character])
-        return Roster(positions, _characters=new_characters)
+        return Roster(positions, self._area, _characters=new_characters)
 
     def __contains__(self, character):
         return character in self._characters

@@ -9,7 +9,7 @@ class World:
         self._area = Area(Point(0, 0), Point(width, height))
         self._width = width
         self._height = height
-        self._roster = Roster.for_value(characters)
+        self._roster = Roster.for_value(characters, area=self._area)
 
         bad_positions = [p for p, _ in self._roster if p not in self._area]
         if bad_positions:
