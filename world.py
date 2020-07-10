@@ -1,4 +1,4 @@
-from roster import Roster
+from roster import Roster, Attack, Move, StateChange
 from space import Area, Point
 import tracing
 
@@ -45,10 +45,29 @@ class World:
                     continue
                 viewpoint = world.viewpoint(position)
                 limits = self._area.from_origin(position)
-                action = character.next_action(viewpoint, limits)
+                actions = AvailableActions(position, character)
+
+                action = character.next_action(viewpoint, limits, actions)
+
                 new_roster = action.next_roster(world._roster)
                 world = World(self._width, self._height, new_roster)
         return world
+
+
+class AvailableActions:
+
+    def __init__(self, position, character):
+        self._position = position
+        self._character = character
+
+    def move(self, vector):
+        return Move(self._character, vector)
+
+    def attack(self, target):
+        return Attack(self._character, target)
+
+    def change_state(self, new_state):
+        return StateChange(self._character, new_state)
 
 
 class Viewpoint:

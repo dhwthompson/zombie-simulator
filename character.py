@@ -1,4 +1,3 @@
-from roster import Attack, Move, StateChange
 from space import BoundingBox, UnlimitedBoundingBox, Vector
 
 
@@ -122,15 +121,15 @@ class Character:
     def undead(self):
         return self._state.undead
 
-    def next_action(self, environment, limits):
+    def next_action(self, environment, limits, actions):
         new_state = self._state.next_state
         if new_state:
-            return StateChange(self, new_state)
+            return actions.change_state(new_state)
         target = self.attack(environment)
         if target:
-            return Attack(self, target)
+            return actions.attack(target)
         move = self.move(environment, limits)
-        return Move(self, move)
+        return actions.move(move)
 
     def move(self, environment, limits=UnlimitedBoundingBox()):
         """Choose where to move next.

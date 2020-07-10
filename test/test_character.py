@@ -9,7 +9,6 @@ from .strategies import list_and_element
 from character import Character, default_human, default_zombie
 from character import Dead, Living, Undead
 from character import Obstacles, TargetVectors
-from roster import Attack, Move, StateChange
 from space import BoundingBox, Vector
 
 
@@ -199,6 +198,17 @@ class TestUndeadState:
         assert Undead().next_state is None
 
 
+Move = namedtuple('Move', ['vector'])
+Attack = namedtuple('Attack', ['target'])
+StateChange = namedtuple('StateChange', ['new_state'])
+
+class FakeActions:
+
+    move = Move
+    attack = Attack
+    change_state = StateChange
+
+
 class TestCharacter:
 
     def test_livingness(self):
@@ -210,21 +220,21 @@ class TestCharacter:
     def test_move_action(self):
         character = Character(state=Undead())
         environment = FakeViewpoint([(Vector(3, 3), default_human())])
-        next_action = character.next_action(environment, BoundingBox.range(5))
-        assert next_action == Move(character, Vector(1, 1))
+        next_action = character.next_action(environment, BoundingBox.range(5), FakeActions)
+        assert next_action == Move(Vector(1, 1))
 
     def test_attack_action(self):
         character = Character(state=Undead())
         target = default_human()
         next_action = character.next_action([(Vector(1, 1), target)],
-                                            BoundingBox.range(5))
-        assert next_action == Attack(character, target)
+                                            BoundingBox.range(5), FakeActions)
+        assert next_action == Attack(target)
 
     def test_state_change_action(self):
         character = Character(state=Dead(age=20))
-        next_action = character.next_action([], BoundingBox.range(5))
+        next_action = character.next_action([], BoundingBox.range(5), FakeActions)
 
-        assert next_action == StateChange(character, Undead())
+        assert next_action == StateChange(Undead())
 
     def test_state_change(self):
         character = Character(state=Dead())
