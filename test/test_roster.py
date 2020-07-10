@@ -44,6 +44,11 @@ class TestRoster:
         roster = Roster.for_value({})
         assert not roster
 
+    @given(position_dicts(min_size=1))
+    def test_non_empty_roster(self, positions):
+        roster = Roster.for_value(positions)
+        assert roster
+
     def test_roster_for_itself(self):
         roster = Roster.for_value({(0, 2): object()})
         assert roster.for_value(roster) is roster
