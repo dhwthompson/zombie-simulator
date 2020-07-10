@@ -54,6 +54,17 @@ class Roster:
         else:
             return (best_position, closest_character)
 
+    def move_character(self, old_position, new_position):
+        new_positions = [(new_position if pos == old_position else pos, char)
+                         for (pos, char) in self._positions.items()]
+        return Roster(new_positions)
+
+    def change_character(self, position, change):
+        new_positions = [(pos, change(char) if pos == position else char)
+                         for (pos, char) in self._positions.items()]
+        return Roster(new_positions)
+
+
     def __contains__(self, character):
         return character in self._positions.values()
 
@@ -90,9 +101,7 @@ class Move:
             raise ValueError('Attempt to move non-existent character '
                              '{}'.format(character))
 
-        new_positions = [(new_position if pos == old_position else pos, char)
-                         for (pos, char) in roster]
-        return Roster(new_positions)
+        return roster.move_character(old_position, new_position)
 
     def __eq__(self, other):
         return (isinstance(other, Move)
@@ -121,9 +130,10 @@ class Attack:
             raise ValueError('Attack on non-existent character at '
                              '{}'.format(target_position))
 
-        new_positions = [(pos, char.attacked() if pos == target_position else char)
-                         for (pos, char) in roster]
-        return Roster(new_positions)
+        return roster.change_character(target_position, self._attack)
+
+    def _attack(self, character):
+        return character.attacked()
 
     def __eq__(self, other):
         return (isinstance(other, Attack)
@@ -149,9 +159,10 @@ class StateChange:
             raise ValueError('Attempt to change non-existent character '
                              '{}'.format(character))
 
-        new_positions = [(pos, char.with_state(self._new_state) if pos == position else char)
-                         for (pos, char) in roster]
-        return Roster(new_positions)
+        return roster.change_character(position, self._change_state)
+
+    def _change_state(self, character):
+        return character.with_state(self._new_state)
 
     def __eq__(self, other):
         return (isinstance(other, StateChange)
