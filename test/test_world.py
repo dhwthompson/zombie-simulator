@@ -16,7 +16,7 @@ class TestWorld:
     @example(0, 0)
     @example(1, 1)
     def test_world_dimensions(self, width, height):
-        world = World(width, height, characters=None)
+        world = World(width, height, characters={})
         assert world.rows == [[None] * width] * height
 
     def test_explicitly_empty_world(self):
@@ -32,7 +32,7 @@ class TestWorld:
             World(2, 2, {(2, 2): object()})
 
     def test_empty_viewpoint(self):
-        world = World(2, 2, characters=None)
+        world = World(2, 2, characters={})
         assert len(world.viewpoint((1, 1))) == 0
 
     def test_viewpoint_single_character(self):

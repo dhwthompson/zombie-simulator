@@ -40,8 +40,8 @@ class TestRoster:
     def test_value_equality(self, positions):
         assert Roster.for_value(positions) == Roster.for_value(positions.copy())
 
-    def test_roster_for_nothing(self):
-        roster = Roster.for_value(None)
+    def test_empty_roster(self):
+        roster = Roster.for_value({})
         assert not roster
 
     def test_roster_for_itself(self):
@@ -188,7 +188,7 @@ class TestStateChange:
 
         state_change = StateChange(character, position, state)
 
-        roster = Roster.for_value(None)
+        roster = Roster.for_value({})
 
         with pytest.raises(ValueError):
             state_change.next_roster(roster)

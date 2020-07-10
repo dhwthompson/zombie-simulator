@@ -10,8 +10,6 @@ class Roster:
     def for_value(cls, value):
         if isinstance(value, Roster):
             return value
-        if value is None:
-            return Roster({})
         return Roster(value)
 
         raise TypeError('Expected Roster instance or dict-like value')
