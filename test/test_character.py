@@ -184,22 +184,22 @@ class TestUndeadState:
         distance_after_move = (human - best_move).distance
         assert all(distance_after_move <= (human - move).distance for move in moves)
 
-    def test_attacks_nearby_humans(self):
-        victim = default_human()
-        environment = [(Vector(1, 1), victim)]
-        assert Undead().attack(environment) == victim
+    @given(vectors(max_offset=1))
+    def test_attacks_nearby_humans(self, vector):
+        target_vectors = namedtuple('Targets', ['nearest_human'])(vector)
+        assert Undead().attack(target_vectors) == vector
 
-    @given(environments(characters=humans))
-    def test_does_not_attack_distant_humans(self, environment):
-        assume(not any(pos.distance < 4 for pos, char in environment))
-        assert Undead().attack(environment) is None
+    @given(vectors().filter(lambda v: v.distance >= 2))
+    def test_does_not_attack_distant_humans(self, vector):
+        target_vectors = namedtuple('Targets', ['nearest_human'])(vector)
+        assert Undead().attack(target_vectors) is None
 
     def test_no_next_state(self):
         assert Undead().next_state is None
 
 
 Move = namedtuple('Move', ['vector'])
-Attack = namedtuple('Attack', ['target'])
+Attack = namedtuple('Attack', ['vector'])
 StateChange = namedtuple('StateChange', ['new_state'])
 
 class FakeActions:
@@ -226,9 +226,9 @@ class TestCharacter:
     def test_attack_action(self):
         character = Character(state=Undead())
         target = default_human()
-        next_action = character.next_action([(Vector(1, 1), target)],
+        next_action = character.next_action(FakeViewpoint([(Vector(1, 1), target)]),
                                             BoundingBox.range(5), FakeActions)
-        assert next_action == Attack(target)
+        assert next_action == Attack(Vector(1, 1))
 
     def test_state_change_action(self):
         character = Character(state=Dead(age=20))
@@ -337,9 +337,9 @@ class TestZombie:
 
     @given(st.lists(st.tuples(vectors(max_offset=1), humans), min_size=1, max_size=1))
     def test_attack(self, zombie, environment):
-        human = environment[0][1]
+        vector = environment[0][0]
 
-        assert zombie.attack(environment) == human
+        assert zombie.attack(FakeViewpoint(environment)) == vector
 
     @given(environments(characters=humans))
     @example([(Vector(2, 0), default_human())])
@@ -347,7 +347,7 @@ class TestZombie:
         biting_range = BoundingBox(Vector(-1, -1), Vector(2, 2))
         assume(all(e[0] not in biting_range for e in environment))
 
-        assert zombie.attack(environment) is None
+        assert zombie.attack(FakeViewpoint(environment)) is None
 
 
 class TestHuman:

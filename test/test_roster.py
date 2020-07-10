@@ -158,7 +158,7 @@ class TestAttack:
         target = Target(attacked)
 
         roster = Roster.for_value({Point(0, 0): attacker, Point(1, 1): target})
-        attack = Attack(attacker, target)
+        attack = Attack(attacker, Point(1, 1))
         new_roster = attack.next_roster(roster)
         assert new_roster.character_at(Point(1, 1)) is attacked
 
@@ -167,7 +167,7 @@ class TestAttack:
         target = Target(object())
 
         roster = Roster.for_value({Point(0, 0): attacker, Point(1, 1): target})
-        attack = Attack(attacker, target)
+        attack = Attack(attacker, Point(1, 1))
         new_roster = attack.next_roster(roster)
         assert new_roster.character_at(Point(0, 0)) is attacker
 

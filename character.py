@@ -38,7 +38,7 @@ class Living:
     movement_range = BoundingBox.range(2)
     next_state = None
 
-    def attack(self, environment):
+    def attack(self, target_vectors):
         return None
 
     def best_move(self, target_vectors, available_moves):
@@ -62,7 +62,7 @@ class Dead:
 
     _resurrection_age = 20
 
-    def attack(self, environment):
+    def attack(self, target_vectors):
         return None
 
     def best_move(self, target_vectors, available_moves):
@@ -89,10 +89,10 @@ class Undead:
     attack_range = BoundingBox.range(1)
     next_state = None
 
-    def attack(self, environment):
-        for offset, character in environment:
-            if character.living and offset in self.attack_range:
-                return character
+    def attack(self, target_vectors):
+        nearest_human = target_vectors.nearest_human
+        if nearest_human is not None and nearest_human in self.attack_range:
+            return nearest_human
 
     def best_move(self, target_vectors, available_moves):
         nearest_human = target_vectors.nearest_human
@@ -125,9 +125,9 @@ class Character:
         new_state = self._state.next_state
         if new_state:
             return actions.change_state(new_state)
-        target = self.attack(environment)
-        if target:
-            return actions.attack(target)
+        target_vector = self.attack(environment)
+        if target_vector:
+            return actions.attack(target_vector)
         move = self.move(environment, limits)
         return actions.move(move)
 
@@ -159,7 +159,7 @@ class Character:
         return moves
 
     def attack(self, environment):
-        return self._state.attack(environment)
+        return self._state.attack(TargetVectors(environment))
 
     def with_state(self, new_state):
         return Character(state=new_state)

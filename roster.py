@@ -102,29 +102,29 @@ class Move:
 
 class Attack:
 
-    def __init__(self, attacker, target):
+    def __init__(self, attacker, target_position):
         self._attacker = attacker
-        self._target = target
+        self._target_position = target_position
 
     def next_roster(self, roster):
         attacker = self._attacker
-        target = self._target
+        target_position = self._target_position
 
         if attacker not in roster:
             raise ValueError('Attack by non-existent character '
                              '{}'.format(attacker))
-        if target not in roster:
-            raise ValueError('Attack on non-existent character '
-                             '{}'.format(target))
+        if roster.character_at(self._target_position) is None:
+            raise ValueError('Attack on non-existent character at '
+                             '{}'.format(target_position))
 
-        new_positions = [(pos, char.attacked() if char == target else char)
+        new_positions = [(pos, char.attacked() if pos == target_position else char)
                          for (pos, char) in roster]
         return Roster(new_positions)
 
     def __eq__(self, other):
         return (isinstance(other, Attack)
                 and self._attacker == other._attacker
-                and self._target == other._target)
+                and self._target == other._target_position)
 
     def __repr__(self):
         return f'Attack({self._attacker}, {self._target})'

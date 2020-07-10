@@ -63,8 +63,8 @@ class AvailableActions:
     def move(self, vector):
         return Move(self._character, vector)
 
-    def attack(self, target):
-        return Attack(self._character, target)
+    def attack(self, vector):
+        return Attack(self._character, self._position + vector)
 
     def change_state(self, new_state):
         return StateChange(self._character, new_state)
