@@ -41,11 +41,6 @@ MAX_AGE = None
 if environ.get('MAX_AGE'):
     MAX_AGE = int(environ.get('MAX_AGE'))
 
-population = Population((DENSITY * (1 - ZOMBIE_CHANCE), default_human),
-                        (DENSITY * ZOMBIE_CHANCE, default_zombie))
-world = WorldBuilder(world_width, world_height, population).world
-renderer = Renderer(world)
-
 def each_interval(interval, current_time=time.time, sleep=time.sleep):
     """Yield at regular intervals.
 
@@ -66,6 +61,11 @@ def clear():
 
 
 if __name__ == '__main__':
+    population = Population((DENSITY * (1 - ZOMBIE_CHANCE), default_human),
+                            (DENSITY * ZOMBIE_CHANCE, default_zombie))
+    world = WorldBuilder(world_width, world_height, population).world
+    renderer = Renderer(world)
+
     ticks = each_interval(TICK)
     if MAX_AGE is not None:
         ticks = islice(ticks, MAX_AGE)
