@@ -61,13 +61,13 @@ class AvailableActions:
         self._character = character
 
     def move(self, vector):
-        return Move(self._character, vector)
+        return Move(self._character, self._position, self._position + vector)
 
     def attack(self, vector):
         return Attack(self._character, self._position + vector)
 
     def change_state(self, new_state):
-        return StateChange(self._character, new_state)
+        return StateChange(self._character, self._position, new_state)
 
 
 class Viewpoint:

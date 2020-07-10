@@ -72,12 +72,16 @@ class Roster:
 
 class Move:
 
-    def __init__(self, character, move_vector):
+    def __init__(self, character, old_position, new_position):
         self._character = character
-        self._move_vector = move_vector
+        self._old_position = old_position
+        self._new_position = new_position
 
     def next_roster(self, roster):
-        if not self._move_vector:
+        old_position = self._old_position
+        new_position = self._new_position
+
+        if old_position == new_position:
             return roster
 
         character = self._character
@@ -86,18 +90,18 @@ class Move:
             raise ValueError('Attempt to move non-existent character '
                              '{}'.format(character))
 
-        new_positions = [(pos + self._move_vector if char == character else pos, char)
+        new_positions = [(new_position if pos == old_position else pos, char)
                          for (pos, char) in roster]
         return Roster(new_positions)
 
     def __eq__(self, other):
         return (isinstance(other, Move)
                 and self._character == other._character
-                and self._move_vector == other._move_vector)
-
+                and self._old_position == old_position
+                and self._new_position == new_position)
 
     def __repr__(self):
-        return f'Move({self._character}, {self._move_vector})'
+        return f'Move({self._character}, {self._old_position, self._new_position})'
 
 
 class Attack:
@@ -132,18 +136,20 @@ class Attack:
 
 class StateChange:
 
-    def __init__(self, character, new_state):
+    def __init__(self, character, position, new_state):
         self._character = character
+        self._position = position
         self._new_state = new_state
 
     def next_roster(self, roster):
         character = self._character
+        position = self._position
 
         if character not in roster:
             raise ValueError('Attempt to change non-existent character '
                              '{}'.format(character))
 
-        new_positions = [(pos, char.with_state(self._new_state) if char == character else char)
+        new_positions = [(pos, char.with_state(self._new_state) if pos == position else char)
                          for (pos, char) in roster]
         return Roster(new_positions)
 

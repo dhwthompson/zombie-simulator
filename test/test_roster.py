@@ -91,7 +91,7 @@ class TestMove:
     def test_zero_move_preserves_roster(self, positions_and_item):
         positions, (position, character) = positions_and_item
         roster = Roster.for_value(positions)
-        assert Move(character, Vector.ZERO).next_roster(roster) == roster
+        assert Move(character, position, position).next_roster(roster) == roster
 
     @given(position_dicts(min_size=1).flatmap(dict_and_element), st.from_type(Vector))
     def test_character_moves(self, positions_and_item, move_vector):
@@ -99,7 +99,7 @@ class TestMove:
         new_position = position + move_vector
         assume(not any(pos == new_position for pos, _ in positions.items()))
         roster = Roster.for_value(positions)
-        move = Move(character, move_vector)
+        move = Move(character, position, new_position)
 
         next_roster = move.next_roster(roster)
 
@@ -108,21 +108,21 @@ class TestMove:
     def test_move_to_occupied_position(self):
         a, b = object(), object()
         roster = Roster.for_value({Point(0, 0): a, Point(1, 1): b})
-        move = Move(b, Vector(-1, -1))
+        move = Move(b, Point(0, 0), Point(1, 1))
         with pytest.raises(ValueError):
             move.next_roster(roster)
 
     def test_move_of_non_existent_character(self):
         a, b = object(), object()
         roster = Roster.for_value({Point(0, 0): a})
-        move = Move(b, Vector(1, 1))
+        move = Move(b, Point(1, 1), Point(2, 1))
         with pytest.raises(ValueError):
             move.next_roster(roster)
 
     def test_move_preserves_non_moving_character(self):
         a, b = object(), object()
         roster = Roster.for_value({Point(0, 0): a, Point(1, 1): b})
-        move = Move(a, Vector(0, 1))
+        move = Move(a, Point(0, 0), Point(0, 1))
         assert move.next_roster(roster).character_at(Point(1, 1)) is b
 
 
@@ -184,9 +184,9 @@ class Character:
 class TestStateChange:
 
     def test_fails_if_character_not_in_roster(self):
-        character, state = object(), object()
+        character, position, state = object(), Point(0, 0), object()
 
-        state_change = StateChange(character, state)
+        state_change = StateChange(character, position, state)
 
         roster = Roster.for_value(None)
 
@@ -195,8 +195,9 @@ class TestStateChange:
 
     def test_changes_character_state(self):
         character, state = Character(state=None), object()
-        state_change = StateChange(character, state)
-        roster = Roster.for_value({Point(0, 1): character})
+        position = Point(0, 1)
+        state_change = StateChange(character, position, state)
+        roster = Roster.for_value({position: character})
 
         next_roster = state_change.next_roster(roster)
 
