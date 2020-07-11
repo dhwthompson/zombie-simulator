@@ -32,6 +32,8 @@ class Roster:
 
         for position, character in character_positions.items():
             point = Point(*position)
+            if point not in self._area:
+                raise ValueError(f"{point} is not in the world area")
             if point in self._positions:
                 raise ValueError(f"Multiple characters at position {position}")
             if character in self._characters:
@@ -66,6 +68,8 @@ class Roster:
 
     def move_character(self, old_position, new_position):
         positions = self._positions.copy()
+        if new_position not in self._area:
+            raise ValueError(f"{new_position} is not in the world area")
         if new_position in positions:
             raise ValueError(f"Attempt to move to occupied position {new_position}")
         positions[new_position] = positions.pop(old_position)

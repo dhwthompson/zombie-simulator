@@ -13,9 +13,9 @@ from space import Area, Point, Vector
 
 characters = st.builds(object)
 
-def position_dicts(min_size=0):
+def position_dicts(min_size=0, max_size=None):
     # Using OrderedDict so Hypothesis can pick a random element
-    return st.dictionaries(st.from_type(Point), characters, min_size=min_size, dict_class=OrderedDict)
+    return st.dictionaries(st.from_type(Point), characters, min_size=min_size, max_size=max_size, dict_class=OrderedDict)
 
 
 def areas(min_size_x=1, min_size_y=1):
@@ -26,6 +26,20 @@ def areas(min_size_x=1, min_size_y=1):
                 y=st.integers(min_value=p.y + min_size_y)
         )
     return st.from_type(Point).flatmap(lambda p: st.builds(Area, st.just(p), points_greater_than(p)))
+
+
+def position_dicts_in(area, min_size=0, max_size=None):
+    return st.dictionaries(
+            st.builds(
+                Point,
+                x=st.integers(min_value=area._lower.x, max_value=area._upper.x-1),
+                y=st.integers(min_value=area._lower.y, max_value=area._upper.y-1),
+            ),
+            characters,
+            min_size=min_size,
+            max_size=max_size,
+            dict_class=OrderedDict
+    )
 
 
 def area_containing(points):
@@ -53,6 +67,12 @@ class TestRoster:
         positions = {Point(0, 0): character, Point(1, 1): character}
         with pytest.raises(ValueError) as e:
             Roster.for_value(positions, area_containing(positions))
+
+    @given(position_dicts(), areas())
+    def test_characters_outside_area(self, positions, area):
+        assume(not all(p in area for p in positions))
+        with pytest.raises(ValueError) as e:
+            Roster.for_value(positions, area)
 
     @given(position_dicts())
     def test_value_equality(self, positions):
@@ -127,8 +147,11 @@ class TestMove:
     def test_character_moves(self, positions_and_item, move_vector):
         positions, (position, character) = positions_and_item
         new_position = position + move_vector
+
+        all_positions = list(positions) + [new_position]
+
         assume(not any(pos == new_position for pos, _ in positions.items()))
-        roster = Roster.for_value(positions, area_containing(positions))
+        roster = Roster.for_value(positions, area_containing(all_positions))
         move = Move(character, position, new_position)
 
         next_roster = move.next_roster(roster)
@@ -141,6 +164,19 @@ class TestMove:
 
         roster = Roster.for_value(positions, area_containing(positions))
         move = Move(b, Point(0, 0), Point(1, 1))
+        with pytest.raises(ValueError):
+            move.next_roster(roster)
+
+    @given(areas().flatmap(lambda area: st.tuples(st.just(area), position_dicts_in(area, min_size=1))), st.from_type(Point))
+    def test_move_out_of_bounds(self, area_and_positions, new_position):
+        area, positions = area_and_positions
+        position, character = next(iter(positions.items()))
+
+        assume(new_position not in area)
+
+        roster = Roster.for_value(positions, area)
+        move = Move(character, position, new_position)
+
         with pytest.raises(ValueError):
             move.next_roster(roster)
 
