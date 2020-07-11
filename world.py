@@ -11,11 +11,6 @@ class World:
         self._height = height
         self._roster = Roster.for_value(characters, area=self._area)
 
-        bad_positions = [p for p, _ in self._roster if p not in self._area]
-        if bad_positions:
-            raise ValueError('Off-world characters at '
-                             '{}'.format(bad_positions))
-
     def __repr__(self):
         return 'World({}, {}, {})'.format(self._width, self._height, self._roster)
 
