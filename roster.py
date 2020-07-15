@@ -1,11 +1,23 @@
 from collections import Counter
+from itertools import chain
 import math
 
 from space import Point
+from tree import SpaceTree
+
+
+class HasAttributes:
+    def __init__(self, **attributes):
+        self._attributes = attributes
+
+    def __call__(self, character):
+        return all(
+            getattr(character, name) == value
+            for name, value in self._attributes.items()
+        )
 
 
 class Roster:
-
     @classmethod
     def for_value(cls, value, area=None):
         if isinstance(value, Roster):
@@ -16,88 +28,127 @@ class Roster:
 
         return Roster(value, area)
 
-    def __init__(self, character_positions, area, _characters=None):
+    def __init__(
+        self, character_positions, area, *, _undead_positions=None, _characters=None
+    ):
         if _characters is not None:
             # This only turns up when we're building up from an existing roster
             self._positions = character_positions
             self._area = area
+            self._undead_positions = _undead_positions
             self._characters = _characters
         else:
             self._build_positions(character_positions, area)
 
     def _build_positions(self, character_positions, area):
-        self._positions = {}
         self._characters = set()
         self._area = area
+
+        undead_positions = SpaceTree.build(area)
+        other_positions = SpaceTree.build(area)
 
         for position, character in character_positions.items():
             point = Point(*position)
             if point not in self._area:
                 raise ValueError(f"{point} is not in the world area")
-            if point in self._positions:
+            if point in undead_positions or point in other_positions:
                 raise ValueError(f"Multiple characters at position {position}")
             if character in self._characters:
                 raise ValueError(f"Character {character} in multiple places")
 
-            self._positions[point] = character
+            if character.undead:
+                undead_positions = undead_positions.set(point, character)
+            else:
+                other_positions = other_positions.set(point, character)
+
             self._characters.add(character)
 
+        self._undead_positions = undead_positions
+        self._positions = other_positions
+
     def character_at(self, position):
-        return self._positions.get(position)
+        return self._undead_positions.get(position) or self._positions.get(position)
 
-    def nearest_to(self, origin, predicate=None):
-        min_distance = math.inf
-        best_position = None
-        closest_character = None
-        if predicate is None:
-            predicate = lambda item: True
-
-        for pos, char in self:
-            if pos == origin or not predicate(char):
-                continue
-            distance = (pos - origin).distance
-            if distance < min_distance:
-                min_distance = distance
-                best_position = pos
-                closest_character = char
-
-        if closest_character is None:
-            return None
+    def nearest_to(self, origin, *, undead, **attributes):
+        if undead:
+            return self._undead_positions.nearest_to(
+                origin, HasAttributes(**attributes)
+            )
         else:
-            return (best_position, closest_character)
+            return self._positions.nearest_to(origin, HasAttributes(**attributes))
 
     def move_character(self, old_position, new_position):
-        positions = self._positions.copy()
         if new_position not in self._area:
             raise ValueError(f"{new_position} is not in the world area")
-        if new_position in positions:
+
+        if new_position in self._undead_positions or new_position in self._positions:
             raise ValueError(f"Attempt to move to occupied position {new_position}")
-        positions[new_position] = positions.pop(old_position)
-        return Roster(positions, self._area, _characters=self._characters)
+
+        undead_positions = self._undead_positions
+        other_positions = self._positions
+
+        if old_position in undead_positions:
+            character = undead_positions[old_position]
+            undead_positions = undead_positions.unset(old_position).set(
+                new_position, character
+            )
+        elif old_position in other_positions:
+            character = other_positions[old_position]
+            other_positions = other_positions.unset(old_position).set(
+                new_position, character
+            )
+        else:
+            raise ValueError(f"Attempt to move from unoccupied position {old_position}")
+
+        return Roster(
+            other_positions,
+            self._area,
+            _characters=self._characters,
+            _undead_positions=undead_positions,
+        )
 
     def change_character(self, position, change):
-        positions = self._positions.copy()
-        old_character = positions[position]
-        new_character = change(positions[position])
-        positions[position] = new_character
+        undead_positions = self._undead_positions
+        other_positions = self._positions
+
+        if position in undead_positions:
+            old_character = undead_positions[position]
+            undead_positions = undead_positions.unset(position)
+        elif position in other_positions:
+            old_character = other_positions[position]
+            other_positions = other_positions.unset(position)
+
+        new_character = change(old_character)
+        if new_character.undead:
+            undead_positions = undead_positions.set(position, new_character)
+        else:
+            other_positions = other_positions.set(position, new_character)
 
         new_characters = self._characters - set([old_character]) | set([new_character])
-        return Roster(positions, self._area, _characters=new_characters)
+        return Roster(
+            other_positions,
+            self._area,
+            _characters=new_characters,
+            _undead_positions=undead_positions,
+        )
 
     def __contains__(self, character):
         return character in self._characters
 
     def __iter__(self):
-        return iter(self._positions.items())
+        return iter(chain(self._positions.items(), self._undead_positions.items()))
 
     def __len__(self):
-        return len(self._positions)
+        return len(self._positions) + len(self._undead_positions)
 
     def __repr__(self):
-        return 'Roster({})'.format(self._positions)
+        return "Roster({}, {})".format(self._positions, self._undead_positions)
 
     def __eq__(self, other):
-        return self._positions == other._positions
+        return (
+            self._positions == other._positions
+            and self._undead_positions == other._undead_positions
+        )
 
 
 class Move:

@@ -12,11 +12,11 @@ class TargetVectors:
 
     @property
     def nearest_human(self):
-        return self._viewpoint.nearest(lambda c: c.living)
+        return self._viewpoint.nearest(undead=False, living=True)
 
     @property
     def nearest_zombie(self):
-        return self._viewpoint.nearest(lambda c: c.undead)
+        return self._viewpoint.nearest(undead=True)
 
     def from_offset(self, offset):
         return TargetVectors(self._viewpoint.from_offset(offset))

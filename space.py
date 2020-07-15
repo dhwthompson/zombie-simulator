@@ -26,7 +26,29 @@ class Area:
         return x_contains and y_contains
 
     def __repr__(self):
-        return 'Area({}, {})'.format(self._lower, self._upper)
+        return "Area({}, {})".format(self._lower, self._upper)
+
+    def __hash__(self):
+        return hash((self._lower, self._upper))
+
+    def __eq__(self, other):
+        return self._lower == other._lower and self._upper == other._upper
+
+    @property
+    def width(self):
+        return self._upper.x - self._lower.x
+
+    @property
+    def height(self):
+        return self._upper.y - self._lower.y
+
+    def distance_from(self, point):
+        x = min(point.x, self._upper.x)
+        x = max(x, self._lower.x)
+        y = min(point.y, self._upper.y)
+        y = max(y, self._lower.y)
+        best_point = Point(x, y)
+        return (best_point - point).distance
 
     def from_origin(self, origin):
         return BoundingBox(self._lower - origin, self._upper - origin)

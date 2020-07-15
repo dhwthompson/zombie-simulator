@@ -25,7 +25,7 @@ class World:
         return [self._row(y) for y in range(self._height)]
 
     def _row(self, y):
-        return [self._roster.character_at((x, y)) for x in range(self._width)]
+        return [self._roster.character_at(Point(x, y)) for x in range(self._width)]
 
     def viewpoint(self, origin):
         return Viewpoint(origin, self._roster)
@@ -78,8 +78,11 @@ class Viewpoint:
     def __len__(self):
         return len(self._roster)
 
-    def nearest(self, predicate):
-        nearest = self._roster.nearest_to(self._origin, predicate)
+    def character_at(self, offset):
+        return self._roster.character_at(self._origin + offset)
+
+    def nearest(self, **attributes):
+        nearest = self._roster.nearest_to(self._origin, **attributes)
         if nearest:
             return nearest[0] - self._origin
 

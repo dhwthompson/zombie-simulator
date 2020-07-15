@@ -78,6 +78,20 @@ class TestArea:
         lower, upper = points
         assert lower in Area(lower, upper)
 
+    def test_width(self):
+        lower = Point(0, 0)
+        upper = Point(2, 2)
+        area = Area(lower, upper)
+
+        assert area.width == 2
+
+    def test_width(self):
+        lower = Point(0, 0)
+        upper = Point(2, 2)
+        area = Area(lower, upper)
+
+        assert area.height == 2
+
     @given(points, points)
     def test_excludes_upper_bound(self, lower, upper):
         assert upper not in Area(lower, upper)

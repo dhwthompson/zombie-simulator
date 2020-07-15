@@ -17,10 +17,20 @@ class FakeViewpoint:
     def __init__(self, positions):
         self._positions = positions
 
-    def nearest(self, predicate):
-        matches = [pos for pos, char in self._positions if predicate(char)]
+    def nearest(self, **attributes):
+        matches = [
+                pos for pos, char in self._positions
+                if all(getattr(char, a) == v for a, v in attributes.items())
+        ]
         if matches:
             return min(matches, key=lambda pos: pos.distance)
+        else:
+            return None
+
+    def character_at(self, position):
+        for point, character in self._positions:
+            if point == position:
+                return character
         else:
             return None
 
@@ -76,14 +86,14 @@ class TestObstacles:
     @example([])
     @example([(Vector.ZERO, object())])
     def test_never_includes_zero_vector(self, environment):
-        assert Vector.ZERO not in Obstacles(environment)
+        assert Vector.ZERO not in Obstacles(FakeViewpoint(environment))
 
     @given(environments(min_size=1).flatmap(list_and_element))
     def test_includes_entry(self, env_and_entry):
         environment, (position, _) = env_and_entry
         assume(position != Vector.ZERO)
 
-        assert position in Obstacles(environment)
+        assert position in Obstacles(FakeViewpoint(environment))
 
 
 class TestLivingState:
