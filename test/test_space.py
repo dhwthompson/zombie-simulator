@@ -16,10 +16,12 @@ non_huge_vectors = vectors.filter(lambda v: v.distance < 10000)
 # greater than the corresponding components of the first Point. When used as
 # arguments for an Area, these generate non-empty Areas.
 ordered_points = points.flatmap(
-        lambda v: st.tuples(
-            st.just(v),
-            st.builds(Point, x=st.integers(min_value=v.x+1),y=st.integers(min_value=v.y+1))
-        )
+    lambda v: st.tuples(
+        st.just(v),
+        st.builds(
+            Point, x=st.integers(min_value=v.x + 1), y=st.integers(min_value=v.y + 1)
+        ),
+    )
 )
 
 
@@ -60,7 +62,6 @@ class TestPoint:
 
 
 class TestArea:
-
     def test_no_arg_constructor(self):
         with pytest.raises(TypeError) as exc:
             Area()
@@ -150,7 +151,7 @@ class TestVector:
     def test_truthiness(self, vector):
         assert bool(vector) == (vector.distance > 0)
 
-    @pytest.mark.parametrize('dx,dy', [(2, 1), (-2, 1), (2, -1), (-2, -1)])
+    @pytest.mark.parametrize("dx,dy", [(2, 1), (-2, 1), (2, -1), (-2, -1)])
     def test_non_zero_distance(self, dx, dy):
         assert Vector(dx, dy).distance == math.sqrt(5)
 
@@ -178,13 +179,14 @@ class TestVector:
 
 # When tests iterate over bounding boxes, anything much larger than this will
 # be too big to get through quickly
-small_vectors = st.builds(Vector,
-                          st.integers(min_value=-30, max_value=30),
-                          st.integers(min_value=-30, max_value=30))
+small_vectors = st.builds(
+    Vector,
+    st.integers(min_value=-30, max_value=30),
+    st.integers(min_value=-30, max_value=30),
+)
 
 
 class TestBoundingBox:
-
     def test_takes_two_vectors(self):
         BoundingBox(Vector.ZERO, Vector(1, 1))
 
@@ -228,7 +230,6 @@ class TestBoundingBox:
 
 
 class TestUnlimitedBoundingBox:
-
     @given(vectors)
     def test_contains_everything(self, vector):
         assert vector in UnlimitedBoundingBox()

@@ -17,11 +17,11 @@ def get_world_size(size_string, get_terminal_size, default):
     if not size_string:
         return default
 
-    if size_string == 'auto':
+    if size_string == "auto":
         terminal_size = get_terminal_size()
         return (terminal_size.columns // 2, terminal_size.lines - 1)
 
-    size_match = re.match(r'(\d+)x(\d+)$', size_string)
+    size_match = re.match(r"(\d+)x(\d+)$", size_string)
 
     if size_match:
         return tuple([int(d) for d in size_match.groups()])
@@ -29,18 +29,19 @@ def get_world_size(size_string, get_terminal_size, default):
     raise ValueError(f'Unrecognised format "{size_string}"')
 
 
-world_width, world_height = get_world_size(environ.get('WORLD_SIZE'),
-                                           shutil.get_terminal_size,
-                                           default=(60, 30))
+world_width, world_height = get_world_size(
+    environ.get("WORLD_SIZE"), shutil.get_terminal_size, default=(60, 30)
+)
 
-DENSITY = float(environ.get('DENSITY', 0.05))
-ZOMBIE_CHANCE = float(environ.get('ZOMBIE_CHANCE', 0.2))
-TICK = float(environ.get('TICK', 0.1))
+DENSITY = float(environ.get("DENSITY", 0.05))
+ZOMBIE_CHANCE = float(environ.get("ZOMBIE_CHANCE", 0.2))
+TICK = float(environ.get("TICK", 0.1))
 
 MAX_AGE = None
 
-if environ.get('MAX_AGE'):
-    MAX_AGE = int(environ.get('MAX_AGE'))
+if environ.get("MAX_AGE"):
+    MAX_AGE = int(environ.get("MAX_AGE"))
+
 
 def each_interval(interval, current_time=time.time, sleep=time.sleep):
     """Yield at regular intervals.
@@ -58,12 +59,14 @@ def each_interval(interval, current_time=time.time, sleep=time.sleep):
 
 
 def clear():
-    print('\033[H\033[J', end='')
+    print("\033[H\033[J", end="")
 
 
-if __name__ == '__main__':
-    population = Population((DENSITY * (1 - ZOMBIE_CHANCE), default_human),
-                            (DENSITY * ZOMBIE_CHANCE, default_zombie))
+if __name__ == "__main__":
+    population = Population(
+        (DENSITY * (1 - ZOMBIE_CHANCE), default_human),
+        (DENSITY * ZOMBIE_CHANCE, default_zombie),
+    )
     world = WorldBuilder(world_width, world_height, population).world
     renderer = Renderer(world)
 

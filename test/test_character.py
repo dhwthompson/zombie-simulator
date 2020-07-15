@@ -13,14 +13,14 @@ from space import BoundingBox, Vector
 
 
 class FakeViewpoint:
-
     def __init__(self, positions):
         self._positions = positions
 
     def nearest(self, **attributes):
         matches = [
-                pos for pos, char in self._positions
-                if all(getattr(char, a) == v for a, v in attributes.items())
+            pos
+            for pos, char in self._positions
+            if all(getattr(char, a) == v for a, v in attributes.items())
         ]
         if matches:
             return min(matches, key=lambda pos: pos.distance)
@@ -54,20 +54,20 @@ zombies = st.builds(default_zombie)
 characters = st.one_of(humans, zombies)
 
 containing_boxes = st.builds(
-        BoundingBox,
-        lower=st.builds(Vector, dx=st.integers(max_value=0), dy=st.integers(max_value=0)),
-        upper=st.builds(Vector, dx=st.integers(min_value=1), dy=st.integers(min_value=1)),
+    BoundingBox,
+    lower=st.builds(Vector, dx=st.integers(max_value=0), dy=st.integers(max_value=0)),
+    upper=st.builds(Vector, dx=st.integers(min_value=1), dy=st.integers(min_value=1)),
 )
 
+
 def environments(characters=characters, min_size=0, max_size=None):
-    all_envs = st.lists(st.tuples(vectors(1000), characters),
-                        min_size=min_size,
-                        max_size=max_size)
+    all_envs = st.lists(
+        st.tuples(vectors(1000), characters), min_size=min_size, max_size=max_size
+    )
     return all_envs.filter(lambda e: not any(pos == Vector.ZERO for pos, _ in e))
 
 
 class TestTargetVectors:
-
     @given(environments(characters=humans, min_size=1).flatmap(list_and_element))
     def test_nearest_human(self, env_and_entry):
         environment, (position, character) = env_and_entry
@@ -81,7 +81,6 @@ class TestTargetVectors:
 
 
 class TestObstacles:
-
     @given(environments())
     @example([])
     @example([(Vector.ZERO, object())])
@@ -97,7 +96,6 @@ class TestObstacles:
 
 
 class TestLivingState:
-
     def test_is_living(self):
         assert Living().living
 
@@ -107,27 +105,36 @@ class TestLivingState:
     @given(moves=st.lists(vectors(), min_size=1))
     def test_movement_without_zombies(self, moves):
         target_vectors = TargetVectors(FakeViewpoint([]))
-        assert (Living().best_move(target_vectors, moves) == min(moves, key=lambda v: v.distance))
+        assert Living().best_move(target_vectors, moves) == min(
+            moves, key=lambda v: v.distance
+        )
 
-    @given(zombie_vectors=st.lists(vectors(), min_size=1), moves=st.lists(vectors(), min_size=1))
+    @given(
+        zombie_vectors=st.lists(vectors(), min_size=1),
+        moves=st.lists(vectors(), min_size=1),
+    )
     def test_movement_with_zombies(self, zombie_vectors, moves):
-        target_vectors = TargetVectors(FakeViewpoint([(v, default_zombie()) for v in zombie_vectors]))
+        target_vectors = TargetVectors(
+            FakeViewpoint([(v, default_zombie()) for v in zombie_vectors])
+        )
         best_move = Living().best_move(target_vectors, moves)
 
         def distance_after_move(move):
             return min((zombie - move).distance for zombie in zombie_vectors)
 
         best_move_distance = distance_after_move(best_move)
-        note(f'Best distance, after {best_move}: {best_move_distance}')
+        note(f"Best distance, after {best_move}: {best_move_distance}")
 
         for move in moves:
             move_distance = distance_after_move(move)
-            note(f'Distance after {move}: {move_distance}')
+            note(f"Distance after {move}: {move_distance}")
 
         assert all(best_move_distance >= distance_after_move(move) for move in moves)
 
     def test_chooses_shortest_best_move(self):
-        target_vectors = TargetVectors(FakeViewpoint([(Vector(1, 2), default_zombie())]))
+        target_vectors = TargetVectors(
+            FakeViewpoint([(Vector(1, 2), default_zombie())])
+        )
         moves = [Vector.ZERO, Vector(1, 0), Vector(2, 0)]
 
         assert Living().best_move(target_vectors, moves) == Vector.ZERO
@@ -143,7 +150,6 @@ class TestLivingState:
 
 
 class TestDeadState:
-
     def test_is_not_living(self):
         assert not Dead().living
 
@@ -174,7 +180,6 @@ class TestDeadState:
 
 
 class TestUndeadState:
-
     def test_is_not_living(self):
         assert not Undead().living
 
@@ -183,12 +188,14 @@ class TestUndeadState:
 
     @given(moves=st.lists(vectors(), min_size=1))
     def test_movement_without_humans(self, moves):
-        target_vectors = namedtuple('Targets', ['nearest_human'])(None)
-        assert (Undead().best_move(target_vectors, moves) == min(moves, key=lambda v: v.distance))
+        target_vectors = namedtuple("Targets", ["nearest_human"])(None)
+        assert Undead().best_move(target_vectors, moves) == min(
+            moves, key=lambda v: v.distance
+        )
 
     @given(human=vectors(), moves=st.lists(vectors(), min_size=1))
     def test_gets_as_close_to_target_as_possible(self, human, moves):
-        target_vectors = namedtuple('Targets', ['nearest_human'])(human)
+        target_vectors = namedtuple("Targets", ["nearest_human"])(human)
         best_move = Undead().best_move(target_vectors, moves)
 
         distance_after_move = (human - best_move).distance
@@ -196,21 +203,22 @@ class TestUndeadState:
 
     @given(vectors(max_offset=1))
     def test_attacks_nearby_humans(self, vector):
-        target_vectors = namedtuple('Targets', ['nearest_human'])(vector)
+        target_vectors = namedtuple("Targets", ["nearest_human"])(vector)
         assert Undead().attack(target_vectors) == vector
 
     @given(vectors().filter(lambda v: v.distance >= 2))
     def test_does_not_attack_distant_humans(self, vector):
-        target_vectors = namedtuple('Targets', ['nearest_human'])(vector)
+        target_vectors = namedtuple("Targets", ["nearest_human"])(vector)
         assert Undead().attack(target_vectors) is None
 
     def test_no_next_state(self):
         assert Undead().next_state is None
 
 
-Move = namedtuple('Move', ['vector'])
-Attack = namedtuple('Attack', ['vector'])
-StateChange = namedtuple('StateChange', ['new_state'])
+Move = namedtuple("Move", ["vector"])
+Attack = namedtuple("Attack", ["vector"])
+StateChange = namedtuple("StateChange", ["new_state"])
+
 
 class FakeActions:
 
@@ -220,7 +228,6 @@ class FakeActions:
 
 
 class TestCharacter:
-
     def test_livingness(self):
         assert Character(state=Living()).living
 
@@ -230,14 +237,17 @@ class TestCharacter:
     def test_move_action(self):
         character = Character(state=Undead())
         environment = FakeViewpoint([(Vector(3, 3), default_human())])
-        next_action = character.next_action(environment, BoundingBox.range(5), FakeActions)
+        next_action = character.next_action(
+            environment, BoundingBox.range(5), FakeActions
+        )
         assert next_action == Move(Vector(1, 1))
 
     def test_attack_action(self):
         character = Character(state=Undead())
         target = default_human()
-        next_action = character.next_action(FakeViewpoint([(Vector(1, 1), target)]),
-                                            BoundingBox.range(5), FakeActions)
+        next_action = character.next_action(
+            FakeViewpoint([(Vector(1, 1), target)]), BoundingBox.range(5), FakeActions
+        )
         assert next_action == Attack(Vector(1, 1))
 
     def test_state_change_action(self):
@@ -253,7 +263,6 @@ class TestCharacter:
 
 
 class TestZombie:
-
     @pytest.fixture(scope="session")
     def zombie(self):
         return default_zombie()
@@ -298,9 +307,11 @@ class TestZombie:
         assert zombie.move(FakeViewpoint([])) == Vector.ZERO
 
     def test_nearest_human(self, zombie):
-        environment = [(Vector(3, -3), default_human()),
-                       (Vector(2, 2), default_human()),
-                       (Vector(-3, 3), default_human())]
+        environment = [
+            (Vector(3, -3), default_human()),
+            (Vector(2, 2), default_human()),
+            (Vector(-3, 3), default_human()),
+        ]
 
         assert zombie.move(FakeViewpoint(environment)) == Vector(1, 1)
 
@@ -314,10 +325,12 @@ class TestZombie:
         assert zombie.move(FakeViewpoint(environment)) in expected_moves
 
     def test_blocked_path(self, zombie):
-        environment = [(Vector(2, 2), default_human()),
-                       (Vector(1, 1), default_zombie()),
-                       (Vector(1, 0), default_zombie()),
-                       (Vector(0, 1), default_zombie())]
+        environment = [
+            (Vector(2, 2), default_human()),
+            (Vector(1, 1), default_zombie()),
+            (Vector(1, 0), default_zombie()),
+            (Vector(0, 1), default_zombie()),
+        ]
         assert zombie.move(FakeViewpoint(environment)) == Vector.ZERO
 
     def test_all_paths_blocked(self, zombie):
@@ -340,9 +353,11 @@ class TestZombie:
         assert zombie.move(viewpoint) == Vector.ZERO
 
     def test_alternate_path(self, zombie):
-        environment = [(Vector(2, 2), default_human()),
-                       (Vector(1, 1), default_zombie()),
-                       (Vector(1, 0), default_zombie())]
+        environment = [
+            (Vector(2, 2), default_human()),
+            (Vector(1, 1), default_zombie()),
+            (Vector(1, 0), default_zombie()),
+        ]
         assert zombie.move(FakeViewpoint(environment)) == Vector(0, 1)
 
     @given(st.lists(st.tuples(vectors(max_offset=1), humans), min_size=1, max_size=1))
@@ -361,7 +376,6 @@ class TestZombie:
 
 
 class TestHuman:
-
     @pytest.fixture(scope="session")
     def human(self):
         return default_human()

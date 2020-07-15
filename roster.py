@@ -24,7 +24,7 @@ class Roster:
             return value
 
         if area is None:
-            raise ValueError('Roster requires area parameter')
+            raise ValueError("Roster requires area parameter")
 
         return Roster(value, area)
 
@@ -149,7 +149,6 @@ class Roster:
 
 
 class Move:
-
     def __init__(self, character, old_position, new_position):
         self._character = character
         self._old_position = old_position
@@ -165,22 +164,23 @@ class Move:
         character = self._character
 
         if character not in roster:
-            raise ValueError(f'Attempt to move non-existent character {character}')
+            raise ValueError(f"Attempt to move non-existent character {character}")
 
         return roster.move_character(old_position, new_position)
 
     def __eq__(self, other):
-        return (isinstance(other, Move)
-                and self._character == other._character
-                and self._old_position == old_position
-                and self._new_position == new_position)
+        return (
+            isinstance(other, Move)
+            and self._character == other._character
+            and self._old_position == old_position
+            and self._new_position == new_position
+        )
 
     def __repr__(self):
-        return f'Move({self._character}, {self._old_position, self._new_position})'
+        return f"Move({self._character}, {self._old_position, self._new_position})"
 
 
 class Attack:
-
     def __init__(self, attacker, target_position):
         self._attacker = attacker
         self._target_position = target_position
@@ -190,9 +190,9 @@ class Attack:
         target_position = self._target_position
 
         if attacker not in roster:
-            raise ValueError(f'Attack by non-existent character {attacker}')
+            raise ValueError(f"Attack by non-existent character {attacker}")
         if roster.character_at(self._target_position) is None:
-            raise ValueError(f'Attack on non-existent character at {target_position}')
+            raise ValueError(f"Attack on non-existent character at {target_position}")
 
         return roster.change_character(target_position, self._attack)
 
@@ -200,16 +200,17 @@ class Attack:
         return character.attacked()
 
     def __eq__(self, other):
-        return (isinstance(other, Attack)
-                and self._attacker == other._attacker
-                and self._target == other._target_position)
+        return (
+            isinstance(other, Attack)
+            and self._attacker == other._attacker
+            and self._target == other._target_position
+        )
 
     def __repr__(self):
-        return f'Attack({self._attacker}, {self._target})'
+        return f"Attack({self._attacker}, {self._target})"
 
 
 class StateChange:
-
     def __init__(self, character, position, new_state):
         self._character = character
         self._position = position
@@ -220,7 +221,7 @@ class StateChange:
         position = self._position
 
         if character not in roster:
-            raise ValueError(f'Attempt to change non-existent character {character}')
+            raise ValueError(f"Attempt to change non-existent character {character}")
 
         return roster.change_character(position, self._change_state)
 
@@ -228,9 +229,11 @@ class StateChange:
         return character.with_state(self._new_state)
 
     def __eq__(self, other):
-        return (isinstance(other, StateChange)
-                and self._character == other._character
-                and self._new_state == other._new_state)
+        return (
+            isinstance(other, StateChange)
+            and self._character == other._character
+            and self._new_state == other._new_state
+        )
 
     def __repr__(self):
-        return f'StateChange({self._character}, {self._new_state})'
+        return f"StateChange({self._character}, {self._new_state})"

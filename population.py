@@ -2,7 +2,6 @@ import random
 
 
 class Population:
-
     def __init__(self, *probabilities, random_source=random.random):
         self._random = random_source
 

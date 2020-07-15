@@ -15,7 +15,6 @@ class Point(NamedTuple):
 
 
 class Area:
-
     def __init__(self, lower: Point, upper: Point):
         self._lower = lower
         self._upper = upper
@@ -61,7 +60,7 @@ class Vector(NamedTuple):
 
     @property
     def distance(self):
-        return math.sqrt(self.dx**2 + self.dy**2)
+        return math.sqrt(self.dx ** 2 + self.dy ** 2)
 
     def __bool__(self):
         return bool(self.distance)
@@ -77,7 +76,6 @@ Vector.ZERO = Vector(0, 0)
 
 
 class BoundingBox:
-
     def __init__(self, lower: Vector, upper: Vector):
         self._lower = lower
         self._upper = upper
@@ -85,7 +83,7 @@ class BoundingBox:
     @classmethod
     def range(cls, radius):
         if radius < 0:
-            raise ValueError(f'Cannot have a negative range {radius}')
+            raise ValueError(f"Cannot have a negative range {radius}")
         return cls(Vector(-radius, -radius), Vector(radius + 1, radius + 1))
 
     def __contains__(self, vector):
@@ -99,10 +97,9 @@ class BoundingBox:
                 yield Vector(dx, dy)
 
     def __repr__(self):
-        return f'BoundingBox({self._lower}, {self._upper})'
+        return f"BoundingBox({self._lower}, {self._upper})"
 
 
 class UnlimitedBoundingBox:
-
     def __contains__(self, vector):
         return True

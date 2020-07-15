@@ -7,14 +7,14 @@ class Renderer:
         return [self._render_row(row) for row in self._world.rows]
 
     def _render_row(self, row):
-        return ''.join(self._render_character(c) for c in row)
+        return "".join(self._render_character(c) for c in row)
 
     def _render_character(self, character):
         if not character:
-            return '. '
+            return ". "
         if character.living:
-            return '\U0001F468 '
+            return "\U0001F468 "
         elif character.undead:
-            return '\U0001F9DF '
+            return "\U0001F9DF "
         else:
-            return '\U0001F480 '
+            return "\U0001F480 "

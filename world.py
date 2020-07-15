@@ -4,7 +4,6 @@ import tracing
 
 
 class World:
-
     def __init__(self, width, height, characters):
         self._area = Area(Point(0, 0), Point(width, height))
         self._width = width
@@ -12,13 +11,15 @@ class World:
         self._roster = Roster.for_value(characters, area=self._area)
 
     def __repr__(self):
-        return f'World({self._width}, {self._height}, {self._roster})'
+        return f"World({self._width}, {self._height}, {self._roster})"
 
     def __eq__(self, other):
-        return (isinstance(other, World)
-                and self._width == other._width
-                and self._height == other._height
-                and self._roster == other._roster)
+        return (
+            isinstance(other, World)
+            and self._width == other._width
+            and self._height == other._height
+            and self._roster == other._roster
+        )
 
     @property
     def rows(self):
@@ -33,8 +34,10 @@ class World:
     def tick(self):
         world = self
         for (position, character) in self._roster:
-            context = {"character_living":
-                character.living, "character_undead": character.undead}
+            context = {
+                "character_living": character.living,
+                "character_undead": character.undead,
+            }
             with tracing.span("character_action", context):
                 if character not in world._roster:
                     continue
@@ -50,7 +53,6 @@ class World:
 
 
 class AvailableActions:
-
     def __init__(self, position, character):
         self._position = position
         self._character = character
@@ -66,14 +68,14 @@ class AvailableActions:
 
 
 class Viewpoint:
-
     def __init__(self, origin, roster):
         self._origin = origin
         self._roster = roster
 
     def __iter__(self):
-        return iter((position - self._origin, character) for position, character in
-                self._roster)
+        return iter(
+            (position - self._origin, character) for position, character in self._roster
+        )
 
     def __len__(self):
         return len(self._roster)
@@ -91,13 +93,14 @@ class Viewpoint:
 
 
 class WorldBuilder:
-
     def __init__(self, width, height, population):
         grid = self._grid(width, height)
 
-        starting_positions = {point: character
-                              for point, character in zip(grid, population)
-                              if character is not None}
+        starting_positions = {
+            point: character
+            for point, character in zip(grid, population)
+            if character is not None
+        }
 
         self._world = World(width, height, starting_positions)
 

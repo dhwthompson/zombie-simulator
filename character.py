@@ -6,7 +6,6 @@ def shortest(vectors):
 
 
 class TargetVectors:
-
     def __init__(self, viewpoint):
         self._viewpoint = viewpoint
 
@@ -23,7 +22,6 @@ class TargetVectors:
 
 
 class Obstacles:
-
     def __init__(self, environment):
         self._obstacles = [pos for pos, char in environment if pos != Vector.ZERO]
 
@@ -43,8 +41,12 @@ class Living:
 
     def best_move(self, target_vectors, available_moves):
         if target_vectors.nearest_zombie is not None:
+
             def move_rank(move):
-                return (-target_vectors.from_offset(move).nearest_zombie.distance, move.distance)
+                return (
+                    -target_vectors.from_offset(move).nearest_zombie.distance,
+                    move.distance,
+                )
 
             return min(available_moves, key=move_rank)
         else:
@@ -52,7 +54,6 @@ class Living:
 
 
 class Dead:
-
     def __init__(self, age=0):
         self._age = age
 
@@ -67,7 +68,7 @@ class Dead:
 
     def best_move(self, target_vectors, available_moves):
         if Vector.ZERO not in available_moves:
-            raise ValueError('Zero move unavailable for dead character')
+            raise ValueError("Zero move unavailable for dead character")
         return Vector.ZERO
 
     @property
@@ -97,6 +98,7 @@ class Undead:
     def best_move(self, target_vectors, available_moves):
         nearest_human = target_vectors.nearest_human
         if nearest_human:
+
             def move_rank(move):
                 return ((nearest_human - move).distance, move.distance)
 
@@ -109,7 +111,6 @@ class Undead:
 
 
 class Character:
-
     def __init__(self, state):
         self._state = state
 
@@ -153,9 +154,9 @@ class Character:
         return self._state.best_move(target_vectors, moves)
 
     def _available_moves(self, limits, obstacles):
-        moves = [m for m in self._state.movement_range
-                 if m in limits
-                 and m not in obstacles]
+        moves = [
+            m for m in self._state.movement_range if m in limits and m not in obstacles
+        ]
         return moves
 
     def attack(self, environment):
