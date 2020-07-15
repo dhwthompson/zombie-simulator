@@ -26,7 +26,7 @@ class Area:
         return x_contains and y_contains
 
     def __repr__(self):
-        return "Area({}, {})".format(self._lower, self._upper)
+        return f"Area({self._lower}, {self._upper})"
 
     def __hash__(self):
         return hash((self._lower, self._upper))
@@ -85,7 +85,7 @@ class BoundingBox:
     @classmethod
     def range(cls, radius):
         if radius < 0:
-            raise ValueError('Cannot have a negative range {}'.format(radius))
+            raise ValueError(f'Cannot have a negative range {radius}')
         return cls(Vector(-radius, -radius), Vector(radius + 1, radius + 1))
 
     def __contains__(self, vector):
@@ -99,7 +99,7 @@ class BoundingBox:
                 yield Vector(dx, dy)
 
     def __repr__(self):
-        return 'BoundingBox({}, {})'.format(self._lower, self._upper)
+        return f'BoundingBox({self._lower}, {self._upper})'
 
 
 class UnlimitedBoundingBox:

@@ -12,7 +12,7 @@ class World:
         self._roster = Roster.for_value(characters, area=self._area)
 
     def __repr__(self):
-        return 'World({}, {}, {})'.format(self._width, self._height, self._roster)
+        return f'World({self._width}, {self._height}, {self._roster})'
 
     def __eq__(self, other):
         return (isinstance(other, World)

@@ -142,7 +142,7 @@ class Roster:
         return len(self._positions) + len(self._undead_positions)
 
     def __repr__(self):
-        return "Roster({}, {})".format(self._positions, self._undead_positions)
+        return f"Roster({self._positions}, {self._undead_positions})"
 
     def __eq__(self, other):
         return (
@@ -168,8 +168,7 @@ class Move:
         character = self._character
 
         if character not in roster:
-            raise ValueError('Attempt to move non-existent character '
-                             '{}'.format(character))
+            raise ValueError(f'Attempt to move non-existent character {character}')
 
         return roster.move_character(old_position, new_position)
 
@@ -194,11 +193,9 @@ class Attack:
         target_position = self._target_position
 
         if attacker not in roster:
-            raise ValueError('Attack by non-existent character '
-                             '{}'.format(attacker))
+            raise ValueError(f'Attack by non-existent character {attacker}')
         if roster.character_at(self._target_position) is None:
-            raise ValueError('Attack on non-existent character at '
-                             '{}'.format(target_position))
+            raise ValueError(f'Attack on non-existent character at {target_position}')
 
         return roster.change_character(target_position, self._attack)
 
@@ -226,8 +223,7 @@ class StateChange:
         position = self._position
 
         if character not in roster:
-            raise ValueError('Attempt to change non-existent character '
-                             '{}'.format(character))
+            raise ValueError(f'Attempt to change non-existent character {character}')
 
         return roster.change_character(position, self._change_state)
 

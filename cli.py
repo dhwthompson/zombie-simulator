@@ -25,7 +25,7 @@ def get_world_size(size_string, get_terminal_size, default):
     if size_match:
         return tuple([int(d) for d in size_match.groups()])
 
-    raise ValueError('Unrecognised format "{}"'.format(size_string))
+    raise ValueError(f'Unrecognised format "{size_string}"')
 
 
 world_width, world_height = get_world_size(environ.get('WORLD_SIZE'),
