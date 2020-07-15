@@ -1,3 +1,4 @@
+from contextlib import ExitStack
 from itertools import islice
 from os import environ
 import re
@@ -70,19 +71,25 @@ if __name__ == '__main__':
     if MAX_AGE is not None:
         ticks = islice(ticks, MAX_AGE)
 
-    with open('tracing.json', mode='w') as trace_file:
-        with tracing.file_tracing(trace_file):
-            try:
-                for _ in ticks:
-                    clear()
-                    for line in renderer.lines:
-                        print(line)
+    tracing_context = ExitStack()
 
-                    with tracing.span("tick"):
-                        old_world, world = world, world.tick()
+    if environ.get("TRACEFILE"):
+        trace_file = open(environ.get("TRACEFILE"), mode="w")
+        tracing_context.enter_context(trace_file)
+        tracing_context.enter_context(tracing.file_tracing(trace_file))
 
-                    if old_world == world:
-                        break
-                    renderer = Renderer(world)
-            except KeyboardInterrupt:
-                sys.exit(1)
+    with tracing_context:
+        try:
+            for _ in ticks:
+                clear()
+                for line in renderer.lines:
+                    print(line)
+
+                with tracing.span("tick"):
+                    old_world, world = world, world.tick()
+
+                if old_world == world:
+                    break
+                renderer = Renderer(world)
+        except KeyboardInterrupt:
+            sys.exit(1)
