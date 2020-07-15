@@ -141,9 +141,6 @@ class Roster:
     def __len__(self):
         return len(self._positions) + len(self._undead_positions)
 
-    def __repr__(self):
-        return f"Roster({self._positions}, {self._undead_positions})"
-
     def __eq__(self, other):
         return (
             self._positions == other._positions
