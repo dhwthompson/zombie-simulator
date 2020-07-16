@@ -1,8 +1,10 @@
+import attr
 import math
 from typing import NamedTuple
 
 
-class Point(NamedTuple):
+@attr.s(auto_attribs=True, frozen=True)
+class Point:
 
     x: int
     y: int
@@ -11,7 +13,7 @@ class Point(NamedTuple):
         return Point(self.x + vector.dx, self.y + vector.dy)
 
     def __sub__(self, point):
-        return Vector(self.x - point[0], self.y - point[1])
+        return Vector(self.x - point.x, self.y - point.y)
 
 
 class Area:

@@ -122,14 +122,14 @@ class TestRoster:
     @given(characters)
     def test_roster_for_itself(self, character):
         roster = Roster.for_value(
-            {(0, 2): character}, area=Area(Point(0, 0), Point(3, 3))
+            {Point(0, 2): character}, area=Area(Point(0, 0), Point(3, 3))
         )
         assert roster.for_value(roster) is roster
 
     @given(characters)
     def test_no_nearest_character(self, character):
         roster = Roster.for_value(
-            {(1, 1): character}, area=Area(Point(0, 0), Point(2, 2))
+            {Point(1, 1): character}, area=Area(Point(0, 0), Point(2, 2))
         )
         assert roster.nearest_to(Point(1, 1), undead=True) is None
         assert roster.nearest_to(Point(1, 1), undead=False) is None

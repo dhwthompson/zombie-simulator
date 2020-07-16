@@ -32,29 +32,29 @@ class TestWorld:
 
     @given(characters())
     def test_world_with_character(self, character):
-        world = World(2, 2, {(1, 1): character})
+        world = World(2, 2, {Point(1, 1): character})
         assert world.rows == [[None, None], [None, character]]
 
     @given(characters())
     def test_character_out_of_bounds(self, character):
         with pytest.raises(ValueError):
-            World(2, 2, {(2, 2): character})
+            World(2, 2, {Point(2, 2): character})
 
     def test_empty_viewpoint(self):
         world = World(2, 2, characters={})
-        assert len(world.viewpoint((1, 1))) == 0
+        assert len(world.viewpoint(Point(1, 1))) == 0
 
     @given(characters())
     def test_viewpoint_single_character(self, character):
-        world = World(2, 2, {(1, 1): character})
-        viewpoint = world.viewpoint((1, 1))
+        world = World(2, 2, {Point(1, 1): character})
+        viewpoint = world.viewpoint(Point(1, 1))
         assert len(viewpoint) == 1
         assert (Vector.ZERO, character) in viewpoint
 
     @given(char1=characters(), char2=characters())
     def test_viewpoint_multiple_characters(self, char1, char2):
-        world = World(3, 3, {(1, 1): char1, (2, 0): char2})
-        viewpoint = world.viewpoint((0, 1))
+        world = World(3, 3, {Point(1, 1): char1, Point(2, 0): char2})
+        viewpoint = world.viewpoint(Point(0, 1))
         assert len(viewpoint) == 2
         assert (Vector(1, 0), char1) in viewpoint
         assert (Vector(2, -1), char2) in viewpoint

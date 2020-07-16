@@ -3,6 +3,7 @@ from hypothesis import strategies as st
 import pytest
 
 from character import default_human, default_zombie
+from space import Point
 from world import World
 
 
@@ -12,7 +13,8 @@ def worlds(
 ):
     dimensions = st.integers(min_value=1, max_value=100)
     x, y = draw(dimensions), draw(dimensions)
-    points = st.tuples(
+    points = st.builds(
+        Point,
         st.integers(min_value=0, max_value=x - 1),
         st.integers(min_value=0, max_value=y - 1),
     )
@@ -50,7 +52,7 @@ def test_zombies_approach_humans():
     zombie = default_zombie()
     human = default_human()
 
-    characters = {(0, 0): zombie, (2, 2): human}
+    characters = {Point(0, 0): zombie, Point(2, 2): human}
 
     world = World(3, 3, characters)
 

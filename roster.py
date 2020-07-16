@@ -2,7 +2,6 @@ from collections import Counter
 from itertools import chain
 import math
 
-from space import Point
 from tree import SpaceTree
 
 
@@ -48,18 +47,17 @@ class Roster:
         other_positions = SpaceTree.build(area)
 
         for position, character in character_positions.items():
-            point = Point(*position)
-            if point not in self._area:
-                raise ValueError(f"{point} is not in the world area")
-            if point in undead_positions or point in other_positions:
+            if position not in self._area:
+                raise ValueError(f"{position} is not in the world area")
+            if position in undead_positions or position in other_positions:
                 raise ValueError(f"Multiple characters at position {position}")
             if character in self._characters:
                 raise ValueError(f"Character {character} in multiple places")
 
             if character.undead:
-                undead_positions = undead_positions.set(point, character)
+                undead_positions = undead_positions.set(position, character)
             else:
-                other_positions = other_positions.set(point, character)
+                other_positions = other_positions.set(position, character)
 
             self._characters.add(character)
 
