@@ -1,10 +1,17 @@
-from collections import namedtuple
+import attr
 
 from renderer import Renderer
 
 
-World = namedtuple("World", ["rows"])
-Character = namedtuple("Character", ["living", "undead"])
+@attr.s(frozen=True)
+class World:
+    rows = attr.ib()
+
+
+@attr.s(auto_attribs=True, frozen=True)
+class Character:
+    living: bool
+    undead: bool
 
 
 class TestRenderer:

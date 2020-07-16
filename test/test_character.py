@@ -1,4 +1,4 @@
-from collections import namedtuple
+import attr
 
 from hypothesis import assume, example, given, note
 from hypothesis import strategies as st
@@ -179,6 +179,11 @@ class TestDeadState:
         assert Dead(age=20).next_state == Undead()
 
 
+@attr.s(frozen=True)
+class TargetsForUndead:
+    nearest_human = attr.ib()
+
+
 class TestUndeadState:
     def test_is_not_living(self):
         assert not Undead().living
@@ -188,14 +193,14 @@ class TestUndeadState:
 
     @given(moves=st.lists(vectors(), min_size=1))
     def test_movement_without_humans(self, moves):
-        target_vectors = namedtuple("Targets", ["nearest_human"])(None)
+        target_vectors = TargetsForUndead(nearest_human=None)
         assert Undead().best_move(target_vectors, moves) == min(
             moves, key=lambda v: v.distance
         )
 
     @given(human=vectors(), moves=st.lists(vectors(), min_size=1))
     def test_gets_as_close_to_target_as_possible(self, human, moves):
-        target_vectors = namedtuple("Targets", ["nearest_human"])(human)
+        target_vectors = TargetsForUndead(nearest_human=human)
         best_move = Undead().best_move(target_vectors, moves)
 
         distance_after_move = (human - best_move).distance
@@ -203,21 +208,21 @@ class TestUndeadState:
 
     @given(vectors(max_offset=1))
     def test_attacks_nearby_humans(self, vector):
-        target_vectors = namedtuple("Targets", ["nearest_human"])(vector)
+        target_vectors = TargetsForUndead(nearest_human=vector)
         assert Undead().attack(target_vectors) == vector
 
     @given(vectors().filter(lambda v: v.distance >= 2))
     def test_does_not_attack_distant_humans(self, vector):
-        target_vectors = namedtuple("Targets", ["nearest_human"])(vector)
+        target_vectors = TargetsForUndead(nearest_human=vector)
         assert Undead().attack(target_vectors) is None
 
     def test_no_next_state(self):
         assert Undead().next_state is None
 
 
-Move = namedtuple("Move", ["vector"])
-Attack = namedtuple("Attack", ["vector"])
-StateChange = namedtuple("StateChange", ["new_state"])
+Move = attr.make_class("Move", ["vector"], frozen=True)
+Attack = attr.make_class("Attack", ["vector"], frozen=True)
+StateChange = attr.make_class("StateChange", ["new_state"], frozen=True)
 
 
 class FakeActions:

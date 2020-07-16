@@ -1,11 +1,14 @@
-from collections import namedtuple
+import attr
 from unittest import mock
 
 import pytest
 
 from cli import each_interval, get_world_size
 
-TerminalSize = namedtuple("TerminalSize", ["columns", "lines"])
+@attr.s(auto_attribs=True, frozen=True)
+class TerminalSize:
+    columns: int
+    lines: int
 
 
 def test_auto_world_size():

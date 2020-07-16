@@ -143,7 +143,8 @@ class TestRoster:
             any(char.undead and char != character for (_, char) in positions.items())
         )
 
-        nearest_position, nearest_character = roster.nearest_to(position, undead=True)
+        nearest = roster.nearest_to(position, undead=True)
+        nearest_position, nearest_character = nearest.position, nearest.character
 
         assert nearest_position != position
         assert nearest_character != character
@@ -171,11 +172,8 @@ class TestRoster:
             )
         )
 
-        nearest_position, nearest_character = roster.nearest_to(
-            position, undead=False, living=True
-        )
-
-        assert nearest_character.living
+        nearest = roster.nearest_to(position, undead=False, living=True)
+        assert nearest.character.living
 
 
 class TestMove:
