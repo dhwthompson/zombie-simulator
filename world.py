@@ -86,7 +86,7 @@ class Viewpoint:
     def nearest(self, **attributes):
         nearest = self._roster.nearest_to(self._origin, **attributes)
         if nearest:
-            return nearest[0] - self._origin
+            return nearest.position - self._origin
 
     def from_offset(self, offset):
         return Viewpoint(self._origin + offset, self._roster)

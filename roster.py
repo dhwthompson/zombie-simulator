@@ -1,3 +1,4 @@
+import attr
 from collections import Counter
 from itertools import chain
 import math
@@ -14,6 +15,12 @@ class HasAttributes:
             getattr(character, name) == value
             for name, value in self._attributes.items()
         )
+
+
+@attr.s(frozen=True)
+class NearestMatch:
+    position = attr.ib()
+    character = attr.ib()
 
 
 class Roster:
@@ -69,11 +76,16 @@ class Roster:
 
     def nearest_to(self, origin, *, undead, **attributes):
         if undead:
-            return self._undead_positions.nearest_to(
+            match = self._undead_positions.nearest_to(
                 origin, HasAttributes(**attributes)
             )
         else:
-            return self._positions.nearest_to(origin, HasAttributes(**attributes))
+            match = self._positions.nearest_to(origin, HasAttributes(**attributes))
+
+        if match:
+            return NearestMatch(position=match.point, character=match.value)
+        else:
+            return None
 
     def move_character(self, old_position, new_position):
         if new_position not in self._area:

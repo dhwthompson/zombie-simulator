@@ -1,4 +1,4 @@
-from collections import namedtuple
+import attr
 from enum import Enum
 from itertools import chain
 import math
@@ -8,7 +8,10 @@ from space import Area, Point
 
 ANYTHING = lambda v: True
 
-Match = namedtuple("Match", ["point", "value"])
+@attr.s(frozen=True)
+class Match:
+    point = attr.ib()
+    value = attr.ib()
 
 
 class SpaceTree:
