@@ -3,6 +3,7 @@ from collections import Counter
 from itertools import chain
 import math
 
+from space import Point
 from tree import SpaceTree
 
 
@@ -158,11 +159,11 @@ class Roster:
         )
 
 
+@attr.s(frozen=True)
 class Move:
-    def __init__(self, character, old_position, new_position):
-        self._character = character
-        self._old_position = old_position
-        self._new_position = new_position
+    _character = attr.ib()
+    _old_position: Point = attr.ib()
+    _new_position: Point = attr.ib()
 
     def next_roster(self, roster):
         old_position = self._old_position
@@ -178,22 +179,11 @@ class Move:
 
         return roster.move_character(old_position, new_position)
 
-    def __eq__(self, other):
-        return (
-            isinstance(other, Move)
-            and self._character == other._character
-            and self._old_position == old_position
-            and self._new_position == new_position
-        )
 
-    def __repr__(self):
-        return f"Move({self._character}, {self._old_position, self._new_position})"
-
-
+@attr.s(frozen=True)
 class Attack:
-    def __init__(self, attacker, target_position):
-        self._attacker = attacker
-        self._target_position = target_position
+    _attacker = attr.ib()
+    _target_position: Point = attr.ib()
 
     def next_roster(self, roster):
         attacker = self._attacker
@@ -209,22 +199,12 @@ class Attack:
     def _attack(self, character):
         return character.attacked()
 
-    def __eq__(self, other):
-        return (
-            isinstance(other, Attack)
-            and self._attacker == other._attacker
-            and self._target == other._target_position
-        )
 
-    def __repr__(self):
-        return f"Attack({self._attacker}, {self._target})"
-
-
+@attr.s(frozen=True)
 class StateChange:
-    def __init__(self, character, position, new_state):
-        self._character = character
-        self._position = position
-        self._new_state = new_state
+    _character = attr.ib()
+    _position: Point = attr.ib()
+    _new_state = attr.ib()
 
     def next_roster(self, roster):
         character = self._character
@@ -237,13 +217,3 @@ class StateChange:
 
     def _change_state(self, character):
         return character.with_state(self._new_state)
-
-    def __eq__(self, other):
-        return (
-            isinstance(other, StateChange)
-            and self._character == other._character
-            and self._new_state == other._new_state
-        )
-
-    def __repr__(self):
-        return f"StateChange({self._character}, {self._new_state})"
