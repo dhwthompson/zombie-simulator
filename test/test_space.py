@@ -86,7 +86,7 @@ class TestArea:
 
         assert area.width == 2
 
-    def test_width(self):
+    def test_height(self):
         lower = Point(0, 0)
         upper = Point(2, 2)
         area = Area(lower, upper)
