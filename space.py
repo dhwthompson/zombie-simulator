@@ -16,24 +16,15 @@ class Point:
         return Vector(self.x - point.x, self.y - point.y)
 
 
+@attr.s(auto_attribs=True, frozen=True)
 class Area:
-    def __init__(self, lower: Point, upper: Point):
-        self._lower = lower
-        self._upper = upper
+    _lower: Point
+    _upper: Point
 
     def __contains__(self, point):
         x_contains = self._lower.x <= point.x < self._upper.x
         y_contains = self._lower.y <= point.y < self._upper.y
         return x_contains and y_contains
-
-    def __repr__(self):
-        return f"Area({self._lower}, {self._upper})"
-
-    def __hash__(self):
-        return hash((self._lower, self._upper))
-
-    def __eq__(self, other):
-        return self._lower == other._lower and self._upper == other._upper
 
     @property
     def width(self):

@@ -116,7 +116,7 @@ class TestArea:
         area = Area(lower, upper)
         assert isinstance(area.from_origin(origin), BoundingBox)
 
-    @given(st.from_type(Area), points, points)
+    @given(st.builds(Area, points, points), points, points)
     @example(Area(Point(0, 0), Point(2, 2)), Point(0, 0), Point(1, 1))
     def test_from_origin_containment(self, area, origin, point):
         from_origin = area.from_origin(origin)
