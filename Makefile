@@ -6,6 +6,7 @@ deps:
 	pip install -q -r requirements.txt
 
 test: deps
+	mypy --html-report mypy .
 	pytest
 
 watch: deps
