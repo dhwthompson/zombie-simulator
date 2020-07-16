@@ -39,8 +39,8 @@ TICK = float(environ.get("TICK", 0.1))
 
 MAX_AGE = None
 
-if environ.get("MAX_AGE"):
-    MAX_AGE = int(environ.get("MAX_AGE"))
+max_age_str = environ.get("MAX_AGE")
+MAX_AGE = int(max_age_str) if max_age_str else None
 
 
 def each_interval(interval, current_time=time.time, sleep=time.sleep):
@@ -76,8 +76,9 @@ if __name__ == "__main__":
 
     tracing_context = ExitStack()
 
-    if environ.get("TRACEFILE"):
-        trace_file = open(environ.get("TRACEFILE"), mode="w")
+    trace_file_name = environ.get("TRACEFILE")
+    if trace_file_name:
+        trace_file = open(trace_file_name, mode="w")
         tracing_context.enter_context(trace_file)
         tracing_context.enter_context(tracing.file_tracing(trace_file))
 
