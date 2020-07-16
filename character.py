@@ -139,8 +139,8 @@ class Character:
 
         Arguments:
             environment: the character's current environment. This is currently
-                passed in as an iterable of (Vector, Character) pairs, which
-                isn't entirely ideal, but works well enough for the moment.
+                passed in as a Viewpoint instance, supporting the
+                `character_at`, `nearest` and `from_offset` methods.
             limits: any limits on the character's movement provided by the
                 edges of the world. This can be anything that reponds to the
                 `in` operator.
