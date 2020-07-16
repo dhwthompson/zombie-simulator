@@ -1,6 +1,5 @@
 import attr
 import math
-from typing import NamedTuple
 
 
 @attr.s(auto_attribs=True, frozen=True)
@@ -46,7 +45,8 @@ class Area:
         return BoundingBox(self._lower - origin, self._upper - origin)
 
 
-class Vector(NamedTuple):
+@attr.s(auto_attribs=True, frozen=True)
+class Vector:
 
     dx: int
     dy: int
