@@ -22,11 +22,13 @@ class TargetVectors:
 
 
 class Obstacles:
-    def __init__(self, environment):
-        self._obstacles = [pos for pos, char in environment if pos != Vector.ZERO]
+    def __init__(self, viewpoint):
+        self._viewpoint = viewpoint
 
     def __contains__(self, vector):
-        return vector in self._obstacles
+        if vector == Vector.ZERO:
+            return False
+        return self._viewpoint.character_at(vector) is not None
 
 
 class Living:
