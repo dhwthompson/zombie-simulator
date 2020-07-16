@@ -1,5 +1,6 @@
 import attr
 import math
+from typing import ClassVar
 
 
 @attr.s(auto_attribs=True, frozen=True)
@@ -45,11 +46,13 @@ class Area:
         return BoundingBox(self._lower - origin, self._upper - origin)
 
 
-@attr.s(auto_attribs=True, frozen=True)
+@attr.s(frozen=True)
 class Vector:
 
-    dx: int
-    dy: int
+    dx: int = attr.ib()
+    dy: int = attr.ib()
+
+    ZERO: ClassVar["Vector"]
 
     @property
     def distance(self):
