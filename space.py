@@ -71,10 +71,10 @@ class Vector:
 Vector.ZERO = Vector(0, 0)
 
 
+@attr.s(auto_attribs=True, frozen=True)
 class BoundingBox:
-    def __init__(self, lower: Vector, upper: Vector):
-        self._lower = lower
-        self._upper = upper
+    _lower: Vector
+    _upper: Vector
 
     @classmethod
     def range(cls, radius):
@@ -91,9 +91,6 @@ class BoundingBox:
         for dy in range(self._lower.dy, self._upper.dy):
             for dx in range(self._lower.dx, self._upper.dx):
                 yield Vector(dx, dy)
-
-    def __repr__(self):
-        return f"BoundingBox({self._lower}, {self._upper})"
 
 
 class UnlimitedBoundingBox:
