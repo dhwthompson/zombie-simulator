@@ -46,11 +46,11 @@ class Area:
         return BoundingBox(self._lower - origin, self._upper - origin)
 
 
-@attr.s(frozen=True)
+@attr.s(auto_attribs=True, frozen=True)
 class Vector:
 
-    dx: int = attr.ib()
-    dy: int = attr.ib()
+    dx: int
+    dy: int
 
     ZERO: ClassVar["Vector"]
 
