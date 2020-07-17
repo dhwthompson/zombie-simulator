@@ -96,7 +96,6 @@ def test_nearest(area_and_points):
     area, (points, origin) = area_and_points
     tree = SpaceTree.build(area=area, positions={point: object() for point in points})
 
-    walk_tree(tree)
     best_match = tree.nearest_to(origin)
 
     assert best_match is not None
@@ -104,21 +103,3 @@ def test_nearest(area_and_points):
     for point in points:
         if point != origin:
             assert (best_match.point - origin).distance <= (point - origin).distance
-
-
-def walk_tree(tree):
-    output = []
-
-    def print_node(node, indent):
-        output.append(f"{' ' * indent}- {node._area}")
-        if hasattr(node, "_lower_child"):
-            for child in [node._lower_child, node._upper_child]:
-                print_node(child, indent + 2)
-        else:
-            output.extend(
-                f"{' ' * indent}* {pos} = {value}"
-                for pos, value in node._positions.items()
-            )
-
-    print_node(tree._root, indent=0)
-    note("\n".join(output))
