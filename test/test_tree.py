@@ -35,7 +35,7 @@ def points_in(area):
 @given(areas().flatmap(lambda a: st.tuples(st.just(a), points_in(a))))
 def test_empty_tree_item(area_and_point):
     area, point = area_and_point
-    tree = SpaceTree.build(area, {})
+    tree: SpaceTree[object] = SpaceTree.build(area, None)
     with pytest.raises(KeyError):
         tree[point]
 
@@ -43,7 +43,7 @@ def test_empty_tree_item(area_and_point):
 @given(areas().flatmap(lambda a: st.tuples(st.just(a), points_in(a))))
 def test_empty_tree_get(area_and_point):
     area, point = area_and_point
-    tree = SpaceTree.build(area, {})
+    tree: SpaceTree[object] = SpaceTree.build(area, None)
     assert tree.get(point) is None
 
 
@@ -99,6 +99,7 @@ def test_nearest(area_and_points):
     walk_tree(tree)
     best_match = tree.nearest_to(origin)
 
+    assert best_match is not None
     assert tree[best_match.point] == best_match.value
     for point in points:
         if point != origin:
