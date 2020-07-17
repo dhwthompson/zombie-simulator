@@ -1,6 +1,6 @@
 import attr
 import math
-from typing import ClassVar
+from typing import ClassVar, Iterator
 
 
 @attr.s(auto_attribs=True, frozen=True)
@@ -9,10 +9,10 @@ class Point:
     x: int
     y: int
 
-    def __add__(self, vector):
+    def __add__(self, vector: "Vector") -> "Point":
         return Point(self.x + vector.dx, self.y + vector.dy)
 
-    def __sub__(self, point):
+    def __sub__(self, point: "Point") -> "Vector":
         return Vector(self.x - point.x, self.y - point.y)
 
 
@@ -21,20 +21,20 @@ class Area:
     _lower: Point
     _upper: Point
 
-    def __contains__(self, point):
+    def __contains__(self, point: Point) -> bool:
         x_contains = self._lower.x <= point.x < self._upper.x
         y_contains = self._lower.y <= point.y < self._upper.y
         return x_contains and y_contains
 
     @property
-    def width(self):
+    def width(self) -> int:
         return self._upper.x - self._lower.x
 
     @property
-    def height(self):
+    def height(self) -> int:
         return self._upper.y - self._lower.y
 
-    def distance_from(self, point):
+    def distance_from(self, point: Point) -> float:
         x = min(point.x, self._upper.x)
         x = max(x, self._lower.x)
         y = min(point.y, self._upper.y)
@@ -42,7 +42,7 @@ class Area:
         best_point = Point(x, y)
         return (best_point - point).distance
 
-    def from_origin(self, origin):
+    def from_origin(self, origin: Point) -> "BoundingBox":
         return BoundingBox(self._lower - origin, self._upper - origin)
 
 
@@ -55,16 +55,16 @@ class Vector:
     ZERO: ClassVar["Vector"]
 
     @property
-    def distance(self):
+    def distance(self) -> float:
         return math.sqrt(self.dx ** 2 + self.dy ** 2)
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         return bool(self.distance)
 
-    def __add__(self, other):
+    def __add__(self, other: "Vector") -> "Vector":
         return Vector(self.dx + other.dx, self.dy + other.dy)
 
-    def __sub__(self, other):
+    def __sub__(self, other: "Vector") -> "Vector":
         return Vector(self.dx - other.dx, self.dy - other.dy)
 
 
@@ -77,22 +77,22 @@ class BoundingBox:
     _upper: Vector
 
     @classmethod
-    def range(cls, radius):
+    def range(cls, radius: int) -> "BoundingBox":
         if radius < 0:
             raise ValueError(f"Cannot have a negative range {radius}")
         return cls(Vector(-radius, -radius), Vector(radius + 1, radius + 1))
 
-    def __contains__(self, vector):
+    def __contains__(self, vector: Vector) -> bool:
         dx_contains = self._lower.dx <= vector.dx < self._upper.dx
         dy_contains = self._lower.dy <= vector.dy < self._upper.dy
         return dx_contains and dy_contains
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Vector]:
         for dy in range(self._lower.dy, self._upper.dy):
             for dx in range(self._lower.dx, self._upper.dx):
                 yield Vector(dx, dy)
 
 
 class UnlimitedBoundingBox:
-    def __contains__(self, vector):
+    def __contains__(self, vector: Vector) -> bool:
         return True

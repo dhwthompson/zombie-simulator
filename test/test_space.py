@@ -58,7 +58,7 @@ class TestPoint:
     def test_point_addition_fails(self):
         # Adding a point to a point doesn't make sense
         with pytest.raises(AttributeError):
-            Point(2, 5) + Point(3, 2)
+            Point(2, 5) + Point(3, 2)  # type: ignore
 
 
 class TestArea:
