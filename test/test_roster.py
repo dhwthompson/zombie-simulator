@@ -111,7 +111,7 @@ class TestRoster:
         )
 
     def test_empty_roster(self):
-        roster = Roster.for_mapping({}, Area(Point(0, 0), Point(5, 5)))
+        roster: Roster[Character] = Roster.for_mapping({}, Area(Point(0, 0), Point(5, 5)))
         assert not roster
 
     @given(position_dicts(min_size=1))
@@ -303,7 +303,7 @@ class TestStateChange:
 
         state_change = StateChange(character, position, state)
 
-        roster = Roster.for_mapping({}, Area(Point(0, 0), Point(5, 5)))
+        roster: Roster[Character] = Roster.for_mapping({}, Area(Point(0, 0), Point(5, 5)))
 
         with pytest.raises(ValueError):
             state_change.next_roster(roster)

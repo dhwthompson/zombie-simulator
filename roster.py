@@ -2,9 +2,22 @@ import attr
 from collections import Counter
 from itertools import chain
 import math
+from typing import Generic, Mapping, Optional, Set, TypeVar
 
-from space import Point
+try:
+    from typing import Protocol
+except ImportError:
+    from typing_extensions import Protocol  # type: ignore
+
+from space import Area, Point
 from tree import SpaceTree
+
+
+class SupportsUndead(Protocol):
+    undead: bool
+
+
+CharacterType = TypeVar("CharacterType", bound=SupportsUndead)
 
 
 class HasAttributes:
@@ -24,14 +37,16 @@ class NearestMatch:
     character = attr.ib()
 
 
-class Roster:
+class Roster(Generic[CharacterType]):
     @classmethod
-    def for_mapping(cls, character_positions, area):
+    def for_mapping(
+        cls, character_positions: Mapping[Point, CharacterType], area: Area
+    ) -> "Roster[CharacterType]":
 
-        characters = set()
+        characters: Set[CharacterType] = set()
 
-        undead_positions = SpaceTree.build(area)
-        other_positions = SpaceTree.build(area)
+        undead_positions: SpaceTree[CharacterType] = SpaceTree.build(area)
+        other_positions: SpaceTree[CharacterType] = SpaceTree.build(area)
 
         for position, character in character_positions.items():
             if position not in area:
@@ -56,7 +71,12 @@ class Roster:
         )
 
     def __init__(
-        self, *, area, characters, undead_positions, non_undead_positions,
+        self,
+        *,
+        area: Area,
+        characters: Set[CharacterType],
+        undead_positions: SpaceTree[CharacterType],
+        non_undead_positions: SpaceTree[CharacterType],
     ):
         self._area = area
         self._characters = characters
