@@ -19,7 +19,7 @@ def worlds(
         st.integers(min_value=0, max_value=y - 1),
     )
     characters = draw(st.dictionaries(points, inhabitants))
-    return World(x, y, characters)
+    return World.for_mapping(x, y, characters)
 
 
 @pytest.mark.integration
@@ -54,7 +54,7 @@ def test_zombies_approach_humans():
 
     characters = {Point(0, 0): zombie, Point(2, 2): human}
 
-    world = World(3, 3, characters)
+    world = World.for_mapping(3, 3, characters)
 
     world = world.tick()
 

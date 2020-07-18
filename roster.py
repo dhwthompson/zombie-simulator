@@ -26,40 +26,19 @@ class NearestMatch:
 
 class Roster:
     @classmethod
-    def for_value(cls, value, area=None):
-        if isinstance(value, Roster):
-            return value
+    def for_mapping(cls, character_positions, area):
 
-        if area is None:
-            raise ValueError("Roster requires area parameter")
-
-        return Roster(value, area)
-
-    def __init__(
-        self, character_positions, area, *, _undead_positions=None, _characters=None
-    ):
-        if _characters is not None:
-            # This only turns up when we're building up from an existing roster
-            self._positions = character_positions
-            self._area = area
-            self._undead_positions = _undead_positions
-            self._characters = _characters
-        else:
-            self._build_positions(character_positions, area)
-
-    def _build_positions(self, character_positions, area):
-        self._characters = set()
-        self._area = area
+        characters = set()
 
         undead_positions = SpaceTree.build(area)
         other_positions = SpaceTree.build(area)
 
         for position, character in character_positions.items():
-            if position not in self._area:
+            if position not in area:
                 raise ValueError(f"{position} is not in the world area")
             if position in undead_positions or position in other_positions:
                 raise ValueError(f"Multiple characters at position {position}")
-            if character in self._characters:
+            if character in characters:
                 raise ValueError(f"Character {character} in multiple places")
 
             if character.undead:
@@ -67,10 +46,22 @@ class Roster:
             else:
                 other_positions = other_positions.set(position, character)
 
-            self._characters.add(character)
+            characters.add(character)
 
+        return Roster(
+            area=area,
+            undead_positions=undead_positions,
+            non_undead_positions=other_positions,
+            characters=characters,
+        )
+
+    def __init__(
+        self, *, area, characters, undead_positions, non_undead_positions,
+    ):
+        self._area = area
+        self._characters = characters
         self._undead_positions = undead_positions
-        self._positions = other_positions
+        self._positions = non_undead_positions
 
     def character_at(self, position):
         return self._undead_positions.get(position) or self._positions.get(position)
@@ -112,10 +103,10 @@ class Roster:
             raise ValueError(f"Attempt to move from unoccupied position {old_position}")
 
         return Roster(
-            other_positions,
-            self._area,
-            _characters=self._characters,
-            _undead_positions=undead_positions,
+            area=self._area,
+            characters=self._characters,
+            undead_positions=undead_positions,
+            non_undead_positions=other_positions,
         )
 
     def change_character(self, position, change):
@@ -137,10 +128,10 @@ class Roster:
 
         new_characters = self._characters - set([old_character]) | set([new_character])
         return Roster(
-            other_positions,
-            self._area,
-            _characters=new_characters,
-            _undead_positions=undead_positions,
+            area=self._area,
+            characters=new_characters,
+            undead_positions=undead_positions,
+            non_undead_positions=other_positions,
         )
 
     def __contains__(self, character):

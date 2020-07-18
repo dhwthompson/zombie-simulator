@@ -1,32 +1,27 @@
+import attr
+
 from roster import Roster, Attack, Move, StateChange
 from space import Area, Point
 import tracing
 
 
+@attr.s(auto_attribs=True, frozen=True)
 class World:
-    def __init__(self, width, height, characters):
-        self._area = Area(Point(0, 0), Point(width, height))
-        self._width = width
-        self._height = height
-        self._roster = Roster.for_value(characters, area=self._area)
+    _area: Area
+    _roster: Roster
 
-    def __repr__(self):
-        return f"World({self._width}, {self._height}, {self._roster})"
-
-    def __eq__(self, other):
-        return (
-            isinstance(other, World)
-            and self._width == other._width
-            and self._height == other._height
-            and self._roster == other._roster
-        )
+    @classmethod
+    def for_mapping(cls, width, height, characters):
+        area = Area(Point(0, 0), Point(width, height))
+        roster = Roster.for_mapping(characters, area=area)
+        return World(area=area, roster=roster)
 
     @property
     def rows(self):
-        return [self._row(y) for y in range(self._height)]
+        return [self._row(y) for y in range(self._area.height)]
 
     def _row(self, y):
-        return [self._roster.character_at(Point(x, y)) for x in range(self._width)]
+        return [self._roster.character_at(Point(x, y)) for x in range(self._area.width)]
 
     def viewpoint(self, origin):
         return Viewpoint(origin, self._roster)
@@ -48,7 +43,7 @@ class World:
                 action = character.next_action(viewpoint, limits, actions)
 
                 new_roster = action.next_roster(world._roster)
-                world = World(self._width, self._height, new_roster)
+                world = World(self._area, new_roster)
         return world
 
 
@@ -102,7 +97,7 @@ class WorldBuilder:
             if character is not None
         }
 
-        self._world = World(width, height, starting_positions)
+        self._world = World.for_mapping(width, height, starting_positions)
 
     def _grid(self, width, height):
         for y in range(height):
