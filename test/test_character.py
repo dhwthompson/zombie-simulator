@@ -156,8 +156,13 @@ class TestDeadState:
     def test_is_not_undead(self):
         assert not Dead().undead
 
-    def test_cannot_move(self):
-        assert list(Dead().movement_range) == [Vector.ZERO]
+    @given(vectors())
+    @example(Vector.ZERO)
+    def test_cannot_move(self, vector):
+        if vector == Vector.ZERO:
+            assert vector in Dead().movement_range
+        else:
+            assert vector not in Dead().movement_range
 
     @given(environments(), st.lists(vectors(), min_size=1))
     def test_never_moves(self, environment, moves):
@@ -257,7 +262,8 @@ class TestCharacter:
 
     def test_state_change_action(self):
         character = Character(state=Dead(age=20))
-        next_action = character.next_action([], BoundingBox.range(5), FakeActions)
+        viewpoint = FakeViewpoint([])
+        next_action = character.next_action(viewpoint, BoundingBox.range(5), FakeActions)
 
         assert next_action == StateChange(Undead())
 
