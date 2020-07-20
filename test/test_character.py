@@ -73,6 +73,7 @@ class TestTargetVectors:
         environment, (position, character) = env_and_entry
 
         nearest_human = TargetVectors(FakeViewpoint(environment)).nearest_human
+        assert nearest_human is not None
         assert nearest_human.distance <= position.distance
 
     @given(environments(characters=zombies))

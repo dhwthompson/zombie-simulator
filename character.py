@@ -25,6 +25,12 @@ class Viewpoint(Protocol):
         ...
 
 
+class SupportsNearestHuman(Protocol):
+    @property
+    def nearest_human(self) -> Optional[Vector]:
+        ...
+
+
 class TargetVectors:
     def __init__(self, viewpoint: Viewpoint):
         self._viewpoint = viewpoint
@@ -128,7 +134,7 @@ class Undead:
     attack_range = BoundingBox.range(1)
     next_state = None
 
-    def attack(self, target_vectors: TargetVectors) -> Optional[Vector]:
+    def attack(self, target_vectors: SupportsNearestHuman) -> Optional[Vector]:
         nearest_human = target_vectors.nearest_human
         if nearest_human is not None and nearest_human in self.attack_range:
             return nearest_human
@@ -136,7 +142,7 @@ class Undead:
             return None
 
     def best_move(
-        self, target_vectors: TargetVectors, available_moves: Iterable[Vector]
+        self, target_vectors: SupportsNearestHuman, available_moves: Iterable[Vector]
     ) -> Vector:
         nearest_human = target_vectors.nearest_human
         if nearest_human:
