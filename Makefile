@@ -1,12 +1,14 @@
-.PHONY: deps test watch zombies
+.PHONY: deps mypy test watch zombies
 
 WORLD_SIZE ?= auto
 
 deps:
 	pip install -q -r requirements.txt
 
-test: deps
+mypy:
 	mypy --html-report mypy .
+
+test: mypy
 	pytest
 
 watch: deps
