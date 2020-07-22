@@ -7,7 +7,7 @@ from hypothesis import strategies as st
 import pytest
 
 from .strategies import list_and_element, dict_and_element
-from roster import Attack, Move, Roster, StateChange
+from roster import ChangeCharacter, Move, Roster
 from space import Area, Point, Vector
 
 
@@ -20,6 +20,18 @@ class Character:
 
     def __repr__(self):
         return f"Character(undead={self.undead}, living={self.living})"
+
+
+def do_nothing(c: Character) -> Character:
+    return c
+
+
+def kill(c: Character) -> Character:
+    return Character(undead=c.undead, living=False)
+
+
+def reanimate(c: Character) -> Character:
+    return Character(undead=True, living=False)
 
 
 characters = st.builds(Character, undead=st.booleans(), living=st.booleans())
@@ -111,7 +123,9 @@ class TestRoster:
         )
 
     def test_empty_roster(self):
-        roster: Roster[Character] = Roster.for_mapping({}, Area(Point(0, 0), Point(5, 5)))
+        roster: Roster[Character] = Roster.for_mapping(
+            {}, Area(Point(0, 0), Point(5, 5))
+        )
         assert not roster
 
     @given(position_dicts(min_size=1))
@@ -137,6 +151,7 @@ class TestRoster:
         )
 
         nearest = roster.nearest_to(position, undead=True)
+        assert nearest is not None
         nearest_position, nearest_character = nearest.position, nearest.character
 
         assert nearest_position != position
@@ -166,6 +181,7 @@ class TestRoster:
         )
 
         nearest = roster.nearest_to(position, undead=False, living=True)
+        assert nearest is not None
         assert nearest.character.living
 
 
@@ -246,76 +262,57 @@ class Target:
         return self._attack_result
 
 
-class TestAttack:
+class TestChangeCharacter:
     @given(characters)
-    def test_fails_if_target_not_in_roster(self, attacker):
+    def test_fails_if_target_not_in_roster(self, instigator):
         roster = Roster.for_mapping(
-            {Point(0, 0): attacker}, Area(Point(0, 0), Point(5, 5))
+            {Point(0, 0): instigator}, Area(Point(0, 0), Point(5, 5))
         )
-        attack = Attack(attacker, Point(1, 1))
+        action = ChangeCharacter(instigator, Point(1, 1), do_nothing)
         with pytest.raises(ValueError):
-            attack.next_roster(roster)
+            action.next_roster(roster)
 
-    @given(attacker=characters, target=characters)
-    def test_fails_if_attacker_not_in_roster(self, attacker, target):
+    @given(instigator=characters, target=characters)
+    def test_fails_if_instigator_not_in_roster(self, instigator, target):
         roster = Roster.for_mapping(
             {Point(0, 0): target}, Area(Point(0, 0), Point(5, 5))
         )
-        attack = Attack(attacker, target)
+        action = ChangeCharacter(instigator, target, do_nothing)
         with pytest.raises(ValueError):
-            attack.next_roster(roster)
+            action.next_roster(roster)
 
-    @given(attacker=characters, attacked=characters)
-    def test_attacks_target(self, attacker, attacked):
-        target = Target(attacked)
+    @given(attacker=characters)
+    def test_attacks_target(self, attacker):
+        target = Character(living=True, undead=False)
         positions = {Point(0, 0): attacker, Point(1, 1): target}
 
         roster = Roster.for_mapping(positions, area_containing(positions))
-        attack = Attack(attacker, Point(1, 1))
+        attack = ChangeCharacter(attacker, Point(1, 1), kill)
         new_roster = attack.next_roster(roster)
-        assert new_roster.character_at(Point(1, 1)) is attacked
 
-    @given(attacker=characters, attacked_target=characters)
-    def test_preserves_attacker(self, attacker, attacked_target):
-        target = Target(attacked_target)
+        new_character = new_roster.character_at(Point(1, 1))
+        assert new_character is not None
+        assert not new_character.living
+
+    @given(attacker=characters, target=characters)
+    def test_preserves_attacker(self, attacker, target):
         positions = {Point(0, 0): attacker, Point(1, 1): target}
 
         roster = Roster.for_mapping(positions, area_containing(positions))
-        attack = Attack(attacker, Point(1, 1))
+        attack = ChangeCharacter(attacker, Point(1, 1), kill)
         new_roster = attack.next_roster(roster)
         assert new_roster.character_at(Point(0, 0)) is attacker
 
-
-class StatefulCharacter:
-
-    undead = False
-
-    def __init__(self, state):
-        self.state = state
-
-    def with_state(self, state):
-        return StatefulCharacter(state=state)
-
-
-class TestStateChange:
-    def test_fails_if_character_not_in_roster(self):
-        character, position, state = object(), Point(0, 0), object()
-
-        state_change = StateChange(character, position, state)
-
-        roster: Roster[Character] = Roster.for_mapping({}, Area(Point(0, 0), Point(5, 5)))
-
-        with pytest.raises(ValueError):
-            state_change.next_roster(roster)
-
     def test_changes_character_state(self):
-        character, state = StatefulCharacter(state=None), object()
+        character = Character(living=False, undead=False)
         position = Point(0, 1)
-        state_change = StateChange(character, position, state)
+        state_change = ChangeCharacter(character, position, reanimate)
         roster = Roster.for_mapping(
             {position: character}, Area(Point(0, 0), Point(5, 5))
         )
 
         next_roster = state_change.next_roster(roster)
 
-        assert next_roster.character_at(Point(0, 1)).state == state
+        new_character = next_roster.character_at(Point(0, 1))
+        assert new_character is not None
+        assert new_character.undead

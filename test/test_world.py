@@ -49,15 +49,15 @@ class TestWorld:
         world = World.for_mapping(2, 2, {Point(1, 1): character})
         viewpoint = world.viewpoint(Point(1, 1))
         assert len(viewpoint) == 1
-        assert (Vector.ZERO, character) in viewpoint
+        assert viewpoint.character_at(Vector.ZERO) == character
 
     @given(char1=characters(), char2=characters())
     def test_viewpoint_multiple_characters(self, char1, char2):
         world = World.for_mapping(3, 3, {Point(1, 1): char1, Point(2, 0): char2})
         viewpoint = world.viewpoint(Point(0, 1))
         assert len(viewpoint) == 2
-        assert (Vector(1, 0), char1) in viewpoint
-        assert (Vector(2, -1), char2) in viewpoint
+        assert viewpoint.character_at(Vector(1, 0)) == char1
+        assert viewpoint.character_at(Vector(2, -1)) == char2
 
 
 class TestWorldBuilder:

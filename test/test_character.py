@@ -1,4 +1,5 @@
 import attr
+from typing import Union
 
 from hypothesis import assume, example, given, note
 from hypothesis import strategies as st
@@ -7,7 +8,8 @@ import pytest
 
 from .strategies import list_and_element
 from character import Character, default_human, default_zombie
-from character import Dead, Living, Undead
+from character import Actions
+from character import State, Dead, Living, Undead
 from character import Obstacles, TargetVectors
 from space import BoundingBox, Vector
 
@@ -226,16 +228,33 @@ class TestUndeadState:
         assert Undead().next_state is None
 
 
-Move = attr.make_class("Move", ["vector"], frozen=True)
-Attack = attr.make_class("Attack", ["vector"], frozen=True)
-StateChange = attr.make_class("StateChange", ["new_state"], frozen=True)
+@attr.s(auto_attribs=True, frozen=True)
+class Move:
+    vector: Vector
+
+
+@attr.s(auto_attribs=True, frozen=True)
+class Attack:
+    vector: Vector
+
+
+@attr.s(auto_attribs=True, frozen=True)
+class StateChange:
+    new_state: State
+
+
+Action = Union[Move, Attack, StateChange]
 
 
 class FakeActions:
+    def move(self, vector: Vector) -> Action:
+        return Move(vector)
 
-    move = Move
-    attack = Attack
-    change_state = StateChange
+    def attack(self, vector: Vector) -> Action:
+        return Attack(vector)
+
+    def change_state(self, new_state: State) -> Action:
+        return StateChange(new_state)
 
 
 class TestCharacter:
@@ -248,8 +267,8 @@ class TestCharacter:
     def test_move_action(self):
         character = Character(state=Undead())
         environment = FakeViewpoint([(Vector(3, 3), default_human())])
-        next_action = character.next_action(
-            environment, BoundingBox.range(5), FakeActions
+        next_action: Action = character.next_action(
+            environment, BoundingBox.range(5), FakeActions()
         )
         assert next_action == Move(Vector(1, 1))
 
@@ -257,14 +276,16 @@ class TestCharacter:
         character = Character(state=Undead())
         target = default_human()
         next_action = character.next_action(
-            FakeViewpoint([(Vector(1, 1), target)]), BoundingBox.range(5), FakeActions
+            FakeViewpoint([(Vector(1, 1), target)]), BoundingBox.range(5), FakeActions()
         )
         assert next_action == Attack(Vector(1, 1))
 
     def test_state_change_action(self):
         character = Character(state=Dead(age=20))
         viewpoint = FakeViewpoint([])
-        next_action = character.next_action(viewpoint, BoundingBox.range(5), FakeActions)
+        next_action = character.next_action(
+            viewpoint, BoundingBox.range(5), FakeActions()
+        )
 
         assert next_action == StateChange(Undead())
 

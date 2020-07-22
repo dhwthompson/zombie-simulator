@@ -1,4 +1,4 @@
-from typing import ClassVar, Iterable, Optional, Tuple, Union
+from typing import ClassVar, Generic, Iterable, Optional, Tuple, TypeVar, Union
 
 try:
     from typing import Protocol
@@ -9,16 +9,29 @@ from space import BoundingBox, UnlimitedBoundingBox, Vector
 
 State = Union["Living", "Dead", "Undead"]
 
+ActionType = TypeVar("ActionType", covariant=True)
+
 
 def shortest(vectors: Iterable[Vector]) -> Vector:
     return min(vectors, key=lambda v: v.distance)
+
+
+class Actions(Protocol[ActionType]):
+    def move(self, vector: Vector) -> ActionType:
+        ...
+
+    def attack(self, vector: Vector) -> ActionType:
+        ...
+
+    def change_state(self, new_state: State) -> ActionType:
+        ...
 
 
 class Viewpoint(Protocol):
     def character_at(self, offset: Vector) -> object:
         ...
 
-    def nearest(self, **attributes: object) -> Optional[Vector]:
+    def nearest(self, **attributes: bool) -> Optional[Vector]:
         ...
 
     def from_offset(self, offset: Vector) -> "Viewpoint":
@@ -171,7 +184,12 @@ class Character:
     def undead(self) -> bool:
         return self._state.undead
 
-    def next_action(self, environment: Viewpoint, limits: VectorContainer, actions):
+    def next_action(
+        self,
+        environment: Viewpoint,
+        limits: VectorContainer,
+        actions: Actions[ActionType],
+    ) -> ActionType:
         new_state = self._state.next_state
         if new_state:
             return actions.change_state(new_state)
