@@ -32,13 +32,6 @@ def test_tick_returns_a_world(world):
 @pytest.mark.integration
 @given(worlds())
 @settings(max_examples=25)
-def test_characters_preserved(world):
-    assert len(sum(world.rows, [])) == len(sum(world.tick().rows, []))
-
-
-@pytest.mark.integration
-@given(worlds())
-@settings(max_examples=25)
 def test_tick_keeps_zombies(world):
     old_zombies = set(z for z in sum(world.rows, []) if z and z.undead)
     new_world = world.tick()
