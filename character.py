@@ -92,20 +92,20 @@ class Living:
     def best_move(
         self, target_vectors: TargetVectors, available_moves: Iterable[Vector]
     ) -> Vector:
-        if target_vectors.nearest_zombie is not None:
-
-            def move_rank(move: Vector) -> Tuple[float, float]:
-                viewpoint_after_move = target_vectors.from_offset(move)
-                nearest_zombie_after_move = viewpoint_after_move.nearest_zombie
-                assert nearest_zombie_after_move is not None
-                return (
-                    -nearest_zombie_after_move.distance,
-                    move.distance,
-                )
-
-            return min(available_moves, key=move_rank)
-        else:
+        nearest_zombie = target_vectors.nearest_zombie
+        if nearest_zombie is None:
             return shortest(available_moves)
+
+        def move_rank(move: Vector) -> Tuple[float, float]:
+            viewpoint_after_move = target_vectors.from_offset(move)
+            nearest_zombie_after_move = viewpoint_after_move.nearest_zombie
+            assert nearest_zombie_after_move is not None
+            return (
+                -nearest_zombie_after_move.distance,
+                move.distance,
+            )
+
+        return min(available_moves, key=move_rank)
 
 
 class Dead:
