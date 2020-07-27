@@ -28,11 +28,11 @@ ordered_points = points.flatmap(
 class TestPoint:
     def test_no_arg_constructor(self):
         with pytest.raises(TypeError) as exc:
-            Point()
+            Point()  # type: ignore
 
     def test_single_arg_constructor(self):
         with pytest.raises(TypeError):
-            Point(3)
+            Point(3)  # type: ignore
 
     @given(st.integers(), st.integers())
     def test_accepts_two_coordinates(self, x, y):
@@ -58,17 +58,17 @@ class TestPoint:
     def test_point_addition_fails(self):
         # Adding a point to a point doesn't make sense
         with pytest.raises(AttributeError):
-            Point(2, 5) + Point(3, 2)
+            Point(2, 5) + Point(3, 2)  # type: ignore
 
 
 class TestArea:
     def test_no_arg_constructor(self):
         with pytest.raises(TypeError) as exc:
-            Area()
+            Area()  # type: ignore
 
     def test_single_arg_constructor(self):
         with pytest.raises(TypeError):
-            Area(Point(1, 3))
+            Area(Point(1, 3))  # type: ignore
 
     @given(points, points)
     def test_two_point_constructor(self, point_a, point_b):
@@ -127,11 +127,11 @@ class TestArea:
 class TestVector:
     def test_no_arg_constructor(self):
         with pytest.raises(TypeError) as exc:
-            Vector()
+            Vector()  # type: ignore
 
     def test_single_arg_constructor(self):
         with pytest.raises(TypeError):
-            Vector(3)
+            Vector(3)  # type: ignore
 
     @given(st.integers(), st.integers())
     def test_accepts_two_coordinates(self, dx, dy):

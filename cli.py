@@ -5,15 +5,30 @@ import re
 import shutil
 import sys
 import time
+from typing import Callable, Generator, Iterator, Optional, Tuple
 
-from character import default_human, default_zombie
+try:
+    from typing import Protocol
+except ImportError:
+    from typing_extensions import Protocol  # type: ignore
+
+from character import Character, default_human, default_zombie
 from population import Population
 from renderer import Renderer
 import tracing
 from world import WorldBuilder
 
 
-def get_world_size(size_string, get_terminal_size, default):
+class TerminalSize(Protocol):
+    columns: int
+    lines: int
+
+
+def get_world_size(
+    size_string: Optional[str],
+    get_terminal_size: Callable[[], TerminalSize],
+    default: Tuple[int, int],
+) -> Tuple[int, int]:
     if not size_string:
         return default
 
@@ -24,7 +39,7 @@ def get_world_size(size_string, get_terminal_size, default):
     size_match = re.match(r"(\d+)x(\d+)$", size_string)
 
     if size_match:
-        return tuple([int(d) for d in size_match.groups()])
+        return (int(size_match.group(1)), int(size_match.group(2)))
 
     raise ValueError(f'Unrecognised format "{size_string}"')
 
@@ -39,11 +54,15 @@ TICK = float(environ.get("TICK", 0.1))
 
 MAX_AGE = None
 
-if environ.get("MAX_AGE"):
-    MAX_AGE = int(environ.get("MAX_AGE"))
+max_age_str = environ.get("MAX_AGE")
+MAX_AGE = int(max_age_str) if max_age_str else None
 
 
-def each_interval(interval, current_time=time.time, sleep=time.sleep):
+def each_interval(
+    interval: float,
+    current_time: Callable[[], float] = time.time,
+    sleep: Callable[[float], None] = time.sleep,
+) -> Generator[None, None, None]:
     """Yield at regular intervals.
 
     This generator waits at least `interval` seconds between each value it
@@ -58,26 +77,27 @@ def each_interval(interval, current_time=time.time, sleep=time.sleep):
         sleep(sleep_time)
 
 
-def clear():
+def clear() -> None:
     print("\033[H\033[J", end="")
 
 
 if __name__ == "__main__":
-    population = Population(
+    population = Population[Character](
         (DENSITY * (1 - ZOMBIE_CHANCE), default_human),
         (DENSITY * ZOMBIE_CHANCE, default_zombie),
     )
     world = WorldBuilder(world_width, world_height, population).world
     renderer = Renderer(world)
 
-    ticks = each_interval(TICK)
+    ticks: Iterator[None] = each_interval(TICK)
     if MAX_AGE is not None:
         ticks = islice(ticks, MAX_AGE)
 
     tracing_context = ExitStack()
 
-    if environ.get("TRACEFILE"):
-        trace_file = open(environ.get("TRACEFILE"), mode="w")
+    trace_file_name = environ.get("TRACEFILE")
+    if trace_file_name:
+        trace_file = open(trace_file_name, mode="w")
         tracing_context.enter_context(trace_file)
         tracing_context.enter_context(tracing.file_tracing(trace_file))
 

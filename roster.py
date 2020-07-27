@@ -2,64 +2,60 @@ import attr
 from collections import Counter
 from itertools import chain
 import math
+from typing import Callable, Generic, Iterator, Mapping, Optional, Set, Tuple, TypeVar
 
-from space import Point
+try:
+    from typing import Protocol
+except ImportError:
+    from typing_extensions import Protocol  # type: ignore
+
+from space import Area, Point
 from tree import SpaceTree
 
 
+class SupportsUndead(Protocol):
+    @property
+    def undead(self) -> bool:
+        ...
+
+
+CharacterType = TypeVar("CharacterType", bound=SupportsUndead)
+
+
 class HasAttributes:
-    def __init__(self, **attributes):
+    def __init__(self, **attributes: bool):
         self._attributes = attributes
 
-    def __call__(self, character):
+    def __call__(self, character: object) -> bool:
         return all(
             getattr(character, name) == value
             for name, value in self._attributes.items()
         )
 
 
-@attr.s(frozen=True)
-class NearestMatch:
-    position = attr.ib()
-    character = attr.ib()
+@attr.s(auto_attribs=True, frozen=True)
+class NearestMatch(Generic[CharacterType]):
+    position: Point
+    character: CharacterType
 
 
-class Roster:
+class Roster(Generic[CharacterType]):
     @classmethod
-    def for_value(cls, value, area=None):
-        if isinstance(value, Roster):
-            return value
+    def for_mapping(
+        cls, character_positions: Mapping[Point, CharacterType], area: Area
+    ) -> "Roster[CharacterType]":
 
-        if area is None:
-            raise ValueError("Roster requires area parameter")
+        characters: Set[CharacterType] = set()
 
-        return Roster(value, area)
-
-    def __init__(
-        self, character_positions, area, *, _undead_positions=None, _characters=None
-    ):
-        if _characters is not None:
-            # This only turns up when we're building up from an existing roster
-            self._positions = character_positions
-            self._area = area
-            self._undead_positions = _undead_positions
-            self._characters = _characters
-        else:
-            self._build_positions(character_positions, area)
-
-    def _build_positions(self, character_positions, area):
-        self._characters = set()
-        self._area = area
-
-        undead_positions = SpaceTree.build(area)
-        other_positions = SpaceTree.build(area)
+        undead_positions: SpaceTree[CharacterType] = SpaceTree.build(area)
+        other_positions: SpaceTree[CharacterType] = SpaceTree.build(area)
 
         for position, character in character_positions.items():
-            if position not in self._area:
+            if position not in area:
                 raise ValueError(f"{position} is not in the world area")
             if position in undead_positions or position in other_positions:
                 raise ValueError(f"Multiple characters at position {position}")
-            if character in self._characters:
+            if character in characters:
                 raise ValueError(f"Character {character} in multiple places")
 
             if character.undead:
@@ -67,15 +63,34 @@ class Roster:
             else:
                 other_positions = other_positions.set(position, character)
 
-            self._characters.add(character)
+            characters.add(character)
 
+        return Roster(
+            area=area,
+            undead_positions=undead_positions,
+            non_undead_positions=other_positions,
+            characters=characters,
+        )
+
+    def __init__(
+        self,
+        *,
+        area: Area,
+        characters: Set[CharacterType],
+        undead_positions: SpaceTree[CharacterType],
+        non_undead_positions: SpaceTree[CharacterType],
+    ):
+        self._area = area
+        self._characters = characters
         self._undead_positions = undead_positions
-        self._positions = other_positions
+        self._positions = non_undead_positions
 
-    def character_at(self, position):
+    def character_at(self, position: Point) -> Optional[CharacterType]:
         return self._undead_positions.get(position) or self._positions.get(position)
 
-    def nearest_to(self, origin, *, undead, **attributes):
+    def nearest_to(
+        self, origin: Point, *, undead: bool, **attributes: bool
+    ) -> Optional[NearestMatch[CharacterType]]:
         if undead:
             match = self._undead_positions.nearest_to(
                 origin, HasAttributes(**attributes)
@@ -88,7 +103,9 @@ class Roster:
         else:
             return None
 
-    def move_character(self, old_position, new_position):
+    def move_character(
+        self, old_position: Point, new_position: Point
+    ) -> "Roster[CharacterType]":
         if new_position not in self._area:
             raise ValueError(f"{new_position} is not in the world area")
 
@@ -112,13 +129,15 @@ class Roster:
             raise ValueError(f"Attempt to move from unoccupied position {old_position}")
 
         return Roster(
-            other_positions,
-            self._area,
-            _characters=self._characters,
-            _undead_positions=undead_positions,
+            area=self._area,
+            characters=self._characters,
+            undead_positions=undead_positions,
+            non_undead_positions=other_positions,
         )
 
-    def change_character(self, position, change):
+    def change_character(
+        self, position: Point, change: Callable[[CharacterType], CharacterType]
+    ) -> "Roster[CharacterType]":
         undead_positions = self._undead_positions
         other_positions = self._positions
 
@@ -137,35 +156,37 @@ class Roster:
 
         new_characters = self._characters - set([old_character]) | set([new_character])
         return Roster(
-            other_positions,
-            self._area,
-            _characters=new_characters,
-            _undead_positions=undead_positions,
+            area=self._area,
+            characters=new_characters,
+            undead_positions=undead_positions,
+            non_undead_positions=other_positions,
         )
 
-    def __contains__(self, character):
+    def __contains__(self, character: CharacterType) -> bool:
         return character in self._characters
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Tuple[Point, CharacterType]]:
         return iter(chain(self._positions.items(), self._undead_positions.items()))
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._positions) + len(self._undead_positions)
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Roster):
+            return False
         return (
             self._positions == other._positions
             and self._undead_positions == other._undead_positions
         )
 
 
-@attr.s(frozen=True)
-class Move:
-    _character = attr.ib()
-    _old_position: Point = attr.ib()
-    _new_position: Point = attr.ib()
+@attr.s(auto_attribs=True, frozen=True)
+class Move(Generic[CharacterType]):
+    _character: CharacterType
+    _old_position: Point
+    _new_position: Point
 
-    def next_roster(self, roster):
+    def next_roster(self, roster: Roster[CharacterType]) -> Roster[CharacterType]:
         old_position = self._old_position
         new_position = self._new_position
 
@@ -180,40 +201,18 @@ class Move:
         return roster.move_character(old_position, new_position)
 
 
-@attr.s(frozen=True)
-class Attack:
-    _attacker = attr.ib()
-    _target_position: Point = attr.ib()
+@attr.s(auto_attribs=True, frozen=True)
+class ChangeCharacter(Generic[CharacterType]):
+    _instigator: CharacterType
+    _position: Point
+    _change: Callable[[CharacterType], CharacterType]
 
-    def next_roster(self, roster):
-        attacker = self._attacker
-        target_position = self._target_position
+    def next_roster(self, roster: Roster[CharacterType]) -> Roster[CharacterType]:
+        if self._instigator not in roster:
+            raise ValueError(f"Action by non-existent character {self._instigator}")
 
-        if attacker not in roster:
-            raise ValueError(f"Attack by non-existent character {attacker}")
-        if roster.character_at(self._target_position) is None:
-            raise ValueError(f"Attack on non-existent character at {target_position}")
+        character = roster.character_at(self._position)
+        if character is None:
+            raise ValueError(f"Action on non-existent character at {self._position}")
 
-        return roster.change_character(target_position, self._attack)
-
-    def _attack(self, character):
-        return character.attacked()
-
-
-@attr.s(frozen=True)
-class StateChange:
-    _character = attr.ib()
-    _position: Point = attr.ib()
-    _new_state = attr.ib()
-
-    def next_roster(self, roster):
-        character = self._character
-        position = self._position
-
-        if character not in roster:
-            raise ValueError(f"Attempt to change non-existent character {character}")
-
-        return roster.change_character(position, self._change_state)
-
-    def _change_state(self, character):
-        return character.with_state(self._new_state)
+        return roster.change_character(self._position, self._change)

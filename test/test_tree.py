@@ -35,7 +35,7 @@ def points_in(area):
 @given(areas().flatmap(lambda a: st.tuples(st.just(a), points_in(a))))
 def test_empty_tree_item(area_and_point):
     area, point = area_and_point
-    tree = SpaceTree.build(area, {})
+    tree: SpaceTree[object] = SpaceTree.build(area, None)
     with pytest.raises(KeyError):
         tree[point]
 
@@ -43,7 +43,7 @@ def test_empty_tree_item(area_and_point):
 @given(areas().flatmap(lambda a: st.tuples(st.just(a), points_in(a))))
 def test_empty_tree_get(area_and_point):
     area, point = area_and_point
-    tree = SpaceTree.build(area, {})
+    tree: SpaceTree[object] = SpaceTree.build(area, None)
     assert tree.get(point) is None
 
 
@@ -96,28 +96,10 @@ def test_nearest(area_and_points):
     area, (points, origin) = area_and_points
     tree = SpaceTree.build(area=area, positions={point: object() for point in points})
 
-    walk_tree(tree)
     best_match = tree.nearest_to(origin)
 
+    assert best_match is not None
     assert tree[best_match.point] == best_match.value
     for point in points:
         if point != origin:
             assert (best_match.point - origin).distance <= (point - origin).distance
-
-
-def walk_tree(tree):
-    output = []
-
-    def print_node(node, indent):
-        output.append(f"{' ' * indent}- {node._area}")
-        if hasattr(node, "_lower_child"):
-            for child in [node._lower_child, node._upper_child]:
-                print_node(child, indent + 2)
-        else:
-            output.extend(
-                f"{' ' * indent}* {pos} = {value}"
-                for pos, value in node._positions.items()
-            )
-
-    print_node(tree._root, indent=0)
-    note("\n".join(output))

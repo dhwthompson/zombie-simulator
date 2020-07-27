@@ -24,40 +24,40 @@ class TestWorld:
     @example(0, 0)
     @example(1, 1)
     def test_world_dimensions(self, width, height):
-        world = World(width, height, characters={})
+        world = World.for_mapping(width, height, characters={})
         assert world.rows == [[None] * width] * height
 
     def test_explicitly_empty_world(self):
-        assert World(2, 2, {}).rows == [[None, None], [None, None]]
+        assert World.for_mapping(2, 2, {}).rows == [[None, None], [None, None]]
 
     @given(characters())
     def test_world_with_character(self, character):
-        world = World(2, 2, {Point(1, 1): character})
+        world = World.for_mapping(2, 2, {Point(1, 1): character})
         assert world.rows == [[None, None], [None, character]]
 
     @given(characters())
     def test_character_out_of_bounds(self, character):
         with pytest.raises(ValueError):
-            World(2, 2, {Point(2, 2): character})
+            World.for_mapping(2, 2, {Point(2, 2): character})
 
     def test_empty_viewpoint(self):
-        world = World(2, 2, characters={})
+        world = World.for_mapping(2, 2, characters={})
         assert len(world.viewpoint(Point(1, 1))) == 0
 
     @given(characters())
     def test_viewpoint_single_character(self, character):
-        world = World(2, 2, {Point(1, 1): character})
+        world = World.for_mapping(2, 2, {Point(1, 1): character})
         viewpoint = world.viewpoint(Point(1, 1))
         assert len(viewpoint) == 1
-        assert (Vector.ZERO, character) in viewpoint
+        assert viewpoint.character_at(Vector.ZERO) == character
 
     @given(char1=characters(), char2=characters())
     def test_viewpoint_multiple_characters(self, char1, char2):
-        world = World(3, 3, {Point(1, 1): char1, Point(2, 0): char2})
+        world = World.for_mapping(3, 3, {Point(1, 1): char1, Point(2, 0): char2})
         viewpoint = world.viewpoint(Point(0, 1))
         assert len(viewpoint) == 2
-        assert (Vector(1, 0), char1) in viewpoint
-        assert (Vector(2, -1), char2) in viewpoint
+        assert viewpoint.character_at(Vector(1, 0)) == char1
+        assert viewpoint.character_at(Vector(2, -1)) == char2
 
 
 class TestWorldBuilder:

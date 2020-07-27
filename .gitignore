@@ -2,4 +2,5 @@
 .hypothesis/
 .coverage
 htmlcov/
+mypy/
 tracing.json

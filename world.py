@@ -1,37 +1,50 @@
-from roster import Roster, Attack, Move, StateChange
-from space import Area, Point
+import attr
+from typing import (
+    Collection,
+    Generator,
+    Generic,
+    Iterable,
+    Mapping,
+    Optional,
+    Tuple,
+    TypeVar,
+)
+
+try:
+    from typing import Protocol
+except ImportError:
+    from typing_extensions import Protocol  # type: ignore
+
+from character import Character, State
+from roster import Roster, ChangeCharacter, Move
+from space import Area, Point, Vector
 import tracing
 
 
+@attr.s(auto_attribs=True, frozen=True)
 class World:
-    def __init__(self, width, height, characters):
-        self._area = Area(Point(0, 0), Point(width, height))
-        self._width = width
-        self._height = height
-        self._roster = Roster.for_value(characters, area=self._area)
+    _area: Area
+    _roster: Roster[Character]
 
-    def __repr__(self):
-        return f"World({self._width}, {self._height}, {self._roster})"
-
-    def __eq__(self, other):
-        return (
-            isinstance(other, World)
-            and self._width == other._width
-            and self._height == other._height
-            and self._roster == other._roster
-        )
+    @classmethod
+    def for_mapping(
+        cls, width: int, height: int, characters: Mapping[Point, Character],
+    ) -> "World":
+        area = Area(Point(0, 0), Point(width, height))
+        roster = Roster.for_mapping(characters, area=area)
+        return World(area=area, roster=roster)
 
     @property
-    def rows(self):
-        return [self._row(y) for y in range(self._height)]
+    def rows(self) -> Collection[Collection[Optional[Character]]]:
+        return [self._row(y) for y in range(self._area.height)]
 
-    def _row(self, y):
-        return [self._roster.character_at(Point(x, y)) for x in range(self._width)]
+    def _row(self, y: int) -> Collection[Optional[Character]]:
+        return [self._roster.character_at(Point(x, y)) for x in range(self._area.width)]
 
-    def viewpoint(self, origin):
+    def viewpoint(self, origin: Point) -> "Viewpoint":
         return Viewpoint(origin, self._roster)
 
-    def tick(self):
+    def tick(self) -> "World":
         world = self
         for (position, character) in self._roster:
             context = {
@@ -45,55 +58,68 @@ class World:
                 limits = self._area.from_origin(position)
                 actions = AvailableActions(position, character)
 
-                action = character.next_action(viewpoint, limits, actions)
+                action: Action = character.next_action(viewpoint, limits, actions)
 
                 new_roster = action.next_roster(world._roster)
-                world = World(self._width, self._height, new_roster)
+                world = World(self._area, new_roster)
         return world
 
 
+class Action(Protocol):
+    def next_roster(self, roster: Roster[Character]) -> Roster[Character]:
+        ...
+
+
 class AvailableActions:
-    def __init__(self, position, character):
+    def __init__(self, position: Point, character: Character):
         self._position = position
         self._character = character
 
-    def move(self, vector):
+    def move(self, vector: Vector) -> Action:
         return Move(self._character, self._position, self._position + vector)
 
-    def attack(self, vector):
-        return Attack(self._character, self._position + vector)
+    def attack(self, vector: Vector) -> Action:
+        return ChangeCharacter(
+            self._character, self._position + vector, Character.attacked
+        )
 
-    def change_state(self, new_state):
-        return StateChange(self._character, self._position, new_state)
+    def change_state(self, new_state: State) -> Action:
+        return ChangeCharacter(
+            self._character, self._position, lambda c: c.with_state(new_state)
+        )
 
 
 class Viewpoint:
-    def __init__(self, origin, roster):
+    def __init__(self, origin: Point, roster: Roster[Character]):
         self._origin = origin
         self._roster = roster
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[Tuple[Vector, Character]]:
         return iter(
             (position - self._origin, character) for position, character in self._roster
         )
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._roster)
 
-    def character_at(self, offset):
+    def character_at(self, offset: Vector) -> Optional[Character]:
         return self._roster.character_at(self._origin + offset)
 
-    def nearest(self, **attributes):
+    def nearest(self, **attributes: bool) -> Optional[Vector]:
         nearest = self._roster.nearest_to(self._origin, **attributes)
         if nearest:
             return nearest.position - self._origin
+        else:
+            return None
 
-    def from_offset(self, offset):
+    def from_offset(self, offset: Vector) -> "Viewpoint":
         return Viewpoint(self._origin + offset, self._roster)
 
 
 class WorldBuilder:
-    def __init__(self, width, height, population):
+    def __init__(
+        self, width: int, height: int, population: Iterable[Optional[Character]]
+    ):
         grid = self._grid(width, height)
 
         starting_positions = {
@@ -102,13 +128,13 @@ class WorldBuilder:
             if character is not None
         }
 
-        self._world = World(width, height, starting_positions)
+        self._world = World.for_mapping(width, height, starting_positions)
 
-    def _grid(self, width, height):
+    def _grid(self, width: int, height: int) -> Generator[Point, None, None]:
         for y in range(height):
             for x in range(width):
                 yield Point(x, y)
 
     @property
-    def world(self):
+    def world(self) -> World:
         return self._world
