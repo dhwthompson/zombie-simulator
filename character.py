@@ -1,9 +1,21 @@
-from typing import ClassVar, Generic, Iterable, Optional, Tuple, TypeVar, Union
+import math
+from typing import (
+    Callable,
+    ClassVar,
+    Generic,
+    Iterable,
+    Optional,
+    Tuple,
+    TypeVar,
+    Union,
+)
 
 try:
     from typing import Protocol
 except ImportError:
     from typing_extensions import Protocol  # type: ignore
+
+import attr
 
 from space import BoundingBox, UnlimitedBoundingBox, Vector
 
@@ -79,6 +91,94 @@ class Obstacles:
         return self._viewpoint.character_at(vector) is not None
 
 
+def best_move_brute_force(
+    moves: Iterable[Vector], nearest_func: Callable[[Vector], Optional[Vector]]
+) -> Vector:
+    def distance_after_move(move: Vector) -> float:
+        nearest = nearest_func(move)
+        return nearest.distance if nearest is not None else math.inf
+
+    return min(moves, key=lambda move: (-distance_after_move(move), move.distance))
+
+
+@attr.s(auto_attribs=True)
+class MoveOption:
+    move: Vector
+    upper_bound: float
+
+
+def best_move_upper_bound(
+    moves: Iterable[Vector], nearest_func: Callable[[Vector], Optional[Vector]]
+) -> Vector:
+    """Pick a move that maximises the distance from the nearest enemy.
+
+    This function takes a slightly more considered approach than its
+    predecessor, based on the idea that we don't want to call the "find my
+    nearest enemy" function more often than we have to.
+
+    As such, the algorithm is:
+
+        - Start out every available move with an unlimited potential distance
+        - Pick an arbitrary move and set it as our best option
+        - Find out where the nearest enemy would be after that move
+        - Use that information to limit the maximum possible distances for
+          every other move we know about. For instance, if not moving at all
+          would leave us with an enemy at (-10, 0), we know that moving 2 cells
+          to the right could only ever increase that to a maximum of 12.
+        - Trim out any moves where we know that move could never outmatch the
+          best move we know about
+        - If there are still moves available that might be better, repeat using
+          the move with the most potential
+
+    In the best case, this algorithm works out as follows:
+
+        - Work out where the nearest enemy is
+        - Guess that our best move is to run directly away from it
+        - Check our closest enemy after that, find that it's better than we
+          could get from any other move, and pick that one
+
+    This only leaves us running the nearest-enemy function twice, rather than
+    25 times for a 5-by-5 square.
+    """
+    # Moves that take us further away are good; shorter moves break ties
+    move_key = lambda option: (-option.upper_bound, option.move.distance)
+
+    options = sorted(
+        [MoveOption(move, math.inf) for move in moves], key=move_key
+    )
+    if not options:
+        raise ValueError("Attempting to choose from no available moves")
+
+    best_option: Optional[MoveOption] = None
+
+    while options:
+        # Either we'll set this as our new best candidate, or we'll discard it. Either
+        # way, it's no longer needed in our options to explore
+        candidate = options.pop(0)
+        nearest = nearest_func(candidate.move)
+        if nearest is None:
+            return candidate.move
+        candidate.upper_bound = nearest.distance
+        if best_option is None or candidate.upper_bound > best_option.upper_bound:
+            best_option = candidate
+
+        for option in options:
+            option.upper_bound = min(
+                option.upper_bound, (nearest + (candidate.move - option.move)).distance
+            )
+
+        options = sorted(
+            [o for o in options if o.upper_bound > best_option.upper_bound], key=move_key
+        )
+
+    # We have an earlier check that there are options available, so we've gone
+    # around the loop at least once, so we have either broken out and returned,
+    # or we've assigned something to `best_option`.
+    assert(best_option is not None)
+
+    return best_option.move
+
+
 class Living:
 
     living = True
@@ -92,20 +192,15 @@ class Living:
     def best_move(
         self, target_vectors: TargetVectors, available_moves: Iterable[Vector]
     ) -> Vector:
-        nearest_zombie = target_vectors.nearest_zombie
-        if nearest_zombie is None:
-            return shortest(available_moves)
+        def nearest_zombie(move: Vector) -> Optional[Vector]:
+            return target_vectors.from_offset(move).nearest_zombie
 
-        def move_rank(move: Vector) -> Tuple[float, float]:
-            viewpoint_after_move = target_vectors.from_offset(move)
-            nearest_zombie_after_move = viewpoint_after_move.nearest_zombie
-            assert nearest_zombie_after_move is not None
-            return (
-                -nearest_zombie_after_move.distance,
-                move.distance,
-            )
+        use_upper_bound = True
 
-        return min(available_moves, key=move_rank)
+        if use_upper_bound:
+            return best_move_upper_bound(available_moves, nearest_zombie)
+        else:
+            return best_move_brute_force(available_moves, nearest_zombie)
 
 
 class Dead:

@@ -116,6 +116,10 @@ class TestLivingState:
         zombie_vectors=st.lists(vectors(), min_size=1),
         moves=st.lists(vectors(), min_size=1),
     )
+    @example(
+        zombie_vectors=[Vector(dx=0, dy=130), Vector(dx=0, dy=-128)],
+        moves=[Vector(dx=0, dy=0), Vector(dx=0, dy=1), Vector(dx=0, dy=2)],
+    )
     def test_movement_with_zombies(self, zombie_vectors, moves):
         target_vectors = TargetVectors(
             FakeViewpoint([(v, default_zombie()) for v in zombie_vectors])
