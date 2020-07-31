@@ -1,3 +1,4 @@
+from functools import reduce
 import math
 
 from hypothesis import assume, example, given
@@ -12,17 +13,47 @@ vectors = st.from_type(Vector)
 non_huge_vectors = vectors.filter(lambda v: v.distance < 10000)
 
 
-# Generates tuples of Points such that all the second Point's components are
-# greater than the corresponding components of the first Point. When used as
-# arguments for an Area, these generate non-empty Areas.
-ordered_points = points.flatmap(
-    lambda v: st.tuples(
-        st.just(v),
+@st.composite
+def ordered_points(draw):
+    """Generate tuples of Points with both components strictly ordered.
+
+    When used as arguments for an Area, these generate non-empty Areas.
+    """
+    lower_point = draw(points)
+    upper_point = draw(
         st.builds(
-            Point, x=st.integers(min_value=v.x + 1), y=st.integers(min_value=v.y + 1)
+            Point,
+            x=st.integers(min_value=lower_point.x + 1),
+            y=st.integers(min_value=lower_point.y + 1),
         ),
     )
-)
+
+    return (lower_point, upper_point)
+
+
+@st.composite
+def vectors_and_containing_boxes(draw, vectors=vectors):
+    vector = draw(vectors)
+    boxes = draw(
+        st.lists(
+            st.builds(
+                BoundingBox,
+                lower=st.builds(
+                    Vector,
+                    dx=st.integers(max_value=vector.dx),
+                    dy=st.integers(max_value=vector.dy),
+                ),
+                upper=st.builds(
+                    Vector,
+                    dx=st.integers(min_value=vector.dx + 1),
+                    dy=st.integers(min_value=vector.dy + 1),
+                ),
+            ),
+            min_size=1,
+        )
+    )
+
+    return (vector, boxes)
 
 
 class TestPoint:
@@ -74,7 +105,7 @@ class TestArea:
     def test_two_point_constructor(self, point_a, point_b):
         Area(point_a, point_b)
 
-    @given(ordered_points)
+    @given(ordered_points())
     def test_contains_lower_bound(self, points):
         lower, upper = points
         assert lower in Area(lower, upper)
@@ -97,7 +128,7 @@ class TestArea:
     def test_excludes_upper_bound(self, lower, upper):
         assert upper not in Area(lower, upper)
 
-    @given(ordered_points)
+    @given(ordered_points())
     def test_includes_midpoint(self, points):
         lower, upper = points
         midpoint = Point((lower.x + upper.x) // 2, (lower.y + upper.y) // 2)
@@ -213,6 +244,21 @@ class TestBoundingBox:
     def test_iteration_is_limited_to_box(self, box, vector):
         assume(vector not in box)
         assert vector not in list(box)
+
+    @given(
+        boxes=st.lists(st.builds(BoundingBox, vectors, vectors), min_size=2),
+        vector=vectors,
+    )
+    def test_vector_outside_intersection(self, boxes, vector):
+        assume(any(vector not in box for box in boxes))
+        intersection = reduce(lambda a, b: a.intersect(b), boxes)
+        assert vector not in intersection
+
+    @given(vectors_and_containing_boxes())
+    def test_vector_inside_intersection(self, vector_and_boxes):
+        vector, boxes = vector_and_boxes
+        intersection = reduce(lambda a, b: a.intersect(b), boxes)
+        assert vector in intersection
 
     @given(st.integers(min_value=0), vectors)
     @example(radius=10, vector=Vector(10, 10))

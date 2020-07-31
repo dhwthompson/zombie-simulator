@@ -92,3 +92,14 @@ class BoundingBox:
             for dx in range(self._lower.dx, self._upper.dx):
                 yield Vector(dx, dy)
 
+    def intersect(self, other: "BoundingBox") -> "BoundingBox":
+        return BoundingBox(
+            Vector(
+                max(self._lower.dx, other._lower.dx),
+                max(self._lower.dy, other._lower.dy),
+            ),
+            Vector(
+                min(self._upper.dx, other._upper.dx),
+                min(self._upper.dy, other._upper.dy),
+            ),
+        )

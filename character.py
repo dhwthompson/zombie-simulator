@@ -208,7 +208,7 @@ class Dead:
 
     living: bool = False
     undead: bool = False
-    movement_range: Iterable[Vector] = [Vector.ZERO]
+    movement_range = BoundingBox.range(0)
 
     _resurrection_age: ClassVar[int] = 20
 
@@ -279,10 +279,7 @@ class Character:
         return self._state.undead
 
     def next_action(
-        self,
-        environment: Viewpoint,
-        limits: VectorContainer,
-        actions: Actions[ActionType],
+        self, environment: Viewpoint, limits: BoundingBox, actions: Actions[ActionType],
     ) -> ActionType:
         new_state = self._state.next_state
         if new_state:
@@ -293,7 +290,7 @@ class Character:
         move = self.move(environment, limits)
         return actions.move(move)
 
-    def move(self, environment: Viewpoint, limits: VectorContainer) -> Vector:
+    def move(self, environment: Viewpoint, limits: BoundingBox) -> Vector:
         """Choose where to move next.
 
         Arguments:
@@ -315,11 +312,10 @@ class Character:
         return self._state.best_move(target_vectors, moves)
 
     def _available_moves(
-        self, limits: VectorContainer, obstacles: VectorContainer
+        self, limits: BoundingBox, obstacles: VectorContainer
     ) -> Iterable[Vector]:
-        moves = [
-            m for m in self._state.movement_range if m in limits and m not in obstacles
-        ]
+        character_range = self._state.movement_range.intersect(limits)
+        moves = [m for m in character_range if m not in obstacles]
         return moves
 
     def attack(self, environment: Viewpoint) -> Optional[Vector]:
