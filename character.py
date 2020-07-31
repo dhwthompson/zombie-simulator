@@ -143,9 +143,7 @@ def best_move_upper_bound(
     # Moves that take us further away are good; shorter moves break ties
     move_key = lambda option: (-option.upper_bound, option.move.distance)
 
-    options = sorted(
-        [MoveOption(move, math.inf) for move in moves], key=move_key
-    )
+    options = sorted([MoveOption(move, math.inf) for move in moves], key=move_key)
     if not options:
         raise ValueError("Attempting to choose from no available moves")
 
@@ -168,13 +166,14 @@ def best_move_upper_bound(
             )
 
         options = sorted(
-            [o for o in options if o.upper_bound > best_option.upper_bound], key=move_key
+            [o for o in options if o.upper_bound > best_option.upper_bound],
+            key=move_key,
         )
 
     # We have an earlier check that there are options available, so we've gone
     # around the loop at least once, so we have either broken out and returned,
     # or we've assigned something to `best_option`.
-    assert(best_option is not None)
+    assert best_option is not None
 
     return best_option.move
 
