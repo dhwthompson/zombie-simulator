@@ -4,7 +4,7 @@ from hypothesis import assume, example, given
 from hypothesis import strategies as st
 import pytest
 
-from space import Area, BoundingBox, Point, UnlimitedBoundingBox, Vector
+from space import Area, BoundingBox, Point, Vector
 
 
 points = st.from_type(Point)
@@ -227,9 +227,3 @@ class TestBoundingBox:
     def test_invalid_range(self):
         with pytest.raises(ValueError):
             BoundingBox.range(-1)
-
-
-class TestUnlimitedBoundingBox:
-    @given(vectors)
-    def test_contains_everything(self, vector):
-        assert vector in UnlimitedBoundingBox()

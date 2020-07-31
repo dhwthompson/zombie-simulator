@@ -92,7 +92,3 @@ class BoundingBox:
             for dx in range(self._lower.dx, self._upper.dx):
                 yield Vector(dx, dy)
 
-
-class UnlimitedBoundingBox:
-    def __contains__(self, vector: Vector) -> bool:
-        return True

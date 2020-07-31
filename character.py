@@ -17,7 +17,7 @@ except ImportError:
 
 import attr
 
-from space import BoundingBox, UnlimitedBoundingBox, Vector
+from space import BoundingBox, Vector
 
 State = Union["Living", "Dead", "Undead"]
 
@@ -293,9 +293,7 @@ class Character:
         move = self.move(environment, limits)
         return actions.move(move)
 
-    def move(
-        self, environment: Viewpoint, limits: VectorContainer = UnlimitedBoundingBox()
-    ) -> Vector:
+    def move(self, environment: Viewpoint, limits: VectorContainer) -> Vector:
         """Choose where to move next.
 
         Arguments:
