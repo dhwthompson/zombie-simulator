@@ -2,7 +2,7 @@ import attr
 from enum import Enum
 from itertools import chain
 import math
-from typing import Callable, Dict, Generic, Iterable, Optional, TypeVar, Tuple, Union
+from typing import Callable, Dict, Generic, Iterable, Optional, Set, TypeVar, Tuple, Union
 
 from space import Area, Point
 
@@ -108,6 +108,9 @@ class SpaceTree(Generic[ValueType]):
         """
         return self._root.nearest_to(origin, predicate)
 
+    def items_in(self, area: Area) -> Set[Match[ValueType]]:
+        return set(self._root.items_in(area))
+
 
 class Leaf(Generic[ValueType]):
     """Helper class for SpaceTree, representing a node that hasn't been split."""
@@ -134,6 +137,13 @@ class Leaf(Generic[ValueType]):
 
     def items(self) -> Iterable[Tuple[Point, ValueType]]:
         return self._positions.items()
+
+    def items_in(self, area: Area) -> Iterable[Match[ValueType]]:
+        if not self._area.intersects_with(area):
+            return []
+        return (
+            Match(pos, item) for pos, item in self._positions.items() if pos in area
+        )
 
     def set(self, point: Point, value: ValueType) -> "Node[ValueType]":
         if point not in self._positions and len(self._positions) >= self.LEAF_MAX:
@@ -253,6 +263,11 @@ class SplitNode(Generic[ValueType]):
 
     def items(self) -> Iterable[Tuple[Point, ValueType]]:
         return chain(self._lower_child.items(), self._upper_child.items())
+
+    def items_in(self, area: Area) -> Iterable[Match[ValueType]]:
+        if not self._area.intersects_with(area):
+            return []
+        return chain(self._lower_child.items_in(area), self._upper_child.items_in(area))
 
     def set(self, point: Point, value: ValueType) -> "SplitNode[ValueType]":
         if self._lower_func(point):

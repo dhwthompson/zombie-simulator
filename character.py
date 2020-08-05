@@ -5,6 +5,7 @@ from typing import (
     Generic,
     Iterable,
     Optional,
+    Set,
     Tuple,
     TypeVar,
     Union,
@@ -43,6 +44,9 @@ class Viewpoint(Protocol):
     def character_at(self, offset: Vector) -> object:
         ...
 
+    def occupied_points_in(self, box: BoundingBox) -> Set[Vector]:
+        ...
+
     def nearest(self, **attributes: bool) -> Optional[Vector]:
         ...
 
@@ -79,16 +83,6 @@ class VectorContainer(Protocol):
 
     def __contains__(self, vector: Vector) -> bool:
         ...
-
-
-class Obstacles:
-    def __init__(self, viewpoint: Viewpoint):
-        self._viewpoint = viewpoint
-
-    def __contains__(self, vector: Vector) -> bool:
-        if vector == Vector.ZERO:
-            return False
-        return self._viewpoint.character_at(vector) is not None
 
 
 def best_move_brute_force(
@@ -306,15 +300,15 @@ class Character:
         vector.
         """
         target_vectors = TargetVectors(environment)
-        obstacles = Obstacles(environment)
 
-        moves = self._available_moves(limits, obstacles)
+        moves = self._available_moves(limits, environment)
         return self._state.best_move(target_vectors, moves)
 
     def _available_moves(
-        self, limits: BoundingBox, obstacles: VectorContainer
+        self, limits: BoundingBox, environment: Viewpoint
     ) -> Iterable[Vector]:
         character_range = self._state.movement_range.intersect(limits)
+        obstacles = environment.occupied_points_in(character_range) - {Vector.ZERO}
         moves = [m for m in character_range if m not in obstacles]
         return moves
 

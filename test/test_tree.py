@@ -4,7 +4,7 @@ from .strategies import list_and_element
 import pytest
 
 from space import Area, Point
-from tree import SpaceTree
+from tree import Match, SpaceTree
 
 
 def areas(min_size_x=1, min_size_y=1, max_dimension=1000):
@@ -103,3 +103,25 @@ def test_nearest(area_and_points):
     for point in points:
         if point != origin:
             assert (best_match.point - origin).distance <= (point - origin).distance
+
+
+@given(
+    areas().flatmap(lambda a: st.tuples(st.just(a), st.lists(points_in(a)))), areas()
+)
+@example(
+    (Area(Point(0, 0), Point(10, 10)), [Point(1, 1), Point(8, 8)]),
+    Area(Point(1, 1), Point(3, 3)),
+)
+def test_items_in(area_and_points, inclusion_area):
+    tree_area = area_and_points[0]
+    positions = {point: object() for point in area_and_points[1]}
+
+    tree = SpaceTree.build(area=tree_area, positions=positions)
+
+    matches_in_area = tree.items_in(inclusion_area)
+
+    for point, character in positions.items():
+        if point in inclusion_area:
+            assert Match(point, character) in matches_in_area
+        else:
+            assert Match(point, character) not in matches_in_area

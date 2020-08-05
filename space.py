@@ -42,6 +42,14 @@ class Area:
         best_point = Point(x, y)
         return (best_point - point).distance
 
+    def intersects_with(self, other: "Area") -> bool:
+        lower_x = max(self._lower.x, other._lower.x)
+        lower_y = max(self._lower.y, other._lower.y)
+        upper_x = min(self._upper.x, other._upper.x)
+        upper_y = min(self._upper.y, other._upper.y)
+
+        return upper_x > lower_x and upper_y > lower_y
+
     def from_origin(self, origin: Point) -> "BoundingBox":
         return BoundingBox(self._lower - origin, self._upper - origin)
 
@@ -103,3 +111,6 @@ class BoundingBox:
                 min(self._upper.dy, other._upper.dy),
             ),
         )
+
+    def to_area(self, origin: Point) -> Area:
+        return Area(origin + self._lower, origin + self._upper)

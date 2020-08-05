@@ -2,7 +2,7 @@ import attr
 from collections import Counter
 from itertools import chain
 import math
-from typing import Callable, Generic, Iterator, Mapping, Optional, Set, Tuple, TypeVar
+from typing import Callable, Collection, Generic, Iterator, Mapping, Optional, Set, Tuple, TypeVar
 
 try:
     from typing import Protocol
@@ -34,7 +34,7 @@ class HasAttributes:
 
 
 @attr.s(auto_attribs=True, frozen=True)
-class NearestMatch(Generic[CharacterType]):
+class Match(Generic[CharacterType]):
     position: Point
     character: CharacterType
 
@@ -88,9 +88,13 @@ class Roster(Generic[CharacterType]):
     def character_at(self, position: Point) -> Optional[CharacterType]:
         return self._undead_positions.get(position) or self._positions.get(position)
 
+    def characters_in(self, area: Area) -> Set[Match[CharacterType]]:
+        all_items = self._undead_positions.items_in(area) | self._positions.items_in(area)
+        return {Match(i.point, i.value) for i in all_items}
+
     def nearest_to(
         self, origin: Point, *, undead: bool, **attributes: bool
-    ) -> Optional[NearestMatch[CharacterType]]:
+    ) -> Optional[Match[CharacterType]]:
         if undead:
             match = self._undead_positions.nearest_to(
                 origin, HasAttributes(**attributes)
@@ -99,7 +103,7 @@ class Roster(Generic[CharacterType]):
             match = self._positions.nearest_to(origin, HasAttributes(**attributes))
 
         if match:
-            return NearestMatch(position=match.point, character=match.value)
+            return Match(position=match.point, character=match.value)
         else:
             return None
 

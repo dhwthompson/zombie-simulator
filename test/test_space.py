@@ -32,6 +32,55 @@ def ordered_points(draw):
 
 
 @st.composite
+def overlapping_areas(draw):
+    point = draw(points)
+    areas = draw(
+        st.lists(
+            st.builds(
+                Area,
+                lower=st.builds(
+                    Point,
+                    st.integers(max_value=point.x),
+                    st.integers(max_value=point.y),
+                ),
+                upper=st.builds(
+                    Point,
+                    st.integers(min_value=point.x + 1),
+                    st.integers(min_value=point.y + 1),
+                ),
+            ),
+            min_size=2,
+            max_size=2,
+        )
+    )
+
+    return areas
+
+
+@st.composite
+def non_overlapping_areas(draw):
+    lower = draw(points)
+    upper = draw(points)
+    area = Area(lower, upper)
+
+    left = st.builds(Point, x=st.integers(max_value=lower.x), y=st.integers())
+    right = st.builds(Point, x=st.integers(min_value=upper.x + 1), y=st.integers())
+    down = st.builds(Point, x=st.integers(), y=st.integers(max_value=lower.y))
+    up = st.builds(Point, x=st.integers(), y=st.integers(min_value=upper.y + 1))
+
+    second_area = draw(
+        st.one_of(
+            st.builds(Area, lower=left, upper=left),
+            st.builds(Area, lower=right, upper=right),
+            st.builds(Area, lower=down, upper=down),
+            st.builds(Area, lower=up, upper=up),
+        )
+    )
+
+    return (area, second_area)
+
+
+@st.composite
 def vectors_and_containing_boxes(draw, vectors=vectors):
     vector = draw(vectors)
     boxes = draw(
@@ -153,6 +202,24 @@ class TestArea:
         from_origin = area.from_origin(origin)
 
         assert (point in area) == ((point - origin) in from_origin)
+
+    @given(st.builds(Area, points, points), points)
+    def test_areas_and_boxes(self, area, origin):
+        assert area.from_origin(origin).to_area(origin) == area
+
+    @given(overlapping_areas())
+    def test_overlapping_areas(self, areas):
+        area_a, area_b = areas
+        assert area_a.intersects_with(area_b)
+        assert area_b.intersects_with(area_a)
+
+    @given(non_overlapping_areas())
+    @example([Area(Point(0, 0), Point(2, 2)), Area(Point(2, 0), Point(4, 2))])
+    @example([Area(Point(0, 0), Point(2, 2)), Area(Point(0, 2), Point(2, 4))])
+    def test_non_overlapping_areas(self, areas):
+        area_a, area_b = areas
+        assert not area_a.intersects_with(area_b)
+        assert not area_b.intersects_with(area_a)
 
 
 class TestVector:

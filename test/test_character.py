@@ -10,7 +10,7 @@ from .strategies import list_and_element
 from character import Character, default_human, default_zombie
 from character import Actions
 from character import State, Dead, Living, Undead
-from character import Obstacles, TargetVectors
+from character import TargetVectors
 from space import BoundingBox, Vector
 
 
@@ -35,6 +35,9 @@ class FakeViewpoint:
                 return character
         else:
             return None
+
+    def occupied_points_in(self, box):
+        return {pos for pos, char in self._positions if pos in box}
 
     def from_offset(self, offset):
         return FakeViewpoint((v - offset, char) for v, char in self._positions)
@@ -117,21 +120,6 @@ class TestTargetVectors:
     @given(environments(characters=zombies))
     def test_no_humans(self, environment):
         assert TargetVectors(FakeViewpoint(environment)).nearest_human is None
-
-
-class TestObstacles:
-    @given(environments())
-    @example([])
-    @example([(Vector.ZERO, object())])
-    def test_never_includes_zero_vector(self, environment):
-        assert Vector.ZERO not in Obstacles(FakeViewpoint(environment))
-
-    @given(environments(min_size=1).flatmap(list_and_element))
-    def test_includes_entry(self, env_and_entry):
-        environment, (position, _) = env_and_entry
-        assume(position != Vector.ZERO)
-
-        assert position in Obstacles(FakeViewpoint(environment))
 
 
 class TestLivingState:
@@ -524,7 +512,7 @@ class TestHuman:
     @given(environments(), containing_boxes)
     def test_dead_humans_stay_still(self, environment, limits):
         human = Character(state=Dead())
-        assert human.move(environment, limits) == Vector.ZERO
+        assert human.move(FakeViewpoint(environment), limits) == Vector.ZERO
 
     @given(environments())
     def test_never_attacks(self, human, environment):

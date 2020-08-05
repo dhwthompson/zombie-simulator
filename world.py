@@ -6,6 +6,7 @@ from typing import (
     Iterable,
     Mapping,
     Optional,
+    Set,
     Tuple,
     TypeVar,
 )
@@ -17,7 +18,7 @@ except ImportError:
 
 from character import Character, State
 from roster import Roster, ChangeCharacter, Move
-from space import Area, Point, Vector
+from space import Area, BoundingBox, Point, Vector
 import tracing
 
 
@@ -104,6 +105,10 @@ class Viewpoint:
 
     def character_at(self, offset: Vector) -> Optional[Character]:
         return self._roster.character_at(self._origin + offset)
+
+    def occupied_points_in(self, box: BoundingBox) -> Set[Vector]:
+        area = box.to_area(self._origin)
+        return {m.position - self._origin for m in self._roster.characters_in(area)}
 
     def nearest(self, **attributes: bool) -> Optional[Vector]:
         nearest = self._roster.nearest_to(self._origin, **attributes)
