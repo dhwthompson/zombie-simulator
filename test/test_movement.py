@@ -33,11 +33,11 @@ def test_tick_returns_a_world(world):
 @given(worlds())
 @settings(max_examples=25)
 def test_tick_keeps_zombies(world):
-    old_zombies = set(z for z in sum(world.rows, []) if z and z.undead)
+    old_zombie_positions = set(pos for pos, char in world.positions if char.undead)
     new_world = world.tick()
-    new_zombies = set(z for z in sum(new_world.rows, []) if z and z.undead)
+    new_zombie_positions = set(pos for pos, char in world.positions if char.undead)
 
-    assert old_zombies == new_zombies
+    assert old_zombie_positions == new_zombie_positions
 
 
 @pytest.mark.integration
@@ -51,4 +51,4 @@ def test_zombies_approach_humans():
 
     world = world.tick()
 
-    assert world.rows == [[None, None, None], [None, zombie, None], [None, None, human]]
+    assert sorted(world.positions) == [(Point(1, 1), zombie), (Point(2, 2), human)]

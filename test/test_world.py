@@ -25,15 +25,16 @@ class TestWorld:
     @example(1, 1)
     def test_world_dimensions(self, width, height):
         world = World.for_mapping(width, height, characters={})
-        assert world.rows == [[None] * width] * height
+        assert world.width == width
+        assert world.height == height
 
     def test_explicitly_empty_world(self):
-        assert World.for_mapping(2, 2, {}).rows == [[None, None], [None, None]]
+        assert list(World.for_mapping(2, 2, {}).positions) == []
 
     @given(characters())
     def test_world_with_character(self, character):
         world = World.for_mapping(2, 2, {Point(1, 1): character})
-        assert world.rows == [[None, None], [None, character]]
+        assert list(world.positions) == [(Point(1, 1), character)]
 
     @given(characters())
     def test_character_out_of_bounds(self, character):
@@ -64,7 +65,10 @@ class TestWorldBuilder:
     @given(st.iterables(elements=st.one_of(characters(), st.just(None)), min_size=25))
     def test_population(self, population):
         builder = WorldBuilder(5, 5, population)
-        rows = builder.world.rows
-        assert len(rows) == 5
-        for row in rows:
-            assert len(row) == 5
+        world = builder.world
+        assert world.width == 5
+        assert world.height == 5
+        for position, character in world.positions:
+            assert 0 <= position.x < 5
+            assert 0 <= position.y < 5
+            assert character.undead in [True, False]

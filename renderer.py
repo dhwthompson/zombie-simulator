@@ -1,4 +1,5 @@
-from typing import Iterable, Optional
+from space import Point
+from typing import Iterable, Optional, Tuple
 
 try:
     from typing import Protocol
@@ -21,7 +22,15 @@ Row = Iterable[Optional[Character]]
 
 class World(Protocol):
     @property
-    def rows(self) -> Iterable[Row]:
+    def width(self) -> int:
+        ...
+
+    @property
+    def height(self) -> int:
+        ...
+
+    @property
+    def positions(self) -> Iterable[Tuple[Point, Character]]:
         ...
 
 
@@ -31,7 +40,10 @@ class Renderer:
 
     @property
     def lines(self) -> Iterable[str]:
-        return [self._render_row(row) for row in self._world.rows]
+        all_lines = [[". "] * self._world.width for _ in range(self._world.height)]
+        for position, character in self._world.positions:
+            all_lines[position.y][position.x] = self._render_character(character)
+        return [''.join(line) for line in all_lines]
 
     def _render_row(self, row: Row) -> str:
         return "".join(self._render_character(c) for c in row)

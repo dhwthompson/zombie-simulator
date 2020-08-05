@@ -36,11 +36,16 @@ class World:
         return World(area=area, roster=roster)
 
     @property
-    def rows(self) -> Collection[Collection[Optional[Character]]]:
-        return [self._row(y) for y in range(self._area.height)]
+    def width(self) -> int:
+        return self._area.width
 
-    def _row(self, y: int) -> Collection[Optional[Character]]:
-        return [self._roster.character_at(Point(x, y)) for x in range(self._area.width)]
+    @property
+    def height(self) -> int:
+        return self._area.height
+
+    @property
+    def positions(self) -> Iterable[Tuple[Point, Character]]:
+        return iter(self._roster)
 
     def viewpoint(self, origin: Point) -> "Viewpoint":
         return Viewpoint(origin, self._roster)
