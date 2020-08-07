@@ -50,9 +50,16 @@ class World:
     def viewpoint(self, origin: Point) -> "Viewpoint":
         return Viewpoint(origin, self._roster)
 
-    def tick(self) -> "World":
-        world = self
-        for (position, character) in self._roster:
+
+@attr.s(auto_attribs=True, frozen=True)
+class Tick:
+    world: World
+
+    def next(self) -> World:
+        world = self.world
+        area = self.world._area
+
+        for (position, character) in self.world._roster:
             context = {
                 "character_living": character.living,
                 "character_undead": character.undead,
@@ -61,13 +68,13 @@ class World:
                 if character not in world._roster:
                     continue
                 viewpoint = world.viewpoint(position)
-                limits = self._area.from_origin(position)
+                limits = area.from_origin(position)
                 actions = AvailableActions(position, character)
 
                 action: Action = character.next_action(viewpoint, limits, actions)
 
                 new_roster = action.next_roster(world._roster)
-                world = World(self._area, new_roster)
+                world = World(area, new_roster)
         return world
 
 

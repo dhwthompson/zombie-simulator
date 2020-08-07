@@ -16,7 +16,7 @@ from character import Character, default_human, default_zombie
 from population import Population
 from renderer import Renderer
 import tracing
-from world import WorldBuilder
+from world import Tick, WorldBuilder
 
 
 class TerminalSize(Protocol):
@@ -109,7 +109,7 @@ if __name__ == "__main__":
                     print(line)
 
                 with tracing.span("tick"):
-                    old_world, world = world, world.tick()
+                    old_world, world = world, Tick(world).next()
 
                 if old_world == world:
                     break

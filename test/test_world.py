@@ -1,10 +1,11 @@
-from hypothesis import example, given
+from hypothesis import example, given, settings
 from hypothesis import strategies as st
 
 import pytest
 
+from character import default_human, default_zombie
 from space import Point, Vector
-from world import World, WorldBuilder
+from world import Tick, World, WorldBuilder
 
 
 world_dimensions = st.integers(min_value=0, max_value=50)
@@ -72,3 +73,45 @@ class TestWorldBuilder:
             assert 0 <= position.x < 5
             assert 0 <= position.y < 5
             assert character.undead in [True, False]
+
+
+@st.composite
+def worlds(
+    draw, inhabitants=st.one_of(st.builds(default_human), st.builds(default_zombie))
+):
+    dimensions = st.integers(min_value=1, max_value=100)
+    x, y = draw(dimensions), draw(dimensions)
+    points = st.builds(
+        Point,
+        st.integers(min_value=0, max_value=x - 1),
+        st.integers(min_value=0, max_value=y - 1),
+    )
+    characters = draw(st.dictionaries(points, inhabitants))
+    return World.for_mapping(x, y, characters)
+
+@pytest.mark.integration
+class TestTick:
+
+    @given(worlds())
+    @settings(max_examples=25)
+    def test_next_returns_a_world(self, world):
+        assert isinstance(Tick(world).next(), World)
+
+
+    @given(worlds())
+    @settings(max_examples=25)
+    def test_preserves_character_count(self, world):
+        new_world = Tick(world).next()
+        assert len(list(world.positions)) == len(list(new_world.positions))
+
+    def test_zombie_approaches_human(self):
+        zombie = default_zombie()
+        human = default_human()
+
+        characters = {Point(0, 0): zombie, Point(2, 2): human}
+
+        world = World.for_mapping(3, 3, characters)
+
+        world = Tick(world).next()
+
+        assert sorted(world.positions) == [(Point(1, 1), zombie), (Point(2, 2), human)]
