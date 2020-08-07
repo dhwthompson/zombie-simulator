@@ -16,7 +16,7 @@ from character import Character, default_human, default_zombie
 from population import Population
 from renderer import Renderer
 import tracing
-from world import Tick, WorldBuilder
+from world import Builder, RosterTick
 
 
 class TerminalSize(Protocol):
@@ -86,8 +86,9 @@ if __name__ == "__main__":
         (DENSITY * (1 - ZOMBIE_CHANCE), default_human),
         (DENSITY * ZOMBIE_CHANCE, default_zombie),
     )
-    world = WorldBuilder(world_width, world_height, population).world
-    renderer = Renderer(world)
+    builder = Builder(world_width, world_height, population)
+    roster = builder.roster
+    renderer = Renderer(roster)
 
     ticks: Iterator[None] = each_interval(TICK)
     if MAX_AGE is not None:
@@ -109,10 +110,10 @@ if __name__ == "__main__":
                     print(line)
 
                 with tracing.span("tick"):
-                    old_world, world = world, Tick(world).next()
+                    old_roster, roster = roster, RosterTick(roster).next()
 
-                if old_world == world:
+                if old_roster == roster:
                     break
-                renderer = Renderer(world)
+                renderer = Renderer(roster)
         except KeyboardInterrupt:
             sys.exit(1)

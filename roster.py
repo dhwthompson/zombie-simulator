@@ -2,14 +2,25 @@ import attr
 from collections import Counter
 from itertools import chain
 import math
-from typing import Callable, Collection, Generic, Iterator, Mapping, Optional, Set, Tuple, TypeVar
+from typing import (
+    Callable,
+    Collection,
+    Generic,
+    Iterable,
+    Iterator,
+    Mapping,
+    Optional,
+    Set,
+    Tuple,
+    TypeVar,
+)
 
 try:
     from typing import Protocol
 except ImportError:
     from typing_extensions import Protocol  # type: ignore
 
-from space import Area, Point
+from space import Area, BoundingBox, Point, Vector
 from tree import SpaceTree
 
 
@@ -85,11 +96,21 @@ class Roster(Generic[CharacterType]):
         self._undead_positions = undead_positions
         self._positions = non_undead_positions
 
+    @property
+    def width(self) -> int:
+        return self._area.width
+
+    @property
+    def height(self) -> int:
+        return self._area.height
+
     def character_at(self, position: Point) -> Optional[CharacterType]:
         return self._undead_positions.get(position) or self._positions.get(position)
 
     def characters_in(self, area: Area) -> Set[Match[CharacterType]]:
-        all_items = self._undead_positions.items_in(area) | self._positions.items_in(area)
+        all_items = self._undead_positions.items_in(area) | self._positions.items_in(
+            area
+        )
         return {Match(i.point, i.value) for i in all_items}
 
     def nearest_to(
@@ -170,7 +191,11 @@ class Roster(Generic[CharacterType]):
         return character in self._characters
 
     def __iter__(self) -> Iterator[Tuple[Point, CharacterType]]:
-        return iter(chain(self._positions.items(), self._undead_positions.items()))
+        return iter(self.positions)
+
+    @property
+    def positions(self) -> Iterable[Tuple[Point, CharacterType]]:
+        return chain(self._positions.items(), self._undead_positions.items())
 
     def __len__(self) -> int:
         return len(self._positions) + len(self._undead_positions)
@@ -182,6 +207,37 @@ class Roster(Generic[CharacterType]):
             self._positions == other._positions
             and self._undead_positions == other._undead_positions
         )
+
+
+class Viewpoint(Generic[CharacterType]):
+    def __init__(self, origin: Point, roster: Roster[CharacterType]):
+        self._origin = origin
+        self._roster = roster
+
+    def __iter__(self) -> Iterable[Tuple[Vector, CharacterType]]:
+        return iter(
+            (position - self._origin, character) for position, character in self._roster
+        )
+
+    def __len__(self) -> int:
+        return len(self._roster)
+
+    def character_at(self, offset: Vector) -> Optional[CharacterType]:
+        return self._roster.character_at(self._origin + offset)
+
+    def occupied_points_in(self, box: BoundingBox) -> Set[Vector]:
+        area = box.to_area(self._origin)
+        return {m.position - self._origin for m in self._roster.characters_in(area)}
+
+    def nearest(self, **attributes: bool) -> Optional[Vector]:
+        nearest = self._roster.nearest_to(self._origin, **attributes)
+        if nearest:
+            return nearest.position - self._origin
+        else:
+            return None
+
+    def from_offset(self, offset: Vector) -> "Viewpoint[CharacterType]":
+        return Viewpoint(self._origin + offset, self._roster)
 
 
 @attr.s(auto_attribs=True, frozen=True)

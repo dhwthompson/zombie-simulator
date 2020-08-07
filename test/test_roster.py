@@ -7,7 +7,7 @@ from hypothesis import strategies as st
 import pytest
 
 from .strategies import list_and_element, dict_and_element
-from roster import ChangeCharacter, Move, Roster
+from roster import ChangeCharacter, Move, Roster, Viewpoint
 from space import Area, Point, Vector
 
 
@@ -183,6 +183,34 @@ class TestRoster:
         nearest = roster.nearest_to(position, undead=False, living=True)
         assert nearest is not None
         assert nearest.character.living
+
+
+class TestViewpoint:
+    def test_empty_viewpoint(self):
+        roster: Roster[Character] = Roster.for_mapping(
+            {}, area=Area(Point(0, 0), Point(2, 2))
+        )
+        assert len(Viewpoint(Point(1, 1), roster)) == 0
+
+    @given(characters)
+    def test_viewpoint_single_character(self, character):
+        roster = Roster.for_mapping(
+            {Point(1, 1): character}, area=Area(Point(0, 0), Point(2, 2))
+        )
+        viewpoint = Viewpoint(Point(1, 1), roster)
+        assert len(viewpoint) == 1
+        assert viewpoint.character_at(Vector.ZERO) == character
+
+    @given(char1=characters, char2=characters)
+    def test_viewpoint_multiple_characters(self, char1, char2):
+        roster = Roster.for_mapping(
+            {Point(1, 1): char1, Point(2, 0): char2},
+            area=Area(Point(0, 0), Point(3, 3)),
+        )
+        viewpoint = Viewpoint(Point(0, 1), roster)
+        assert len(viewpoint) == 2
+        assert viewpoint.character_at(Vector(1, 0)) == char1
+        assert viewpoint.character_at(Vector(2, -1)) == char2
 
 
 class TestMove:
