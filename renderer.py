@@ -52,7 +52,7 @@ class Renderer:
         if not character:
             return ". "
         if character.living:
-            return "\U0001F468 "
+            return "\U0001F9D1 "
         elif character.undead:
             return "\U0001F9DF "
         else:

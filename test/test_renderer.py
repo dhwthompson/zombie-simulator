@@ -37,7 +37,7 @@ class TestRenderer:
         human = Character(living=True, undead=False)
         world = World(width=3, height=1, positions=[(Point(1, 0), human)])
         renderer = Renderer(world)
-        assert renderer.lines == [". \U0001F468 . "]
+        assert renderer.lines == [". \U0001F9D1 . "]
 
     def test_dead_human(self):
         dead_human = Character(living=False, undead=False)
