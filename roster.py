@@ -94,7 +94,7 @@ class Roster(Generic[CharacterType]):
         self._area = area
         self._characters = characters
         self._undead_positions = undead_positions
-        self._positions = non_undead_positions
+        self._non_undead_positions = non_undead_positions
 
     @property
     def width(self) -> int:
@@ -105,12 +105,14 @@ class Roster(Generic[CharacterType]):
         return self._area.height
 
     def character_at(self, position: Point) -> Optional[CharacterType]:
-        return self._undead_positions.get(position) or self._positions.get(position)
+        return self._undead_positions.get(position) or self._non_undead_positions.get(
+            position
+        )
 
     def characters_in(self, area: Area) -> Set[Match[CharacterType]]:
-        all_items = self._undead_positions.items_in(area) | self._positions.items_in(
+        all_items = self._undead_positions.items_in(
             area
-        )
+        ) | self._non_undead_positions.items_in(area)
         return {Match(i.point, i.value) for i in all_items}
 
     def nearest_to(
@@ -121,7 +123,9 @@ class Roster(Generic[CharacterType]):
                 origin, HasAttributes(**attributes)
             )
         else:
-            match = self._positions.nearest_to(origin, HasAttributes(**attributes))
+            match = self._non_undead_positions.nearest_to(
+                origin, HasAttributes(**attributes)
+            )
 
         if match:
             return Match(position=match.point, character=match.value)
@@ -134,11 +138,14 @@ class Roster(Generic[CharacterType]):
         if new_position not in self._area:
             raise ValueError(f"{new_position} is not in the world area")
 
-        if new_position in self._undead_positions or new_position in self._positions:
+        if (
+            new_position in self._undead_positions
+            or new_position in self._non_undead_positions
+        ):
             raise ValueError(f"Attempt to move to occupied position {new_position}")
 
         undead_positions = self._undead_positions
-        other_positions = self._positions
+        other_positions = self._non_undead_positions
 
         if old_position in undead_positions:
             character = undead_positions[old_position]
@@ -164,7 +171,7 @@ class Roster(Generic[CharacterType]):
         self, position: Point, change: Callable[[CharacterType], CharacterType]
     ) -> "Roster[CharacterType]":
         undead_positions = self._undead_positions
-        other_positions = self._positions
+        other_positions = self._non_undead_positions
 
         if position in undead_positions:
             old_character = undead_positions[position]
@@ -195,16 +202,16 @@ class Roster(Generic[CharacterType]):
 
     @property
     def positions(self) -> Iterable[Tuple[Point, CharacterType]]:
-        return chain(self._positions.items(), self._undead_positions.items())
+        return chain(self._non_undead_positions.items(), self._undead_positions.items())
 
     def __len__(self) -> int:
-        return len(self._positions) + len(self._undead_positions)
+        return len(self._non_undead_positions) + len(self._undead_positions)
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Roster):
             return False
         return (
-            self._positions == other._positions
+            self._non_undead_positions == other._non_undead_positions
             and self._undead_positions == other._undead_positions
         )
 
