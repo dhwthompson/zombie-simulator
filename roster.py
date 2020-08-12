@@ -59,34 +59,25 @@ class Roster(Generic[CharacterType]):
 
         characters: Set[CharacterType] = set()
 
-        undead_positions: SpaceTree[CharacterType] = SpaceTree.build(area)
-        other_positions: SpaceTree[CharacterType] = SpaceTree.build(area)
+        positions: Dict[bool, SpaceTree[CharacterType]] = {
+            True: SpaceTree.build(area),
+            False: SpaceTree.build(area),
+        }
 
         for position, character in character_positions.items():
             if position not in area:
                 raise ValueError(f"{position} is not in the world area")
-            if position in undead_positions or position in other_positions:
+            if any(position in tree for tree in positions.values()):
                 raise ValueError(f"Multiple characters at position {position}")
             if character in characters:
                 raise ValueError(f"Character {character} in multiple places")
 
-            if character.undead:
-                undead_positions = undead_positions.set(position, character)
-            else:
-                other_positions = other_positions.set(position, character)
+            key = character.undead
+            positions[key] = positions[key].set(position, character)
 
             characters.add(character)
 
-        positions = {
-            True: undead_positions,
-            False: other_positions,
-        }
-
-        return Roster(
-            area=area,
-            positions=positions,
-            characters=characters,
-        )
+        return Roster(area=area, positions=positions, characters=characters)
 
     def __init__(
         self,
