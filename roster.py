@@ -187,14 +187,6 @@ class Viewpoint(Generic[CharacterType]):
         self._origin = origin
         self._roster = roster
 
-    def __iter__(self) -> Iterable[Tuple[Vector, CharacterType]]:
-        return iter(
-            (position - self._origin, character) for position, character in self._roster
-        )
-
-    def __len__(self) -> int:
-        return len(self._roster)
-
     def character_at(self, offset: Vector) -> Optional[CharacterType]:
         return self._roster.character_at(self._origin + offset)
 

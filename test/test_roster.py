@@ -190,7 +190,7 @@ class TestViewpoint:
         roster: Roster[Character] = Roster.for_mapping(
             {}, area=Area(Point(0, 0), Point(2, 2))
         )
-        assert len(Viewpoint(Point(1, 1), roster)) == 0
+        assert Viewpoint(Point(1, 1), roster).nearest() is None
 
     @given(characters)
     def test_viewpoint_single_character(self, character):
@@ -198,7 +198,6 @@ class TestViewpoint:
             {Point(1, 1): character}, area=Area(Point(0, 0), Point(2, 2))
         )
         viewpoint = Viewpoint(Point(1, 1), roster)
-        assert len(viewpoint) == 1
         assert viewpoint.character_at(Vector.ZERO) == character
 
     @given(char1=characters, char2=characters)
@@ -208,7 +207,6 @@ class TestViewpoint:
             area=Area(Point(0, 0), Point(3, 3)),
         )
         viewpoint = Viewpoint(Point(0, 1), roster)
-        assert len(viewpoint) == 2
         assert viewpoint.character_at(Vector(1, 0)) == char1
         assert viewpoint.character_at(Vector(2, -1)) == char2
 
