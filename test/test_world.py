@@ -6,7 +6,7 @@ import pytest
 from character import default_human, default_zombie
 from space import Area, Point, Vector
 from roster import Roster
-from world import Builder, RosterTick
+from world import Builder, Tick
 
 
 world_dimensions = st.integers(min_value=0, max_value=50)
@@ -52,16 +52,16 @@ def rosters(
 
 
 @pytest.mark.integration
-class TestRosterTick:
+class TestTick:
     @given(rosters())
     @settings(max_examples=25)
     def test_next_returns_a_roster(self, roster):
-        assert isinstance(RosterTick(roster).next(), Roster)
+        assert isinstance(Tick(roster).next(), Roster)
 
     @given(rosters())
     @settings(max_examples=25)
     def test_preserves_character_count(self, roster):
-        new_roster = RosterTick(roster).next()
+        new_roster = Tick(roster).next()
         assert len(list(roster.positions)) == len(list(new_roster.positions))
 
     def test_zombie_approaches_human(self):
@@ -72,6 +72,6 @@ class TestRosterTick:
         area = Area(Point(0, 0), Point(3, 3))
         roster = Roster.for_mapping(characters, area=area)
 
-        roster = RosterTick(roster).next()
+        roster = Tick(roster).next()
 
         assert sorted(roster.positions) == [(Point(1, 1), zombie), (Point(2, 2), human)]

@@ -23,7 +23,7 @@ import tracing
 
 
 @attr.s(auto_attribs=True, frozen=True)
-class RosterTick:
+class Tick:
     roster: Roster[Character]
 
     def next(self) -> Roster[Character]:

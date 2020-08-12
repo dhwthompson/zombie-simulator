@@ -16,7 +16,7 @@ from character import Character, default_human, default_zombie
 from population import Population
 from renderer import Renderer
 import tracing
-from world import Builder, RosterTick
+from world import Builder, Tick
 
 
 class TerminalSize(Protocol):
@@ -110,7 +110,7 @@ if __name__ == "__main__":
                     print(line)
 
                 with tracing.span("tick"):
-                    old_roster, roster = roster, RosterTick(roster).next()
+                    old_roster, roster = roster, Tick(roster).next()
 
                 if old_roster == roster:
                     break
