@@ -5,6 +5,7 @@ import math
 from typing import (
     Callable,
     Collection,
+    Dict,
     Generic,
     Iterable,
     Iterator,
@@ -76,10 +77,14 @@ class Roster(Generic[CharacterType]):
 
             characters.add(character)
 
+        positions = {
+            True: undead_positions,
+            False: other_positions,
+        }
+
         return Roster(
             area=area,
-            undead_positions=undead_positions,
-            non_undead_positions=other_positions,
+            positions=positions,
             characters=characters,
         )
 
@@ -88,13 +93,11 @@ class Roster(Generic[CharacterType]):
         *,
         area: Area,
         characters: Set[CharacterType],
-        undead_positions: SpaceTree[CharacterType],
-        non_undead_positions: SpaceTree[CharacterType],
+        positions: Dict[bool, SpaceTree[CharacterType]],
     ):
         self._area = area
         self._characters = characters
-        self._undead_positions = undead_positions
-        self._non_undead_positions = non_undead_positions
+        self._positions = positions
 
     @property
     def width(self) -> int:
@@ -105,30 +108,26 @@ class Roster(Generic[CharacterType]):
         return self._area.height
 
     def character_at(self, position: Point) -> Optional[CharacterType]:
-        return self._undead_positions.get(position) or self._non_undead_positions.get(
-            position
-        )
+        for tree in self._positions.values():
+            if (char := tree.get(position)) is not None:
+                return char
+        else:
+            return None
 
     def characters_in(self, area: Area) -> Set[Match[CharacterType]]:
-        all_items = self._undead_positions.items_in(
-            area
-        ) | self._non_undead_positions.items_in(area)
-        return {Match(i.point, i.value) for i in all_items}
+        matches: Set[Match[CharacterType]] = set()
+        for tree in self._positions.values():
+            matches |= {Match(i.point, i.value) for i in tree.items_in(area)}
+        return matches
 
     def nearest_to(
         self, origin: Point, *, undead: bool, **attributes: bool
     ) -> Optional[Match[CharacterType]]:
-        if undead:
-            match = self._undead_positions.nearest_to(
-                origin, HasAttributes(**attributes)
-            )
-        else:
-            match = self._non_undead_positions.nearest_to(
-                origin, HasAttributes(**attributes)
-            )
+        tree = self._positions[undead]
+        tree_match = tree.nearest_to(origin, HasAttributes(**attributes))
 
-        if match:
-            return Match(position=match.point, character=match.value)
+        if tree_match:
+            return Match(position=tree_match.point, character=tree_match.value)
         else:
             return None
 
@@ -138,61 +137,40 @@ class Roster(Generic[CharacterType]):
         if new_position not in self._area:
             raise ValueError(f"{new_position} is not in the world area")
 
-        if (
-            new_position in self._undead_positions
-            or new_position in self._non_undead_positions
-        ):
+        if any(new_position in tree for tree in self._positions.values()):
             raise ValueError(f"Attempt to move to occupied position {new_position}")
 
-        undead_positions = self._undead_positions
-        other_positions = self._non_undead_positions
+        positions = self._positions.copy()
 
-        if old_position in undead_positions:
-            character = undead_positions[old_position]
-            undead_positions = undead_positions.unset(old_position).set(
-                new_position, character
-            )
-        elif old_position in other_positions:
-            character = other_positions[old_position]
-            other_positions = other_positions.unset(old_position).set(
-                new_position, character
-            )
+        for key, tree in positions.items():
+            if old_position in tree:
+                character = tree[old_position]
+                positions[key] = tree.unset(old_position).set(new_position, character)
+                break
         else:
             raise ValueError(f"Attempt to move from unoccupied position {old_position}")
 
-        return Roster(
-            area=self._area,
-            characters=self._characters,
-            undead_positions=undead_positions,
-            non_undead_positions=other_positions,
-        )
+        return Roster(area=self._area, characters=self._characters, positions=positions)
 
     def change_character(
         self, position: Point, change: Callable[[CharacterType], CharacterType]
     ) -> "Roster[CharacterType]":
-        undead_positions = self._undead_positions
-        other_positions = self._non_undead_positions
+        positions = self._positions.copy()
 
-        if position in undead_positions:
-            old_character = undead_positions[position]
-            undead_positions = undead_positions.unset(position)
-        elif position in other_positions:
-            old_character = other_positions[position]
-            other_positions = other_positions.unset(position)
+        for key, tree in positions.items():
+            if position in tree:
+                old_character = tree[position]
+                positions[key] = tree.unset(position)
 
         new_character = change(old_character)
-        if new_character.undead:
-            undead_positions = undead_positions.set(position, new_character)
-        else:
-            other_positions = other_positions.set(position, new_character)
+
+        positions[new_character.undead] = positions[new_character.undead].set(
+            position, new_character
+        )
 
         new_characters = self._characters - set([old_character]) | set([new_character])
-        return Roster(
-            area=self._area,
-            characters=new_characters,
-            undead_positions=undead_positions,
-            non_undead_positions=other_positions,
-        )
+
+        return Roster(area=self._area, characters=new_characters, positions=positions)
 
     def __contains__(self, character: CharacterType) -> bool:
         return character in self._characters
@@ -202,18 +180,15 @@ class Roster(Generic[CharacterType]):
 
     @property
     def positions(self) -> Iterable[Tuple[Point, CharacterType]]:
-        return chain(self._non_undead_positions.items(), self._undead_positions.items())
+        return chain.from_iterable(t.items() for t in self._positions.values())
 
     def __len__(self) -> int:
-        return len(self._non_undead_positions) + len(self._undead_positions)
+        return sum(len(t) for t in self._positions.values())
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Roster):
             return False
-        return (
-            self._non_undead_positions == other._non_undead_positions
-            and self._undead_positions == other._undead_positions
-        )
+        return self._positions == other._positions
 
 
 class Viewpoint(Generic[CharacterType]):
