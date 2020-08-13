@@ -187,9 +187,6 @@ class Viewpoint(Generic[CharacterType]):
         self._origin = origin
         self._roster = roster
 
-    def character_at(self, offset: Vector) -> Optional[CharacterType]:
-        return self._roster.character_at(self._origin + offset)
-
     def occupied_points_in(self, box: BoundingBox) -> Set[Vector]:
         area = box.to_area(self._origin)
         return {m.position - self._origin for m in self._roster.characters_in(area)}

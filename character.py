@@ -41,9 +41,6 @@ class Actions(Protocol[ActionType]):
 
 
 class Viewpoint(Protocol):
-    def character_at(self, offset: Vector) -> object:
-        ...
-
     def occupied_points_in(self, box: BoundingBox) -> Set[Vector]:
         ...
 
@@ -290,7 +287,7 @@ class Character:
         Arguments:
             environment: the character's current environment. This is currently
                 passed in as a Viewpoint instance, supporting the
-                `character_at`, `nearest` and `from_offset` methods.
+                `occupied_points_in`, `nearest` and `from_offset` methods.
             limits: any limits on the character's movement provided by the
                 edges of the world. This can be anything that reponds to the
                 `in` operator.

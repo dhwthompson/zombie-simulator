@@ -8,7 +8,7 @@ import pytest
 
 from .strategies import list_and_element, dict_and_element
 from roster import ChangeCharacter, Move, Roster, Viewpoint
-from space import Area, Point, Vector
+from space import Area, BoundingBox, Point, Vector
 
 
 class Character:
@@ -190,7 +190,8 @@ class TestViewpoint:
         roster: Roster[Character] = Roster.for_mapping(
             {}, area=Area(Point(0, 0), Point(2, 2))
         )
-        assert Viewpoint(Point(1, 1), roster).nearest() is None
+        viewpoint = Viewpoint(Point(1, 1), roster)
+        assert viewpoint.occupied_points_in(BoundingBox.range(2)) == set()
 
     @given(characters)
     def test_viewpoint_single_character(self, character):
@@ -198,7 +199,7 @@ class TestViewpoint:
             {Point(1, 1): character}, area=Area(Point(0, 0), Point(2, 2))
         )
         viewpoint = Viewpoint(Point(1, 1), roster)
-        assert viewpoint.character_at(Vector.ZERO) == character
+        assert viewpoint.occupied_points_in(BoundingBox.range(2)) == {Vector.ZERO}
 
     @given(char1=characters, char2=characters)
     def test_viewpoint_multiple_characters(self, char1, char2):
@@ -207,8 +208,11 @@ class TestViewpoint:
             area=Area(Point(0, 0), Point(3, 3)),
         )
         viewpoint = Viewpoint(Point(0, 1), roster)
-        assert viewpoint.character_at(Vector(1, 0)) == char1
-        assert viewpoint.character_at(Vector(2, -1)) == char2
+        assert viewpoint.occupied_points_in(BoundingBox.range(1)) == {Vector(1, 0)}
+        assert viewpoint.occupied_points_in(BoundingBox.range(5)) == {
+            Vector(1, 0),
+            Vector(2, -1),
+        }
 
 
 class TestMove:
