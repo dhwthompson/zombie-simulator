@@ -22,13 +22,17 @@ except ImportError:
     from typing_extensions import Protocol  # type: ignore
 
 from space import Area, BoundingBox, Point, Vector
-from tree import SpaceTree
+from tree import PartitionTree
 
 
 class SupportsUndead(Protocol):
     @property
     def undead(self) -> bool:
         ...
+
+
+def is_undead(character: SupportsUndead) -> bool:
+    return character.undead
 
 
 CharacterType = TypeVar("CharacterType", bound=SupportsUndead)
@@ -58,23 +62,19 @@ class Roster(Generic[CharacterType]):
     ) -> "Roster[CharacterType]":
 
         characters: Set[CharacterType] = set()
-
-        positions: Dict[bool, SpaceTree[CharacterType]] = {
-            True: SpaceTree.build(area),
-            False: SpaceTree.build(area),
-        }
+        positions: PartitionTree[bool, CharacterType] = PartitionTree.build(
+            area, is_undead
+        )
 
         for position, character in character_positions.items():
             if position not in area:
                 raise ValueError(f"{position} is not in the world area")
-            if any(position in tree for tree in positions.values()):
+            if position in positions:
                 raise ValueError(f"Multiple characters at position {position}")
             if character in characters:
                 raise ValueError(f"Character {character} in multiple places")
 
-            key = character.undead
-            positions[key] = positions[key].set(position, character)
-
+            positions = positions.set(position, character)
             characters.add(character)
 
         return Roster(area=area, positions=positions, characters=characters)
@@ -84,7 +84,7 @@ class Roster(Generic[CharacterType]):
         *,
         area: Area,
         characters: Set[CharacterType],
-        positions: Dict[bool, SpaceTree[CharacterType]],
+        positions: PartitionTree[bool, CharacterType],
     ):
         self._area = area
         self._characters = characters
@@ -99,26 +99,18 @@ class Roster(Generic[CharacterType]):
         return self._area.height
 
     def character_at(self, position: Point) -> Optional[CharacterType]:
-        for tree in self._positions.values():
-            if (char := tree.get(position)) is not None:
-                return char
-        else:
-            return None
+        return self._positions.get(position)
 
     def characters_in(self, area: Area) -> Set[Match[CharacterType]]:
-        matches: Set[Match[CharacterType]] = set()
-        for tree in self._positions.values():
-            matches |= {Match(i.point, i.value) for i in tree.items_in(area)}
-        return matches
+        return {Match(i.point, i.value) for i in self._positions.items_in(area)}
 
     def nearest_to(
         self, origin: Point, *, undead: bool, **attributes: bool
     ) -> Optional[Match[CharacterType]]:
-        tree = self._positions[undead]
-        tree_match = tree.nearest_to(origin, HasAttributes(**attributes))
+        match = self._positions.nearest_to(origin, undead, HasAttributes(**attributes))
 
-        if tree_match:
-            return Match(position=tree_match.point, character=tree_match.value)
+        if match:
+            return Match(position=match.point, character=match.value)
         else:
             return None
 
@@ -128,36 +120,29 @@ class Roster(Generic[CharacterType]):
         if new_position not in self._area:
             raise ValueError(f"{new_position} is not in the world area")
 
-        if any(new_position in tree for tree in self._positions.values()):
+        if new_position in self._positions:
             raise ValueError(f"Attempt to move to occupied position {new_position}")
 
-        positions = self._positions.copy()
-
-        for key, tree in positions.items():
-            if old_position in tree:
-                character = tree[old_position]
-                positions[key] = tree.unset(old_position).set(new_position, character)
-                break
-        else:
+        try:
+            character = self._positions[old_position]
+        except KeyError:
             raise ValueError(f"Attempt to move from unoccupied position {old_position}")
 
+        positions = self._positions.unset(old_position).set(new_position, character)
         return Roster(area=self._area, characters=self._characters, positions=positions)
 
     def change_character(
         self, position: Point, change: Callable[[CharacterType], CharacterType]
     ) -> "Roster[CharacterType]":
-        positions = self._positions.copy()
-
-        for key, tree in positions.items():
-            if position in tree:
-                old_character = tree[position]
-                positions[key] = tree.unset(position)
+        try:
+            old_character = self._positions[position]
+        except KeyError:
+            raise ValueError(
+                f"Attempt to change character at unoccupied position {position}"
+            )
 
         new_character = change(old_character)
-
-        positions[new_character.undead] = positions[new_character.undead].set(
-            position, new_character
-        )
+        positions = self._positions.unset(position).set(position, new_character)
 
         new_characters = self._characters - set([old_character]) | set([new_character])
 
@@ -171,10 +156,10 @@ class Roster(Generic[CharacterType]):
 
     @property
     def positions(self) -> Iterable[Tuple[Point, CharacterType]]:
-        return chain.from_iterable(t.items() for t in self._positions.values())
+        return self._positions.items()
 
     def __len__(self) -> int:
-        return sum(len(t) for t in self._positions.values())
+        return len(self._positions)
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Roster):

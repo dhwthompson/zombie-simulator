@@ -2,11 +2,23 @@ import attr
 from enum import Enum
 from itertools import chain
 import math
-from typing import Callable, Dict, Generic, Iterable, Optional, Set, TypeVar, Tuple, Union
+from typing import (
+    Callable,
+    Dict,
+    Generic,
+    Hashable,
+    Iterable,
+    Optional,
+    Set,
+    TypeVar,
+    Tuple,
+    Union,
+)
 
 from space import Area, Point
 
 ValueType = TypeVar("ValueType")
+PartitionKeyType = TypeVar("PartitionKeyType", bound=Hashable)
 
 
 ANYTHING = lambda v: True
@@ -16,6 +28,89 @@ ANYTHING = lambda v: True
 class Match(Generic[ValueType]):
     point: Point
     value: ValueType
+
+
+@attr.s(auto_attribs=True, frozen=True)
+class PartitionTree(Generic[PartitionKeyType, ValueType]):
+    @classmethod
+    def build(
+        cls,
+        area: Area,
+        partition_func: Callable[[ValueType], PartitionKeyType],
+        positions: Optional[Dict[Point, ValueType]] = None,
+    ) -> "PartitionTree[PartitionKeyType, ValueType]":
+        tree: "PartitionTree[PartitionKeyType, ValueType]" = PartitionTree(
+            area, partition_func, {}
+        )
+        if positions:
+            for point, value in positions.items():
+                tree = tree.set(point, value)
+
+        return tree
+
+    _area: Area
+    _partition_func: Callable[[ValueType], PartitionKeyType]
+    _trees: Dict[PartitionKeyType, "SpaceTree[ValueType]"]
+
+    def __len__(self) -> int:
+        return sum(len(t) for t in self._trees.values())
+
+    def __contains__(self, position: Point) -> bool:
+        return any(position in tree for tree in self._trees.values())
+
+    def __getitem__(self, position: Point) -> ValueType:
+        if (value := self.get(position)) is not None:
+            return value
+        else:
+            raise KeyError(position)
+
+    def get(self, position: Point) -> Optional[ValueType]:
+        for tree in self._trees.values():
+            if (char := tree.get(position)) is not None:
+                return char
+        else:
+            return None
+
+    def items(self) -> Iterable[Tuple[Point, ValueType]]:
+        return chain.from_iterable(t.items() for t in self._trees.values())
+
+    def items_in(self, area: Area) -> Set[Match[ValueType]]:
+        matches: Set[Match[ValueType]] = set()
+        for tree in self._trees.values():
+            matches |= tree.items_in(area)
+        return matches
+
+    def nearest_to(
+        self,
+        origin: Point,
+        key: PartitionKeyType,
+        predicate: Optional[Callable[[ValueType], bool]] = None,
+    ) -> Optional[Match[ValueType]]:
+        try:
+            tree = self._trees[key]
+        except KeyError:
+            return None
+
+        return tree.nearest_to(origin, predicate)
+
+    def set(
+        self, position: Point, character: ValueType
+    ) -> "PartitionTree[PartitionKeyType, ValueType]":
+        char_key = self._partition_func(character)
+        new_trees = self._trees.copy()
+        key_tree = new_trees.get(char_key, SpaceTree.build(self._area))
+        new_trees[char_key] = key_tree.set(position, character)
+
+        return PartitionTree(self._area, self._partition_func, new_trees)
+
+    def unset(self, position: Point) -> "PartitionTree[PartitionKeyType, ValueType]":
+        for key, tree in self._trees.items():
+            if position in tree:
+                new_trees = self._trees.copy()
+                new_trees[key] = tree.unset(position)
+                return PartitionTree(self._area, self._partition_func, new_trees)
+        else:
+            raise KeyError(position)
 
 
 class SpaceTree(Generic[ValueType]):
