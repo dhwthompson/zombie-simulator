@@ -151,9 +151,6 @@ class Roster(Generic[CharacterType]):
     def __contains__(self, character: CharacterType) -> bool:
         return character in self._characters
 
-    def __iter__(self) -> Iterator[Tuple[Point, CharacterType]]:
-        return iter(self.positions)
-
     @property
     def positions(self) -> Iterable[Tuple[Point, CharacterType]]:
         return self._positions.items()

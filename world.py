@@ -30,7 +30,7 @@ class Tick:
         roster = self.roster
         area = self.roster._area
 
-        for (position, character) in self.roster:
+        for (position, character) in self.roster.positions:
             context = {
                 "character_living": character.living,
                 "character_undead": character.undead,
