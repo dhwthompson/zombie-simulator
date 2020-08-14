@@ -18,11 +18,11 @@ class FakeViewpoint:
     def __init__(self, positions):
         self._positions = positions
 
-    def nearest(self, **attributes):
+    def nearest(self, living, undead):
         matches = [
             pos
             for pos, char in self._positions
-            if all(getattr(char, a) == v for a, v in attributes.items())
+            if char.living == living and char.undead == undead
         ]
         if matches:
             return min(matches, key=lambda pos: pos.distance)

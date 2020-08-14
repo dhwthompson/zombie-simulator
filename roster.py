@@ -1,5 +1,6 @@
 import attr
 from collections import Counter
+from enum import Enum
 from itertools import chain
 import math
 from typing import (
@@ -25,28 +26,38 @@ from space import Area, BoundingBox, Point, Vector
 from tree import PartitionTree
 
 
-class SupportsUndead(Protocol):
+class HasLifeState(Protocol):
+    @property
+    def living(self) -> bool:
+        ...
+
     @property
     def undead(self) -> bool:
         ...
 
 
-def is_undead(character: SupportsUndead) -> bool:
-    return character.undead
+class LifeState(Enum):
+    LIVING = 1
+    DEAD = 2
+    UNDEAD = 3
+
+    @classmethod
+    def for_attributes(cls, *, living: bool, undead: bool) -> "LifeState":
+        if living and undead:
+            raise ValueError("Illegal living/undead state")
+        if undead:
+            return LifeState.UNDEAD
+        if living:
+            return LifeState.LIVING
+        else:
+            return LifeState.DEAD
+
+    @classmethod
+    def for_character(cls, character: HasLifeState) -> "LifeState":
+        return cls.for_attributes(living=character.living, undead=character.undead)
 
 
-CharacterType = TypeVar("CharacterType", bound=SupportsUndead)
-
-
-class HasAttributes:
-    def __init__(self, **attributes: bool):
-        self._attributes = attributes
-
-    def __call__(self, character: object) -> bool:
-        return all(
-            getattr(character, name) == value
-            for name, value in self._attributes.items()
-        )
+CharacterType = TypeVar("CharacterType", bound=HasLifeState)
 
 
 @attr.s(auto_attribs=True, frozen=True)
@@ -62,8 +73,8 @@ class Roster(Generic[CharacterType]):
     ) -> "Roster[CharacterType]":
 
         characters: Set[CharacterType] = set()
-        positions: PartitionTree[bool, CharacterType] = PartitionTree.build(
-            area, is_undead
+        positions: PartitionTree[LifeState, CharacterType] = PartitionTree.build(
+            area, LifeState.for_character
         )
 
         for position, character in character_positions.items():
@@ -84,7 +95,7 @@ class Roster(Generic[CharacterType]):
         *,
         area: Area,
         characters: Set[CharacterType],
-        positions: PartitionTree[bool, CharacterType],
+        positions: PartitionTree[LifeState, CharacterType],
     ):
         self._area = area
         self._characters = characters
@@ -105,9 +116,10 @@ class Roster(Generic[CharacterType]):
         return {Match(i.point, i.value) for i in self._positions.items_in(area)}
 
     def nearest_to(
-        self, origin: Point, *, undead: bool, **attributes: bool
+        self, origin: Point, *, undead: bool, living: bool
     ) -> Optional[Match[CharacterType]]:
-        match = self._positions.nearest_to(origin, undead, HasAttributes(**attributes))
+        key = LifeState.for_attributes(living=living, undead=undead)
+        match = self._positions.nearest_to(origin, key=key)
 
         if match:
             return Match(position=match.point, character=match.value)
@@ -173,8 +185,8 @@ class Viewpoint(Generic[CharacterType]):
         area = box.to_area(self._origin)
         return {m.position - self._origin for m in self._roster.characters_in(area)}
 
-    def nearest(self, **attributes: bool) -> Optional[Vector]:
-        nearest = self._roster.nearest_to(self._origin, **attributes)
+    def nearest(self, living: bool, undead: bool) -> Optional[Vector]:
+        nearest = self._roster.nearest_to(self._origin, undead=undead, living=living)
         if nearest:
             return nearest.position - self._origin
         else:

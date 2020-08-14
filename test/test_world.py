@@ -13,16 +13,19 @@ world_dimensions = st.integers(min_value=0, max_value=50)
 
 
 class FakeCharacter:
-    def __init__(self, undead):
+    def __init__(self, undead, living):
         self.undead = undead
+        self.living = living
 
 
-def characters():
-    return st.booleans().map(FakeCharacter)
-
+characters = st.one_of(
+    st.builds(FakeCharacter, undead=st.just(True), living=st.just(False)),
+    st.builds(FakeCharacter, undead=st.just(False), living=st.just(True)),
+    st.builds(FakeCharacter, undead=st.just(False), living=st.just(False)),
+)
 
 class TestBuilder:
-    @given(st.iterables(elements=st.one_of(characters(), st.just(None)), min_size=25))
+    @given(st.iterables(elements=st.one_of(characters, st.just(None)), min_size=25))
     def test_population(self, population):
         builder = Builder(5, 5, population)
         roster = builder.roster

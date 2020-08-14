@@ -34,7 +34,11 @@ def reanimate(c: Character) -> Character:
     return Character(undead=True, living=False)
 
 
-characters = st.builds(Character, undead=st.booleans(), living=st.booleans())
+characters = st.one_of(
+    st.builds(Character, undead=st.just(True), living=st.just(False)),
+    st.builds(Character, undead=st.just(False), living=st.just(True)),
+    st.builds(Character, undead=st.just(False), living=st.just(False)),
+)
 
 
 def points(max_dimension=1000):
@@ -138,8 +142,8 @@ class TestRoster:
         roster = Roster.for_mapping(
             {Point(1, 1): character}, area=Area(Point(0, 0), Point(2, 2))
         )
-        assert roster.nearest_to(Point(1, 1), undead=True) is None
-        assert roster.nearest_to(Point(1, 1), undead=False) is None
+        assert roster.nearest_to(Point(1, 1), undead=True, living=False) is None
+        assert roster.nearest_to(Point(1, 1), undead=False, living=True) is None
 
     @given(position_dicts(min_size=2).flatmap(dict_and_element))
     def test_nearest_undead(self, positions_and_item):
@@ -150,7 +154,7 @@ class TestRoster:
             any(char.undead and char != character for (_, char) in positions.items())
         )
 
-        nearest = roster.nearest_to(position, undead=True)
+        nearest = roster.nearest_to(position, undead=True, living=False)
         assert nearest is not None
         nearest_position, nearest_character = nearest.position, nearest.character
 

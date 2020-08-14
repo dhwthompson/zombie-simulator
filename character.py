@@ -44,7 +44,7 @@ class Viewpoint(Protocol):
     def occupied_points_in(self, box: BoundingBox) -> Set[Vector]:
         ...
 
-    def nearest(self, **attributes: bool) -> Optional[Vector]:
+    def nearest(self, living: bool, undead: bool) -> Optional[Vector]:
         ...
 
     def from_offset(self, offset: Vector) -> "Viewpoint":
@@ -67,7 +67,7 @@ class TargetVectors:
 
     @property
     def nearest_zombie(self) -> Optional[Vector]:
-        return self._viewpoint.nearest(undead=True)
+        return self._viewpoint.nearest(undead=True, living=False)
 
     def from_offset(self, offset: Vector) -> "TargetVectors":
         return TargetVectors(self._viewpoint.from_offset(offset))
