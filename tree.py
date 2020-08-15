@@ -21,9 +21,6 @@ ValueType = TypeVar("ValueType")
 PartitionKeyType = TypeVar("PartitionKeyType", bound=Hashable)
 
 
-ANYTHING = lambda v: True
-
-
 @attr.s(auto_attribs=True, frozen=True)
 class Match(Generic[ValueType]):
     point: Point
@@ -81,17 +78,14 @@ class PartitionTree(Generic[PartitionKeyType, ValueType]):
         return matches
 
     def nearest_to(
-        self,
-        origin: Point,
-        key: PartitionKeyType,
-        predicate: Optional[Callable[[ValueType], bool]] = None,
+        self, origin: Point, key: PartitionKeyType,
     ) -> Optional[Match[ValueType]]:
         try:
             tree = self._trees[key]
         except KeyError:
             return None
 
-        return tree.nearest_to(origin, predicate)
+        return tree.nearest_to(origin)
 
     def set(
         self, position: Point, character: ValueType
@@ -193,15 +187,9 @@ class SpaceTree(Generic[ValueType]):
         """
         return SpaceTree(self._area, self._root.unset(point))
 
-    def nearest_to(
-        self, origin: Point, predicate: Optional[Callable[[ValueType], bool]] = None
-    ) -> Optional[Match[ValueType]]:
-        """Return the nearest entry to a given point, not including the point itself.
-
-        Optionally, accept a predicate to return the nearest entry for which calling the
-        predicate on its value returns True.
-        """
-        return self._root.nearest_to(origin, predicate)
+    def nearest_to(self, origin: Point) -> Optional[Match[ValueType]]:
+        """Return the nearest entry to a given point, not including the point itself."""
+        return self._root.nearest_to(origin)
 
     def items_in(self, area: Area) -> Set[Match[ValueType]]:
         return set(self._root.items_in(area))
@@ -289,21 +277,15 @@ class Leaf(Generic[ValueType]):
         return Leaf(self._area, new_positions)
 
     def nearest_to(
-        self,
-        origin: Point,
-        predicate: Optional[Callable[[ValueType], bool]] = None,
-        threshold: float = math.inf,
+        self, origin: Point, threshold: float = math.inf,
     ) -> Optional[Match[ValueType]]:
 
         if self._area.distance_from(origin) > threshold:
             return None
 
-        if predicate is None:
-            predicate = ANYTHING
-
         best_match = None
         for pos, value in self._positions.items():
-            if pos == origin or not predicate(value):
+            if pos == origin:
                 continue
             distance = (pos - origin).distance
             if distance < threshold:
@@ -397,17 +379,11 @@ class SplitNode(Generic[ValueType]):
             return SplitNode(self._area, self._lower_func, lower_child, upper_child)
 
     def nearest_to(
-        self,
-        origin: Point,
-        predicate: Optional[Callable[[ValueType], bool]] = None,
-        threshold: float = math.inf,
+        self, origin: Point, threshold: float = math.inf,
     ) -> Optional[Match[ValueType]]:
 
         if self._area.distance_from(origin) > threshold:
             return None
-
-        if predicate is None:
-            predicate = ANYTHING
 
         if self._lower_func(origin):
             children = [self._lower_child, self._upper_child]
@@ -416,7 +392,7 @@ class SplitNode(Generic[ValueType]):
 
         best_match = None
         for child in children:
-            child_match = child.nearest_to(origin, predicate, threshold)
+            child_match = child.nearest_to(origin, threshold)
             if child_match is not None:
                 best_match = child_match
                 threshold = (child_match.point - origin).distance
