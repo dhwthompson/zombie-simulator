@@ -127,7 +127,7 @@ class TestRoster:
         )
 
     def test_empty_roster(self):
-        roster: Roster[Character] = Roster.for_mapping(
+        roster: Roster[Character, LifeState] = Roster.for_mapping(
             {}, Area(Point(0, 0), Point(5, 5))
         )
         assert not roster
@@ -191,7 +191,7 @@ class TestRoster:
 
 class TestViewpoint:
     def test_empty_viewpoint(self):
-        roster: Roster[Character] = Roster.for_mapping(
+        roster: Roster[Character, LifeState] = Roster.for_mapping(
             {}, area=Area(Point(0, 0), Point(2, 2))
         )
         viewpoint = Viewpoint(Point(1, 1), roster)

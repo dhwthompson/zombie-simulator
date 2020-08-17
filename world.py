@@ -17,16 +17,16 @@ except ImportError:
     from typing_extensions import Protocol  # type: ignore
 
 from character import Character, State
-from roster import Roster, ChangeCharacter, Move, Viewpoint
+from roster import Roster, ChangeCharacter, LifeState, Move, Viewpoint
 from space import Area, BoundingBox, Point, Vector
 import tracing
 
 
 @attr.s(auto_attribs=True, frozen=True)
 class Tick:
-    roster: Roster[Character]
+    roster: Roster[Character, LifeState]
 
-    def next(self) -> Roster[Character]:
+    def next(self) -> Roster[Character, LifeState]:
         roster = self.roster
         area = self.roster._area
 
@@ -49,7 +49,8 @@ class Tick:
 
 
 class Action(Protocol):
-    def next_roster(self, roster: Roster[Character]) -> Roster[Character]:
+    def next_roster(
+        self, roster: Roster[Character, LifeState]) -> Roster[Character, LifeState]:
         ...
 
 
@@ -96,5 +97,5 @@ class Builder:
                 yield Point(x, y)
 
     @property
-    def roster(self) -> Roster[Character]:
+    def roster(self) -> Roster[Character, LifeState]:
         return self._roster
