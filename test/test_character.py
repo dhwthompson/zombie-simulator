@@ -13,16 +13,19 @@ from character import State, Dead, Living, Undead
 from character import TargetVectors
 from space import BoundingBox, Vector
 
+# TODO: genericise out of existence
+from roster import LifeState
+
 
 class FakeViewpoint:
     def __init__(self, positions):
         self._positions = positions
 
-    def nearest(self, living, undead):
+    def nearest(self, life_state):
         matches = [
             pos
             for pos, char in self._positions
-            if char.living == living and char.undead == undead
+            if LifeState.for_character(char) == life_state
         ]
         if matches:
             return min(matches, key=lambda pos: pos.distance)

@@ -116,9 +116,8 @@ class Roster(Generic[CharacterType]):
         return {Match(i.point, i.value) for i in self._positions.items_in(area)}
 
     def nearest_to(
-        self, origin: Point, *, undead: bool, living: bool
+        self, origin: Point, *, key: LifeState,
     ) -> Optional[Match[CharacterType]]:
-        key = LifeState.for_attributes(living=living, undead=undead)
         match = self._positions.nearest_to(origin, key=key)
 
         if match:
@@ -185,8 +184,8 @@ class Viewpoint(Generic[CharacterType]):
         area = box.to_area(self._origin)
         return {m.position - self._origin for m in self._roster.characters_in(area)}
 
-    def nearest(self, living: bool, undead: bool) -> Optional[Vector]:
-        nearest = self._roster.nearest_to(self._origin, undead=undead, living=living)
+    def nearest(self, key: LifeState) -> Optional[Vector]:
+        nearest = self._roster.nearest_to(self._origin, key=key)
         if nearest:
             return nearest.position - self._origin
         else:

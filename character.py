@@ -18,6 +18,8 @@ except ImportError:
 
 import attr
 
+# TODO: generic me out of existence
+from roster import LifeState
 from space import BoundingBox, Vector
 
 State = Union["Living", "Dead", "Undead"]
@@ -44,7 +46,7 @@ class Viewpoint(Protocol):
     def occupied_points_in(self, box: BoundingBox) -> Set[Vector]:
         ...
 
-    def nearest(self, living: bool, undead: bool) -> Optional[Vector]:
+    def nearest(self, key: LifeState) -> Optional[Vector]:
         ...
 
     def from_offset(self, offset: Vector) -> "Viewpoint":
@@ -63,11 +65,11 @@ class TargetVectors:
 
     @property
     def nearest_human(self) -> Optional[Vector]:
-        return self._viewpoint.nearest(undead=False, living=True)
+        return self._viewpoint.nearest(LifeState.LIVING)
 
     @property
     def nearest_zombie(self) -> Optional[Vector]:
-        return self._viewpoint.nearest(undead=True, living=False)
+        return self._viewpoint.nearest(LifeState.UNDEAD)
 
     def from_offset(self, offset: Vector) -> "TargetVectors":
         return TargetVectors(self._viewpoint.from_offset(offset))
