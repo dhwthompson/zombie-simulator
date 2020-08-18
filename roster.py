@@ -1,6 +1,5 @@
 import attr
 from collections import Counter
-from enum import Enum
 from itertools import chain
 import math
 from typing import (
@@ -26,38 +25,6 @@ except ImportError:
 
 from space import Area, BoundingBox, Point, Vector
 from tree import PartitionTree
-
-
-class HasLifeState(Protocol):
-    @property
-    def living(self) -> bool:
-        ...
-
-    @property
-    def undead(self) -> bool:
-        ...
-
-
-class LifeState(Enum):
-    LIVING = 1
-    DEAD = 2
-    UNDEAD = 3
-
-    @classmethod
-    def for_attributes(cls, *, living: bool, undead: bool) -> "LifeState":
-        if living and undead:
-            raise ValueError("Illegal living/undead state")
-        if undead:
-            return LifeState.UNDEAD
-        if living:
-            return LifeState.LIVING
-        else:
-            return LifeState.DEAD
-
-    @classmethod
-    def for_character(cls, character: HasLifeState) -> "LifeState":
-        return cls.for_attributes(living=character.living, undead=character.undead)
-
 
 CharacterType = TypeVar("CharacterType")
 PartitionKeyType = TypeVar("PartitionKeyType", bound=Hashable)

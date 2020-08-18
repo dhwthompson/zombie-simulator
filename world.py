@@ -16,8 +16,8 @@ try:
 except ImportError:
     from typing_extensions import Protocol  # type: ignore
 
-from character import Character, State
-from roster import Roster, ChangeCharacter, LifeState, Move, Viewpoint
+from character import Character, LifeState, State
+from roster import Roster, ChangeCharacter, Move, Viewpoint
 from space import Area, BoundingBox, Point, Vector
 import tracing
 

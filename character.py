@@ -1,3 +1,4 @@
+from enum import Enum
 import math
 from typing import (
     Callable,
@@ -18,13 +19,42 @@ except ImportError:
 
 import attr
 
-# TODO: generic me out of existence
-from roster import LifeState
 from space import BoundingBox, Vector
 
 State = Union["Living", "Dead", "Undead"]
 
 ActionType = TypeVar("ActionType", covariant=True)
+
+
+class HasLifeState(Protocol):
+    @property
+    def living(self) -> bool:
+        ...
+
+    @property
+    def undead(self) -> bool:
+        ...
+
+
+class LifeState(Enum):
+    LIVING = 1
+    DEAD = 2
+    UNDEAD = 3
+
+    @classmethod
+    def for_attributes(cls, *, living: bool, undead: bool) -> "LifeState":
+        if living and undead:
+            raise ValueError("Illegal living/undead state")
+        if undead:
+            return LifeState.UNDEAD
+        if living:
+            return LifeState.LIVING
+        else:
+            return LifeState.DEAD
+
+    @classmethod
+    def for_character(cls, character: HasLifeState) -> "LifeState":
+        return cls.for_attributes(living=character.living, undead=character.undead)
 
 
 def shortest(vectors: Iterable[Vector]) -> Vector:

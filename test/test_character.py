@@ -9,12 +9,9 @@ import pytest
 from .strategies import list_and_element
 from character import Character, default_human, default_zombie
 from character import Actions
-from character import State, Dead, Living, Undead
+from character import LifeState, State, Dead, Living, Undead
 from character import TargetVectors
 from space import BoundingBox, Vector
-
-# TODO: genericise out of existence
-from roster import LifeState
 
 
 class FakeViewpoint:

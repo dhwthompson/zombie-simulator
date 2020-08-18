@@ -3,9 +3,9 @@ from hypothesis import strategies as st
 
 import pytest
 
-from character import default_human, default_zombie
+from character import default_human, default_zombie, LifeState
 from space import Area, Point, Vector
-from roster import LifeState, Roster
+from roster import Roster
 from world import Builder, Tick
 
 
