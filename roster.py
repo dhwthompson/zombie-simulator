@@ -4,6 +4,7 @@ from enum import Enum
 from itertools import chain
 import math
 from typing import (
+    Any,
     Callable,
     Collection,
     Dict,
@@ -58,7 +59,7 @@ class LifeState(Enum):
         return cls.for_attributes(living=character.living, undead=character.undead)
 
 
-CharacterType = TypeVar("CharacterType", bound=HasLifeState)
+CharacterType = TypeVar("CharacterType")
 PartitionKeyType = TypeVar("PartitionKeyType", bound=Hashable)
 
 
@@ -68,15 +69,29 @@ class Match(Generic[CharacterType]):
     character: CharacterType
 
 
+def no_partition(character: Any) -> Tuple[()]:
+    return ()
+
+
 class Roster(Generic[CharacterType, PartitionKeyType]):
     @classmethod
     def for_mapping(
         cls, character_positions: Mapping[Point, CharacterType], area: Area
-    ) -> "Roster[CharacterType, LifeState]":
+    ) -> "Roster[CharacterType, Tuple[()]]":
+
+        return Roster.partitioned(character_positions, area, no_partition)
+
+    @classmethod
+    def partitioned(
+        cls,
+        character_positions: Mapping[Point, CharacterType],
+        area: Area,
+        partition_func: Callable[[CharacterType], PartitionKeyType],
+    ) -> "Roster[CharacterType, PartitionKeyType]":
 
         characters: Set[CharacterType] = set()
-        positions: PartitionTree[LifeState, CharacterType] = PartitionTree.build(
-            area, LifeState.for_character
+        positions: PartitionTree[PartitionKeyType, CharacterType] = PartitionTree.build(
+            area, partition_func
         )
 
         for position, character in character_positions.items():

@@ -50,7 +50,8 @@ class Tick:
 
 class Action(Protocol):
     def next_roster(
-        self, roster: Roster[Character, LifeState]) -> Roster[Character, LifeState]:
+        self, roster: Roster[Character, LifeState]
+    ) -> Roster[Character, LifeState]:
         ...
 
 
@@ -86,7 +87,9 @@ class Builder:
             if character is not None
         }
 
-        self._roster = Roster.for_mapping(starting_positions, area=area)
+        self._roster = Roster.partitioned(
+            starting_positions, area=area, partition_func=LifeState.for_character
+        )
 
     def _area(self, width: int, height: int) -> Area:
         return Area(Point(0, 0), Point(width, height))

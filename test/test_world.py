@@ -5,7 +5,7 @@ import pytest
 
 from character import default_human, default_zombie
 from space import Area, Point, Vector
-from roster import Roster
+from roster import LifeState, Roster
 from world import Builder, Tick
 
 
@@ -23,6 +23,7 @@ characters = st.one_of(
     st.builds(FakeCharacter, undead=st.just(False), living=st.just(True)),
     st.builds(FakeCharacter, undead=st.just(False), living=st.just(False)),
 )
+
 
 class TestBuilder:
     @given(st.iterables(elements=st.one_of(characters, st.just(None)), min_size=25))
@@ -51,7 +52,9 @@ def rosters(
         st.integers(min_value=0, max_value=height - 1),
     )
     characters = draw(st.dictionaries(points, inhabitants))
-    return Roster.for_mapping(characters, area=area)
+    return Roster.partitioned(
+        characters, area=area, partition_func=LifeState.for_character
+    )
 
 
 @pytest.mark.integration
@@ -73,7 +76,9 @@ class TestTick:
 
         characters = {Point(0, 0): zombie, Point(2, 2): human}
         area = Area(Point(0, 0), Point(3, 3))
-        roster = Roster.for_mapping(characters, area=area)
+        roster = Roster.partitioned(
+            characters, area=area, partition_func=LifeState.for_character
+        )
 
         roster = Tick(roster).next()
 

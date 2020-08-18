@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from operator import itemgetter
+from typing import Any, Mapping
 
 from hypothesis import assume, given, note
 from hypothesis import strategies as st
@@ -127,9 +128,8 @@ class TestRoster:
         )
 
     def test_empty_roster(self):
-        roster: Roster[Character, LifeState] = Roster.for_mapping(
-            {}, Area(Point(0, 0), Point(5, 5))
-        )
+        characters: Mapping[Point, Any] = {}
+        roster = Roster.for_mapping(characters, Area(Point(0, 0), Point(5, 5)))
         assert not roster
 
     @given(position_dicts(min_size=1))
@@ -140,15 +140,18 @@ class TestRoster:
     @given(characters)
     def test_no_nearest_character(self, character):
         roster = Roster.for_mapping(
-            {Point(1, 1): character}, area=Area(Point(0, 0), Point(2, 2))
+            {Point(1, 1): character}, area=Area(Point(0, 0), Point(2, 2)),
         )
-        assert roster.nearest_to(Point(1, 1), key=LifeState.UNDEAD) is None
-        assert roster.nearest_to(Point(1, 1), key=LifeState.LIVING) is None
+        assert roster.nearest_to(Point(1, 1), key=()) is None
 
     @given(position_dicts(min_size=2).flatmap(dict_and_element))
     def test_nearest_undead(self, positions_and_item):
         positions, (position, character) = positions_and_item
-        roster = Roster.for_mapping(positions, area_containing(positions))
+        roster = Roster.partitioned(
+            positions,
+            area_containing(positions),
+            partition_func=LifeState.for_character,
+        )
 
         assume(
             any(char.undead and char != character for (_, char) in positions.items())
@@ -169,19 +172,20 @@ class TestRoster:
         assert best_distance == (nearest_position - position).distance
 
     @given(position_dicts(min_size=2).flatmap(dict_and_element))
-    def test_nearest_non_undead(self, positions_and_item):
+    def test_nearest_living(self, positions_and_item):
         positions, (position, character) = positions_and_item
-        roster = Roster.for_mapping(positions, area_containing(positions))
+        roster = Roster.partitioned(
+            positions,
+            area_containing(positions),
+            partition_func=LifeState.for_character,
+        )
 
         note(f"Roster: {roster}")
         note(f"Sample position: {position}")
         note(f"Character: {character}")
 
         assume(
-            any(
-                char.living and not char.undead and char != character
-                for (_, char) in positions.items()
-            )
+            any(char.living and char != character for (_, char) in positions.items())
         )
 
         nearest = roster.nearest_to(position, key=LifeState.LIVING)
@@ -191,9 +195,8 @@ class TestRoster:
 
 class TestViewpoint:
     def test_empty_viewpoint(self):
-        roster: Roster[Character, LifeState] = Roster.for_mapping(
-            {}, area=Area(Point(0, 0), Point(2, 2))
-        )
+        characters: Mapping[Point, Any] = {}
+        roster = Roster.for_mapping(characters, area=Area(Point(0, 0), Point(2, 2)))
         viewpoint = Viewpoint(Point(1, 1), roster)
         assert viewpoint.occupied_points_in(BoundingBox.range(2)) == set()
 
