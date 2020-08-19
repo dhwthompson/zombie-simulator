@@ -43,7 +43,7 @@ class Renderer:
         all_lines = [[". "] * self._world.width for _ in range(self._world.height)]
         for position, character in self._world.positions:
             all_lines[position.y][position.x] = self._render_character(character)
-        return [''.join(line) for line in all_lines]
+        return ["".join(line) for line in all_lines]
 
     def _render_row(self, row: Row) -> str:
         return "".join(self._render_character(c) for c in row)
