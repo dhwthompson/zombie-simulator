@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from operator import itemgetter
+from typing import Any, Mapping
 
 from hypothesis import assume, given, note
 from hypothesis import strategies as st
@@ -14,30 +15,25 @@ from space import Area, BoundingBox, Point, Vector
 class Character:
     # Keeping this as an object to preserve object identity
 
-    def __init__(self, undead, living):
-        self.undead = undead
-        self.living = living
+    def __init__(self, colour: str):
+        self.colour = colour
 
     def __repr__(self):
-        return f"Character(undead={self.undead}, living={self.living})"
+        return f"Character(colour={self.colour})"
 
 
-def do_nothing(c: Character) -> Character:
-    return c
+def paint_blue(c: Character) -> Character:
+    return Character(colour="blue")
 
 
-def kill(c: Character) -> Character:
-    return Character(undead=c.undead, living=False)
-
-
-def reanimate(c: Character) -> Character:
-    return Character(undead=True, living=False)
+def character_colour(c: Character) -> str:
+    return c.colour
 
 
 characters = st.one_of(
-    st.builds(Character, undead=st.just(True), living=st.just(False)),
-    st.builds(Character, undead=st.just(False), living=st.just(True)),
-    st.builds(Character, undead=st.just(False), living=st.just(False)),
+    st.builds(Character, colour=st.just("red")),
+    st.builds(Character, colour=st.just("blue")),
+    st.builds(Character, colour=st.just("green")),
 )
 
 
@@ -127,9 +123,8 @@ class TestRoster:
         )
 
     def test_empty_roster(self):
-        roster: Roster[Character] = Roster.for_mapping(
-            {}, Area(Point(0, 0), Point(5, 5))
-        )
+        characters: Mapping[Point, Any] = {}
+        roster = Roster.for_mapping(characters, Area(Point(0, 0), Point(5, 5)))
         assert not roster
 
     @given(position_dicts(min_size=1))
@@ -140,21 +135,27 @@ class TestRoster:
     @given(characters)
     def test_no_nearest_character(self, character):
         roster = Roster.for_mapping(
-            {Point(1, 1): character}, area=Area(Point(0, 0), Point(2, 2))
+            {Point(1, 1): character}, area=Area(Point(0, 0), Point(2, 2)),
         )
-        assert roster.nearest_to(Point(1, 1), undead=True, living=False) is None
-        assert roster.nearest_to(Point(1, 1), undead=False, living=True) is None
+        assert roster.nearest_to(Point(1, 1), key=()) is None
 
     @given(position_dicts(min_size=2).flatmap(dict_and_element))
-    def test_nearest_undead(self, positions_and_item):
+    def test_nearest_in_partition(self, positions_and_item):
         positions, (position, character) = positions_and_item
-        roster = Roster.for_mapping(positions, area_containing(positions))
-
-        assume(
-            any(char.undead and char != character for (_, char) in positions.items())
+        roster = Roster.partitioned(
+            positions, area_containing(positions), partition_func=character_colour,
         )
 
-        nearest = roster.nearest_to(position, undead=True, living=False)
+        partition_key = "blue"
+
+        assume(
+            any(
+                char.colour == partition_key and char != character
+                for (_, char) in positions.items()
+            )
+        )
+
+        nearest = roster.nearest_to(position, key=partition_key)
         assert nearest is not None
         nearest_position, nearest_character = nearest.position, nearest.character
 
@@ -164,36 +165,15 @@ class TestRoster:
         best_distance = min(
             (p - position).distance
             for p, c in positions.items()
-            if c != character and c.undead
+            if c != character and c.colour == partition_key
         )
         assert best_distance == (nearest_position - position).distance
-
-    @given(position_dicts(min_size=2).flatmap(dict_and_element))
-    def test_nearest_non_undead(self, positions_and_item):
-        positions, (position, character) = positions_and_item
-        roster = Roster.for_mapping(positions, area_containing(positions))
-
-        note(f"Roster: {roster}")
-        note(f"Sample position: {position}")
-        note(f"Character: {character}")
-
-        assume(
-            any(
-                char.living and not char.undead and char != character
-                for (_, char) in positions.items()
-            )
-        )
-
-        nearest = roster.nearest_to(position, undead=False, living=True)
-        assert nearest is not None
-        assert nearest.character.living
 
 
 class TestViewpoint:
     def test_empty_viewpoint(self):
-        roster: Roster[Character] = Roster.for_mapping(
-            {}, area=Area(Point(0, 0), Point(2, 2))
-        )
+        characters: Mapping[Point, Any] = {}
+        roster = Roster.for_mapping(characters, area=Area(Point(0, 0), Point(2, 2)))
         viewpoint = Viewpoint(Point(1, 1), roster)
         assert viewpoint.occupied_points_in(BoundingBox.range(2)) == set()
 
@@ -285,24 +265,13 @@ class TestMove:
         assert move.next_roster(roster).character_at(Point(1, 1)) is non_mover
 
 
-class Target:
-
-    undead = False
-
-    def __init__(self, attack_result):
-        self._attack_result = attack_result
-
-    def attacked(self):
-        return self._attack_result
-
-
 class TestChangeCharacter:
     @given(characters)
     def test_fails_if_target_not_in_roster(self, instigator):
         roster = Roster.for_mapping(
             {Point(0, 0): instigator}, Area(Point(0, 0), Point(5, 5))
         )
-        action = ChangeCharacter(instigator, Point(1, 1), do_nothing)
+        action = ChangeCharacter(instigator, Point(1, 1), paint_blue)
         with pytest.raises(ValueError):
             action.next_roster(roster)
 
@@ -311,42 +280,28 @@ class TestChangeCharacter:
         roster = Roster.for_mapping(
             {Point(0, 0): target}, Area(Point(0, 0), Point(5, 5))
         )
-        action = ChangeCharacter(instigator, target, do_nothing)
+        action = ChangeCharacter(instigator, target, paint_blue)
         with pytest.raises(ValueError):
             action.next_roster(roster)
 
-    @given(attacker=characters)
-    def test_attacks_target(self, attacker):
-        target = Character(living=True, undead=False)
-        positions = {Point(0, 0): attacker, Point(1, 1): target}
+    @given(instigator=characters)
+    def test_changes_target(self, instigator):
+        target = Character(colour="red")
+        positions = {Point(0, 0): instigator, Point(1, 1): target}
 
         roster = Roster.for_mapping(positions, area_containing(positions))
-        attack = ChangeCharacter(attacker, Point(1, 1), kill)
-        new_roster = attack.next_roster(roster)
+        paint = ChangeCharacter(instigator, Point(1, 1), paint_blue)
+        new_roster = paint.next_roster(roster)
 
         new_character = new_roster.character_at(Point(1, 1))
         assert new_character is not None
-        assert not new_character.living
+        assert new_character.colour == "blue"
 
-    @given(attacker=characters, target=characters)
-    def test_preserves_attacker(self, attacker, target):
-        positions = {Point(0, 0): attacker, Point(1, 1): target}
+    @given(instigator=characters, target=characters)
+    def test_preserves_instigator(self, instigator, target):
+        positions = {Point(0, 0): instigator, Point(1, 1): target}
 
         roster = Roster.for_mapping(positions, area_containing(positions))
-        attack = ChangeCharacter(attacker, Point(1, 1), kill)
-        new_roster = attack.next_roster(roster)
-        assert new_roster.character_at(Point(0, 0)) is attacker
-
-    def test_changes_character_state(self):
-        character = Character(living=False, undead=False)
-        position = Point(0, 1)
-        state_change = ChangeCharacter(character, position, reanimate)
-        roster = Roster.for_mapping(
-            {position: character}, Area(Point(0, 0), Point(5, 5))
-        )
-
-        next_roster = state_change.next_roster(roster)
-
-        new_character = next_roster.character_at(Point(0, 1))
-        assert new_character is not None
-        assert new_character.undead
+        paint = ChangeCharacter(instigator, Point(1, 1), paint_blue)
+        new_roster = paint.next_roster(roster)
+        assert new_roster.character_at(Point(0, 0)) is instigator

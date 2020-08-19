@@ -1,13 +1,14 @@
 import attr
 from collections import Counter
-from enum import Enum
 from itertools import chain
 import math
 from typing import (
+    Any,
     Callable,
     Collection,
     Dict,
     Generic,
+    Hashable,
     Iterable,
     Iterator,
     Mapping,
@@ -25,39 +26,8 @@ except ImportError:
 from space import Area, BoundingBox, Point, Vector
 from tree import PartitionTree
 
-
-class HasLifeState(Protocol):
-    @property
-    def living(self) -> bool:
-        ...
-
-    @property
-    def undead(self) -> bool:
-        ...
-
-
-class LifeState(Enum):
-    LIVING = 1
-    DEAD = 2
-    UNDEAD = 3
-
-    @classmethod
-    def for_attributes(cls, *, living: bool, undead: bool) -> "LifeState":
-        if living and undead:
-            raise ValueError("Illegal living/undead state")
-        if undead:
-            return LifeState.UNDEAD
-        if living:
-            return LifeState.LIVING
-        else:
-            return LifeState.DEAD
-
-    @classmethod
-    def for_character(cls, character: HasLifeState) -> "LifeState":
-        return cls.for_attributes(living=character.living, undead=character.undead)
-
-
-CharacterType = TypeVar("CharacterType", bound=HasLifeState)
+CharacterType = TypeVar("CharacterType")
+PartitionKeyType = TypeVar("PartitionKeyType", bound=Hashable)
 
 
 @attr.s(auto_attribs=True, frozen=True)
@@ -66,15 +36,29 @@ class Match(Generic[CharacterType]):
     character: CharacterType
 
 
-class Roster(Generic[CharacterType]):
+def no_partition(character: Any) -> Tuple[()]:
+    return ()
+
+
+class Roster(Generic[CharacterType, PartitionKeyType]):
     @classmethod
     def for_mapping(
         cls, character_positions: Mapping[Point, CharacterType], area: Area
-    ) -> "Roster[CharacterType]":
+    ) -> "Roster[CharacterType, Tuple[()]]":
+
+        return Roster.partitioned(character_positions, area, no_partition)
+
+    @classmethod
+    def partitioned(
+        cls,
+        character_positions: Mapping[Point, CharacterType],
+        area: Area,
+        partition_func: Callable[[CharacterType], PartitionKeyType],
+    ) -> "Roster[CharacterType, PartitionKeyType]":
 
         characters: Set[CharacterType] = set()
-        positions: PartitionTree[LifeState, CharacterType] = PartitionTree.build(
-            area, LifeState.for_character
+        positions: PartitionTree[PartitionKeyType, CharacterType] = PartitionTree.build(
+            area, partition_func
         )
 
         for position, character in character_positions.items():
@@ -95,7 +79,7 @@ class Roster(Generic[CharacterType]):
         *,
         area: Area,
         characters: Set[CharacterType],
-        positions: PartitionTree[LifeState, CharacterType],
+        positions: PartitionTree[PartitionKeyType, CharacterType],
     ):
         self._area = area
         self._characters = characters
@@ -116,9 +100,8 @@ class Roster(Generic[CharacterType]):
         return {Match(i.point, i.value) for i in self._positions.items_in(area)}
 
     def nearest_to(
-        self, origin: Point, *, undead: bool, living: bool
+        self, origin: Point, *, key: PartitionKeyType,
     ) -> Optional[Match[CharacterType]]:
-        key = LifeState.for_attributes(living=living, undead=undead)
         match = self._positions.nearest_to(origin, key=key)
 
         if match:
@@ -128,7 +111,7 @@ class Roster(Generic[CharacterType]):
 
     def move_character(
         self, old_position: Point, new_position: Point
-    ) -> "Roster[CharacterType]":
+    ) -> "Roster[CharacterType, PartitionKeyType]":
         if new_position not in self._area:
             raise ValueError(f"{new_position} is not in the world area")
 
@@ -145,7 +128,7 @@ class Roster(Generic[CharacterType]):
 
     def change_character(
         self, position: Point, change: Callable[[CharacterType], CharacterType]
-    ) -> "Roster[CharacterType]":
+    ) -> "Roster[CharacterType, PartitionKeyType]":
         try:
             old_character = self._positions[position]
         except KeyError:
@@ -176,8 +159,8 @@ class Roster(Generic[CharacterType]):
         return self._positions == other._positions
 
 
-class Viewpoint(Generic[CharacterType]):
-    def __init__(self, origin: Point, roster: Roster[CharacterType]):
+class Viewpoint(Generic[CharacterType, PartitionKeyType]):
+    def __init__(self, origin: Point, roster: Roster[CharacterType, PartitionKeyType]):
         self._origin = origin
         self._roster = roster
 
@@ -185,14 +168,16 @@ class Viewpoint(Generic[CharacterType]):
         area = box.to_area(self._origin)
         return {m.position - self._origin for m in self._roster.characters_in(area)}
 
-    def nearest(self, living: bool, undead: bool) -> Optional[Vector]:
-        nearest = self._roster.nearest_to(self._origin, undead=undead, living=living)
+    def nearest(self, key: PartitionKeyType) -> Optional[Vector]:
+        nearest = self._roster.nearest_to(self._origin, key=key)
         if nearest:
             return nearest.position - self._origin
         else:
             return None
 
-    def from_offset(self, offset: Vector) -> "Viewpoint[CharacterType]":
+    def from_offset(
+        self, offset: Vector
+    ) -> "Viewpoint[CharacterType, PartitionKeyType]":
         return Viewpoint(self._origin + offset, self._roster)
 
 
@@ -202,7 +187,9 @@ class Move(Generic[CharacterType]):
     _old_position: Point
     _new_position: Point
 
-    def next_roster(self, roster: Roster[CharacterType]) -> Roster[CharacterType]:
+    def next_roster(
+        self, roster: Roster[CharacterType, PartitionKeyType]
+    ) -> Roster[CharacterType, PartitionKeyType]:
         old_position = self._old_position
         new_position = self._new_position
 
@@ -223,7 +210,9 @@ class ChangeCharacter(Generic[CharacterType]):
     _position: Point
     _change: Callable[[CharacterType], CharacterType]
 
-    def next_roster(self, roster: Roster[CharacterType]) -> Roster[CharacterType]:
+    def next_roster(
+        self, roster: Roster[CharacterType, PartitionKeyType]
+    ) -> Roster[CharacterType, PartitionKeyType]:
         if self._instigator not in roster:
             raise ValueError(f"Action by non-existent character {self._instigator}")
 

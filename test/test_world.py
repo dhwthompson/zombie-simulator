@@ -3,7 +3,7 @@ from hypothesis import strategies as st
 
 import pytest
 
-from character import default_human, default_zombie
+from character import default_human, default_zombie, LifeState
 from space import Area, Point, Vector
 from roster import Roster
 from world import Builder, Tick
@@ -13,16 +13,12 @@ world_dimensions = st.integers(min_value=0, max_value=50)
 
 
 class FakeCharacter:
-    def __init__(self, undead, living):
-        self.undead = undead
-        self.living = living
+    def __init__(self, life_state):
+        self.life_state = life_state
 
 
-characters = st.one_of(
-    st.builds(FakeCharacter, undead=st.just(True), living=st.just(False)),
-    st.builds(FakeCharacter, undead=st.just(False), living=st.just(True)),
-    st.builds(FakeCharacter, undead=st.just(False), living=st.just(False)),
-)
+characters = st.builds(FakeCharacter, st.sampled_from(LifeState))
+
 
 class TestBuilder:
     @given(st.iterables(elements=st.one_of(characters, st.just(None)), min_size=25))
@@ -34,7 +30,7 @@ class TestBuilder:
         for position, character in roster.positions:
             assert 0 <= position.x < 5
             assert 0 <= position.y < 5
-            assert character.undead in [True, False]
+            assert character is not None
 
 
 @st.composite
@@ -51,7 +47,9 @@ def rosters(
         st.integers(min_value=0, max_value=height - 1),
     )
     characters = draw(st.dictionaries(points, inhabitants))
-    return Roster.for_mapping(characters, area=area)
+    return Roster.partitioned(
+        characters, area=area, partition_func=LifeState.for_character
+    )
 
 
 @pytest.mark.integration
@@ -73,7 +71,9 @@ class TestTick:
 
         characters = {Point(0, 0): zombie, Point(2, 2): human}
         area = Area(Point(0, 0), Point(3, 3))
-        roster = Roster.for_mapping(characters, area=area)
+        roster = Roster.partitioned(
+            characters, area=area, partition_func=LifeState.for_character
+        )
 
         roster = Tick(roster).next()
 

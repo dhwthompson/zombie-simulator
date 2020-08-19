@@ -1,3 +1,4 @@
+from enum import Enum
 import math
 from typing import (
     Callable,
@@ -25,6 +26,16 @@ State = Union["Living", "Dead", "Undead"]
 ActionType = TypeVar("ActionType", covariant=True)
 
 
+class LifeState(Enum):
+    LIVING = 1
+    DEAD = 2
+    UNDEAD = 3
+
+    @classmethod
+    def for_character(cls, character: "Character") -> "LifeState":
+        return character.life_state
+
+
 def shortest(vectors: Iterable[Vector]) -> Vector:
     return min(vectors, key=lambda v: v.distance)
 
@@ -44,7 +55,7 @@ class Viewpoint(Protocol):
     def occupied_points_in(self, box: BoundingBox) -> Set[Vector]:
         ...
 
-    def nearest(self, living: bool, undead: bool) -> Optional[Vector]:
+    def nearest(self, key: LifeState) -> Optional[Vector]:
         ...
 
     def from_offset(self, offset: Vector) -> "Viewpoint":
@@ -63,11 +74,11 @@ class TargetVectors:
 
     @property
     def nearest_human(self) -> Optional[Vector]:
-        return self._viewpoint.nearest(undead=False, living=True)
+        return self._viewpoint.nearest(LifeState.LIVING)
 
     @property
     def nearest_zombie(self) -> Optional[Vector]:
-        return self._viewpoint.nearest(undead=True, living=False)
+        return self._viewpoint.nearest(LifeState.UNDEAD)
 
     def from_offset(self, offset: Vector) -> "TargetVectors":
         return TargetVectors(self._viewpoint.from_offset(offset))
@@ -171,8 +182,7 @@ def best_move_upper_bound(
 
 class Living:
 
-    living = True
-    undead = False
+    life_state = LifeState.LIVING
     movement_range = BoundingBox.range(2)
     next_state = None
 
@@ -197,8 +207,7 @@ class Dead:
     def __init__(self, age: int = 0):
         self._age = age
 
-    living: bool = False
-    undead: bool = False
+    life_state = LifeState.DEAD
     movement_range = BoundingBox.range(0)
 
     _resurrection_age: ClassVar[int] = 20
@@ -226,8 +235,7 @@ class Dead:
 
 class Undead:
 
-    living = False
-    undead = True
+    life_state = LifeState.UNDEAD
     movement_range = BoundingBox.range(1)
     attack_range = BoundingBox.range(1)
     next_state = None
@@ -262,12 +270,8 @@ class Character:
         self._state = state
 
     @property
-    def living(self) -> bool:
-        return self._state.living
-
-    @property
-    def undead(self) -> bool:
-        return self._state.undead
+    def life_state(self) -> LifeState:
+        return self._state.life_state
 
     def next_action(
         self, environment: Viewpoint, limits: BoundingBox, actions: Actions[ActionType],

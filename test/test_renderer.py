@@ -1,5 +1,6 @@
 import attr
 
+from character import LifeState
 from renderer import Renderer
 from space import Point
 
@@ -13,8 +14,7 @@ class World:
 
 @attr.s(auto_attribs=True, frozen=True)
 class Character:
-    living: bool
-    undead: bool
+    life_state: LifeState
 
 
 class TestRenderer:
@@ -34,19 +34,19 @@ class TestRenderer:
         assert renderer.lines == [". . . . . ", ". . . . . ", ". . . . . "]
 
     def test_human(self):
-        human = Character(living=True, undead=False)
+        human = Character(LifeState.LIVING)
         world = World(width=3, height=1, positions=[(Point(1, 0), human)])
         renderer = Renderer(world)
         assert renderer.lines == [". \U0001F9D1 . "]
 
     def test_dead_human(self):
-        dead_human = Character(living=False, undead=False)
+        dead_human = Character(LifeState.DEAD)
         world = World(width=3, height=1, positions=[(Point(1, 0), dead_human)],)
         renderer = Renderer(world)
         assert renderer.lines == [". \U0001F480 . "]
 
     def test_zombie(self):
-        zombie = Character(living=False, undead=True)
+        zombie = Character(LifeState.UNDEAD)
         world = World(width=3, height=1, positions=[(Point(1, 0), zombie)])
         renderer = Renderer(world)
         assert renderer.lines == [". \U0001F9DF . "]

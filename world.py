@@ -16,7 +16,7 @@ try:
 except ImportError:
     from typing_extensions import Protocol  # type: ignore
 
-from character import Character, State
+from character import Character, LifeState, State
 from roster import Roster, ChangeCharacter, Move, Viewpoint
 from space import Area, BoundingBox, Point, Vector
 import tracing
@@ -24,16 +24,15 @@ import tracing
 
 @attr.s(auto_attribs=True, frozen=True)
 class Tick:
-    roster: Roster[Character]
+    roster: Roster[Character, LifeState]
 
-    def next(self) -> Roster[Character]:
+    def next(self) -> Roster[Character, LifeState]:
         roster = self.roster
         area = self.roster._area
 
         for (position, character) in self.roster.positions:
             context = {
-                "character_living": character.living,
-                "character_undead": character.undead,
+                "character_state": character.life_state.name,
             }
             with tracing.span("character_action", context):
                 if character not in roster:
@@ -49,7 +48,9 @@ class Tick:
 
 
 class Action(Protocol):
-    def next_roster(self, roster: Roster[Character]) -> Roster[Character]:
+    def next_roster(
+        self, roster: Roster[Character, LifeState]
+    ) -> Roster[Character, LifeState]:
         ...
 
 
@@ -85,7 +86,9 @@ class Builder:
             if character is not None
         }
 
-        self._roster = Roster.for_mapping(starting_positions, area=area)
+        self._roster = Roster.partitioned(
+            starting_positions, area=area, partition_func=LifeState.for_character
+        )
 
     def _area(self, width: int, height: int) -> Area:
         return Area(Point(0, 0), Point(width, height))
@@ -96,5 +99,5 @@ class Builder:
                 yield Point(x, y)
 
     @property
-    def roster(self) -> Roster[Character]:
+    def roster(self) -> Roster[Character, LifeState]:
         return self._roster
