@@ -1,3 +1,4 @@
+from character import LifeState
 from space import Point
 from typing import Iterable, Optional, Tuple
 
@@ -9,11 +10,7 @@ except ImportError:
 
 class Character(Protocol):
     @property
-    def living(self) -> bool:
-        ...
-
-    @property
-    def undead(self) -> bool:
+    def life_state(self) -> LifeState:
         ...
 
 
@@ -51,9 +48,10 @@ class Renderer:
     def _render_character(self, character: Optional[Character]) -> str:
         if not character:
             return ". "
-        if character.living:
-            return "\U0001F9D1 "
-        elif character.undead:
-            return "\U0001F9DF "
-        else:
-            return "\U0001F480 "
+
+        character_strings = {
+            LifeState.LIVING: "\U0001F9D1 ",
+            LifeState.UNDEAD: "\U0001F9DF ",
+            LifeState.DEAD: "\U0001F480 ",
+        }
+        return character_strings[character.life_state]

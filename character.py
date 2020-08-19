@@ -26,35 +26,14 @@ State = Union["Living", "Dead", "Undead"]
 ActionType = TypeVar("ActionType", covariant=True)
 
 
-class HasLifeState(Protocol):
-    @property
-    def living(self) -> bool:
-        ...
-
-    @property
-    def undead(self) -> bool:
-        ...
-
-
 class LifeState(Enum):
     LIVING = 1
     DEAD = 2
     UNDEAD = 3
 
     @classmethod
-    def for_attributes(cls, *, living: bool, undead: bool) -> "LifeState":
-        if living and undead:
-            raise ValueError("Illegal living/undead state")
-        if undead:
-            return LifeState.UNDEAD
-        if living:
-            return LifeState.LIVING
-        else:
-            return LifeState.DEAD
-
-    @classmethod
-    def for_character(cls, character: HasLifeState) -> "LifeState":
-        return cls.for_attributes(living=character.living, undead=character.undead)
+    def for_character(cls, character: "Character") -> "LifeState":
+        return character.life_state
 
 
 def shortest(vectors: Iterable[Vector]) -> Vector:
@@ -203,8 +182,7 @@ def best_move_upper_bound(
 
 class Living:
 
-    living = True
-    undead = False
+    life_state = LifeState.LIVING
     movement_range = BoundingBox.range(2)
     next_state = None
 
@@ -229,8 +207,7 @@ class Dead:
     def __init__(self, age: int = 0):
         self._age = age
 
-    living: bool = False
-    undead: bool = False
+    life_state = LifeState.DEAD
     movement_range = BoundingBox.range(0)
 
     _resurrection_age: ClassVar[int] = 20
@@ -258,8 +235,7 @@ class Dead:
 
 class Undead:
 
-    living = False
-    undead = True
+    life_state = LifeState.UNDEAD
     movement_range = BoundingBox.range(1)
     attack_range = BoundingBox.range(1)
     next_state = None
@@ -294,12 +270,8 @@ class Character:
         self._state = state
 
     @property
-    def living(self) -> bool:
-        return self._state.living
-
-    @property
-    def undead(self) -> bool:
-        return self._state.undead
+    def life_state(self) -> LifeState:
+        return self._state.life_state
 
     def next_action(
         self, environment: Viewpoint, limits: BoundingBox, actions: Actions[ActionType],

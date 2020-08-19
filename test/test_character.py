@@ -123,11 +123,8 @@ class TestTargetVectors:
 
 
 class TestLivingState:
-    def test_is_living(self):
-        assert Living().living
-
-    def test_is_not_undead(self):
-        assert not Living().undead
+    def test_life_state(self):
+        assert Living().life_state == LifeState.LIVING
 
     @given(moves=st.lists(vectors(), min_size=1))
     def test_movement_without_zombies(self, moves):
@@ -181,11 +178,8 @@ class TestLivingState:
 
 
 class TestDeadState:
-    def test_is_not_living(self):
-        assert not Dead().living
-
-    def test_is_not_undead(self):
-        assert not Dead().undead
+    def test_life_state(self):
+        assert Dead().life_state == LifeState.DEAD
 
     @given(vectors())
     @example(Vector.ZERO)
@@ -221,11 +215,8 @@ class TargetsForUndead:
 
 
 class TestUndeadState:
-    def test_is_not_living(self):
-        assert not Undead().living
-
-    def test_is_not_undead(self):
-        assert Undead().undead
+    def test_life_state(self):
+        assert Undead().life_state == LifeState.UNDEAD
 
     @given(moves=st.lists(vectors(), min_size=1))
     def test_movement_without_humans(self, moves):
@@ -286,11 +277,9 @@ class FakeActions:
 
 
 class TestCharacter:
-    def test_livingness(self):
-        assert Character(state=Living()).living
-
-    def test_undeath(self):
-        assert Character(state=Undead()).undead
+    @given(state=st.sampled_from([Living(), Dead(), Undead()]))
+    def test_life_state(self, state):
+        assert Character(state=state).life_state == state.life_state
 
     def test_move_action(self):
         character = Character(state=Undead())
@@ -319,8 +308,7 @@ class TestCharacter:
 
     def test_state_change(self):
         character = Character(state=Dead())
-        assert not character.undead
-        assert character.with_state(Undead()).undead
+        assert character.with_state(Undead()).life_state == LifeState.UNDEAD
 
 
 class TestZombie:
@@ -443,12 +431,6 @@ class TestHuman:
     def human(self):
         return default_human()
 
-    def test_living(self, human):
-        assert human.living
-
-    def test_not_undead(self, human):
-        assert not human.undead
-
     @given(environments_and_limits())
     def test_move_returns_vector(self, human, environment_and_limits):
         environment, limits = environment_and_limits
@@ -504,10 +486,7 @@ class TestHuman:
         assert human.move(environment, limits) == Vector.ZERO
 
     def test_attacked_human_is_dead(self, human):
-        assert not human.attacked().living
-
-    def test_attacked_human_is_not_undead(self, human):
-        assert not human.attacked().undead
+        assert human.attacked().life_state == LifeState.DEAD
 
     @given(environments(), containing_boxes)
     def test_dead_humans_stay_still(self, environment, limits):

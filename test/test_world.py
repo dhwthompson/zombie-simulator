@@ -13,16 +13,11 @@ world_dimensions = st.integers(min_value=0, max_value=50)
 
 
 class FakeCharacter:
-    def __init__(self, undead, living):
-        self.undead = undead
-        self.living = living
+    def __init__(self, life_state):
+        self.life_state = life_state
 
 
-characters = st.one_of(
-    st.builds(FakeCharacter, undead=st.just(True), living=st.just(False)),
-    st.builds(FakeCharacter, undead=st.just(False), living=st.just(True)),
-    st.builds(FakeCharacter, undead=st.just(False), living=st.just(False)),
-)
+characters = st.builds(FakeCharacter, st.sampled_from(LifeState))
 
 
 class TestBuilder:
@@ -35,7 +30,7 @@ class TestBuilder:
         for position, character in roster.positions:
             assert 0 <= position.x < 5
             assert 0 <= position.y < 5
-            assert character.undead in [True, False]
+            assert character is not None
 
 
 @st.composite

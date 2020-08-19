@@ -32,8 +32,7 @@ class Tick:
 
         for (position, character) in self.roster.positions:
             context = {
-                "character_living": character.living,
-                "character_undead": character.undead,
+                "character_state": character.life_state.name,
             }
             with tracing.span("character_action", context):
                 if character not in roster:
