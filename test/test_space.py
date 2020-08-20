@@ -303,8 +303,9 @@ class TestBoundingBox:
 
     @given(st.builds(BoundingBox, small_vectors, small_vectors))
     def test_iteration_covers_box(self, box):
+        box_vectors = list(box)
         for vector in box:
-            assert vector in box
+            assert vector in box_vectors
 
     @given(box=st.builds(BoundingBox, small_vectors, small_vectors), vector=vectors)
     @example(BoundingBox(Vector(-2, -2), Vector(3, 3)), Vector(2, 3))
