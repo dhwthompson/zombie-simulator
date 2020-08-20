@@ -42,6 +42,23 @@ class Area:
         best_point = Point(x, y)
         return (best_point - point).distance
 
+    def __iter__(self) -> Iterator[Point]:
+        for y in range(self._lower.y, self._upper.y):
+            for x in range(self._lower.x, self._upper.x):
+                yield Point(x, y)
+
+    def intersect(self, other: "Area") -> "Area":
+        return Area(
+            Point(
+                max(self._lower.x, other._lower.x),
+                max(self._lower.y, other._lower.y),
+            ),
+            Point(
+                min(self._upper.x, other._upper.x),
+                min(self._upper.y, other._upper.y),
+            ),
+        )
+
     def intersects_with(self, other: "Area") -> bool:
         lower_x = max(self._lower.x, other._lower.x)
         lower_y = max(self._lower.y, other._lower.y)
