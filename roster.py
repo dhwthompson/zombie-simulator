@@ -159,8 +159,8 @@ class Roster(Generic[CharacterType, PartitionKeyType]):
         return self._positions == other._positions
 
 
-class Viewpoint(Generic[CharacterType, PartitionKeyType]):
-    def __init__(self, origin: Point, roster: Roster[CharacterType, PartitionKeyType]):
+class Viewpoint(Generic[PartitionKeyType]):
+    def __init__(self, origin: Point, roster: Roster[Any, PartitionKeyType]):
         self._origin = origin
         self._roster = roster
 
@@ -177,7 +177,7 @@ class Viewpoint(Generic[CharacterType, PartitionKeyType]):
 
     def from_offset(
         self, offset: Vector
-    ) -> "Viewpoint[CharacterType, PartitionKeyType]":
+    ) -> "Viewpoint[PartitionKeyType]":
         return Viewpoint(self._origin + offset, self._roster)
 
 
