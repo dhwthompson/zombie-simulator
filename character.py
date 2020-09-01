@@ -1,3 +1,4 @@
+from collections import defaultdict
 from enum import Enum
 import math
 from typing import (
@@ -6,6 +7,7 @@ from typing import (
     Generic,
     Iterable,
     Optional,
+    Mapping,
     Set,
     Tuple,
     TypeVar,
@@ -310,8 +312,7 @@ class Character:
     ) -> Iterable[Vector]:
         character_range = self._state.movement_range.intersect(limits)
         obstacles = environment.occupied_points_in(character_range) - {Vector.ZERO}
-        moves = [m for m in character_range if m not in obstacles]
-        return moves
+        return available_moves(character_range, obstacles)
 
     def attack(self, environment: Viewpoint) -> Optional[Vector]:
         return self._state.attack(TargetVectors(environment))
@@ -329,3 +330,36 @@ def default_human() -> Character:
 
 def default_zombie() -> Character:
     return Character(state=Undead())
+
+
+def available_moves(
+    character_range: Iterable[Vector], obstacles: Set[Vector],
+) -> Set[Vector]:
+    """Determine available moves for a character.
+
+    This function checks not only that the target spaces are empty, but that there's a
+    path that allows the character to reach them by passing only through empty spaces.
+    """
+    if Vector.ZERO not in character_range or Vector.ZERO in obstacles:
+        raise ValueError("Zero movement unavailable for character")
+
+    def max_offset(move: Vector) -> int:
+        return max(abs(move.dx), abs(move.dy))
+
+    def reachable(a: Vector, b: Vector) -> bool:
+        return abs(a.dx - b.dx) <= 1 and abs(a.dy - b.dy) <= 1
+
+    moves_by_offset: Mapping[int, Set[Vector]] = defaultdict(set)
+    for move in character_range:
+        moves_by_offset[max_offset(move)].add(move)
+
+    available_moves = {Vector.ZERO}
+    for offset in range(1, max(moves_by_offset.keys()) + 1):
+        available_moves |= {
+            outer_move
+            for outer_move in moves_by_offset[offset]
+            if outer_move not in obstacles
+            and any(reachable(outer_move, inner_move) for inner_move in available_moves)
+        }
+
+    return available_moves

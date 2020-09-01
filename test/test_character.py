@@ -11,6 +11,7 @@ from character import Character, default_human, default_zombie
 from character import Actions
 from character import LifeState, State, Dead, Living, Undead
 from character import TargetVectors
+from character import available_moves
 from space import BoundingBox, Vector
 
 
@@ -496,3 +497,73 @@ class TestHuman:
     @given(environments())
     def test_never_attacks(self, human, environment):
         assert human.attack(environment) is None
+
+
+def character_ranges(max_offset=5):
+    return st.builds(
+        BoundingBox,
+        st.builds(
+            Vector,
+            dx=st.integers(min_value=-max_offset, max_value=0),
+            dy=st.integers(min_value=-max_offset, max_value=0),
+        ),
+        st.builds(
+            Vector,
+            dx=st.integers(min_value=1, max_value=max_offset + 1),
+            dy=st.integers(min_value=1, max_value=max_offset + 1),
+        ),
+    )
+
+
+def vectors_in_box(box):
+    return st.sets(
+        st.builds(
+            Vector,
+            dx=st.integers(min_value=box._lower.dx, max_value=box._upper.dx - 1),
+            dy=st.integers(min_value=box._lower.dy, max_value=box._upper.dy - 1),
+        )
+    )
+
+
+class TestAvailableMoves:
+    @given(character_ranges())
+    def test_unobstructed_move(self, character_range):
+        available = available_moves(character_range, set({}))
+        assert available == set(character_range)
+
+    @given(
+        character_range=character_ranges(),
+        obstacles=st.sets(vectors()).map(lambda s: s | {Vector.ZERO}),
+    )
+    def test_zero_vector_obstructed(self, character_range, obstacles):
+        with pytest.raises(ValueError):
+            available_moves(character_range, obstacles)
+
+    @given(
+        character_ranges().flatmap(lambda b: st.tuples(st.just(b), vectors_in_box(b)))
+    )
+    def test_obstructed_move(self, range_and_obstacles):
+        character_range, obstacles = range_and_obstacles
+        assume(Vector.ZERO not in obstacles)
+        available = available_moves(character_range, obstacles)
+
+        assert available <= set(character_range) - obstacles
+
+    def test_total_barrier(self):
+        obstacles = {Vector(1, y) for y in range(-2, 3)}
+        available = available_moves(BoundingBox.range(2), obstacles)
+        assert available == set(BoundingBox(Vector(-2, -2), Vector(1, 3)))
+
+    def test_partial_barrier(self):
+        # +---+---+---+
+        # | m | m |   |
+        # +---+---+---+
+        # | m | x |   |
+        # +---+---+---+
+        # | 0 | x |   |
+        # +---+---+---+
+
+        character_range = BoundingBox(Vector(0, 0), Vector(3, 3))
+        obstacles = {Vector(1, 1), Vector(1, 0)}
+        available = available_moves(character_range, obstacles)
+        assert available == {Vector(0, 0), Vector(0, 1), Vector(0, 2), Vector(1, 2)}
