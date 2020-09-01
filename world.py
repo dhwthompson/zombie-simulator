@@ -23,8 +23,30 @@ import tracing
 
 
 @attr.s(auto_attribs=True, frozen=True)
+class Barriers:
+
+    areas: Set[Area]
+
+    @property
+    def positions(self) -> Generator[Point, None, None]:
+        for area in self.areas:
+            for point in area:
+                yield point
+
+    def occupied(self, point: Point) -> bool:
+        return any(point in area for area in self.areas)
+
+    def occupied_points_in(self, area: Area) -> Set[Point]:
+        barrier_points = set()
+        for barrier in self.areas:
+            barrier_points |= {point for point in barrier.intersect(area)}
+        return barrier_points
+
+
+@attr.s(auto_attribs=True, frozen=True)
 class Tick:
     roster: Roster[Character, LifeState]
+    barriers: Barriers = Barriers(set())
 
     def next(self) -> Roster[Character, LifeState]:
         roster = self.roster
@@ -37,7 +59,7 @@ class Tick:
             with tracing.span("character_action", context):
                 if character not in roster:
                     continue
-                viewpoint = Viewpoint(position, roster)
+                viewpoint = Viewpoint(position, roster, self.barriers)
                 limits = area.from_origin(position)
                 actions = AvailableActions(position, character)
 
@@ -75,14 +97,23 @@ class AvailableActions:
 
 class Builder:
     def __init__(
-        self, width: int, height: int, population: Iterable[Optional[Character]]
+        self,
+        width: int,
+        height: int,
+        population: Iterable[Optional[Character]],
+        barriers: Optional[Barriers] = None,
     ):
-        grid = self._grid(width, height)
         area = self._area(width, height)
+        if barriers is None:
+            barriers = Barriers(set())
+
+        character_positions = (
+            p for p in self._grid(width, height) if not barriers.occupied(p)
+        )
 
         starting_positions = {
             point: character
-            for point, character in zip(grid, population)
+            for point, character in zip(character_positions, population)
             if character is not None
         }
 

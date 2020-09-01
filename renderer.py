@@ -31,13 +31,28 @@ class World(Protocol):
         ...
 
 
+class Barriers(Protocol):
+    @property
+    def positions(self) -> Iterable[Point]:
+        ...
+
+
+class NoBarriers:
+    @property
+    def positions(self) -> Iterable[Point]:
+        return []
+
+
 class Renderer:
-    def __init__(self, world: World):
+    def __init__(self, world: World, barriers: Optional[Barriers] = None):
         self._world = world
+        self._barriers: Barriers = barriers or NoBarriers()
 
     @property
     def lines(self) -> Iterable[str]:
         all_lines = [[". "] * self._world.width for _ in range(self._world.height)]
+        for position in self._barriers.positions:
+            all_lines[position.y][position.x] = "\U0000254B "
         for position, character in self._world.positions:
             all_lines[position.y][position.x] = self._render_character(character)
         return ["".join(line) for line in all_lines]

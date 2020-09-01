@@ -16,7 +16,7 @@ from character import Character, default_human, default_zombie
 from population import Population
 from renderer import Renderer
 import tracing
-from world import Builder, Tick
+from world import Barriers, Builder, Tick
 
 
 class TerminalSize(Protocol):
@@ -50,6 +50,7 @@ world_width, world_height = get_world_size(
 
 DENSITY = float(environ.get("DENSITY", 0.05))
 ZOMBIE_CHANCE = float(environ.get("ZOMBIE_CHANCE", 0.2))
+BARRIERS = int(environ.get("BARRIERS", 20))
 TICK = float(environ.get("TICK", 0.1))
 
 MAX_AGE = None
@@ -86,9 +87,33 @@ if __name__ == "__main__":
         (DENSITY * (1 - ZOMBIE_CHANCE), default_human),
         (DENSITY * ZOMBIE_CHANCE, default_zombie),
     )
-    builder = Builder(world_width, world_height, population)
+
+    from space import Area, Point
+    import random
+
+    barrier_areas = set()
+    for _ in range(BARRIERS):
+        if random.choice([True, False]):
+            # Vertical barrier
+            x1 = random.randint(0, world_width - 1)
+            x2 = x1 + 1
+            ys = [random.randrange(world_height) for _ in range(2)]
+            y1, y2 = sorted(ys)
+        else:
+            # Horizontal barrier
+            xs = [random.randint(0, world_height) for _ in range(2)]
+            x1, x2 = sorted(xs)
+            y1 = random.randint(0, world_height - 1)
+            y2 = y1 + 1
+
+        barrier_areas.add(Area(Point(x1, y1), Point(x2, y2)))
+
+
+    barriers = Barriers(barrier_areas)
+
+    builder = Builder(world_width, world_height, population, barriers)
     roster = builder.roster
-    renderer = Renderer(roster)
+    renderer = Renderer(roster, barriers)
 
     ticks: Iterator[None] = each_interval(TICK)
     if MAX_AGE is not None:
@@ -110,10 +135,10 @@ if __name__ == "__main__":
                     print(line)
 
                 with tracing.span("tick"):
-                    old_roster, roster = roster, Tick(roster).next()
+                    old_roster, roster = roster, Tick(roster, barriers).next()
 
                 if old_roster == roster:
                     break
-                renderer = Renderer(roster)
+                renderer = Renderer(roster, barriers)
         except KeyboardInterrupt:
             sys.exit(1)

@@ -160,13 +160,25 @@ class Roster(Generic[CharacterType, PartitionKeyType]):
 
 
 class Viewpoint(Generic[PartitionKeyType]):
-    def __init__(self, origin: Point, roster: Roster[Any, PartitionKeyType]):
+    def __init__(
+        self,
+        origin: Point,
+        roster: Roster[Any, PartitionKeyType],
+        barriers: Any,
+    ):
         self._origin = origin
         self._roster = roster
+        self._barriers = barriers
 
     def occupied_points_in(self, box: BoundingBox) -> Set[Vector]:
         area = box.to_area(self._origin)
-        return {m.position - self._origin for m in self._roster.characters_in(area)}
+        occupied_by_character = {
+            m.position - self._origin for m in self._roster.characters_in(area)
+        }
+        occupied_by_barrier = {
+            p - self._origin for p in self._barriers.occupied_points_in(area)
+        }
+        return occupied_by_character | occupied_by_barrier
 
     def nearest(self, key: PartitionKeyType) -> Optional[Vector]:
         nearest = self._roster.nearest_to(self._origin, key=key)
@@ -178,7 +190,7 @@ class Viewpoint(Generic[PartitionKeyType]):
     def from_offset(
         self, offset: Vector
     ) -> "Viewpoint[PartitionKeyType]":
-        return Viewpoint(self._origin + offset, self._roster)
+        return Viewpoint(self._origin + offset, self._roster, self._barriers)
 
 
 @attr.s(auto_attribs=True, frozen=True)
