@@ -4,6 +4,7 @@ import math
 from hypothesis import assume, example, given
 from hypothesis import strategies as st
 import pytest
+from pytest import approx
 
 from space import Area, BoundingBox, Point, Vector
 
@@ -326,9 +327,13 @@ class TestVector:
     def test_non_zero_distance(self, dx, dy):
         assert Vector(dx, dy).distance == math.sqrt(5)
 
-    @given(vectors(bound=5000), vectors(bound=5000))
+    @given(vectors(), vectors())
+    @example(Vector(1, 1), Vector(3, 3))
     def test_triangle_inequality(self, a, b):
-        assert (a + b).distance <= a.distance + b.distance
+        sum_distance = (a + b).distance
+        distance_sum = a.distance + b.distance
+
+        assert sum_distance < distance_sum or sum_distance == approx(distance_sum)
 
     def test_value_equality(self):
         assert Vector(2, 5) == Vector(2, 5)
