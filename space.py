@@ -50,12 +50,10 @@ class Area:
     def intersect(self, other: "Area") -> "Area":
         return Area(
             Point(
-                max(self._lower.x, other._lower.x),
-                max(self._lower.y, other._lower.y),
+                max(self._lower.x, other._lower.x), max(self._lower.y, other._lower.y),
             ),
             Point(
-                min(self._upper.x, other._upper.x),
-                min(self._upper.y, other._upper.y),
+                min(self._upper.x, other._upper.x), min(self._upper.y, other._upper.y),
             ),
         )
 
