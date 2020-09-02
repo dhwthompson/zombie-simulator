@@ -113,7 +113,7 @@ class SpaceTree(Generic[ValueType]):
     The best way to build one of these trees is with the `build` class method:
 
         >>> tree = SpaceTree.build(
-        ...     Area(Point(0, 0), Point(10, 10)),
+        ...     Area.from_zero(10, 10),
         ...     {Point(2, 2): "a thing", Point(5, 5): "another thing"}
         ... )
 

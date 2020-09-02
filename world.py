@@ -16,6 +16,7 @@ try:
 except ImportError:
     from typing_extensions import Protocol  # type: ignore
 
+from barriers import Barriers
 from character import Character, LifeState, State
 from roster import Roster, ChangeCharacter, Move, Viewpoint
 from space import Area, BoundingBox, Point, Vector
@@ -25,6 +26,7 @@ import tracing
 @attr.s(auto_attribs=True, frozen=True)
 class Tick:
     roster: Roster[Character, LifeState]
+    barriers: Barriers = Barriers(set())
 
     def next(self) -> Roster[Character, LifeState]:
         roster = self.roster
@@ -37,7 +39,7 @@ class Tick:
             with tracing.span("character_action", context):
                 if character not in roster:
                     continue
-                viewpoint = Viewpoint(position, roster)
+                viewpoint = Viewpoint(position, roster, self.barriers)
                 limits = area.from_origin(position)
                 actions = AvailableActions(position, character)
 
@@ -75,28 +77,25 @@ class AvailableActions:
 
 class Builder:
     def __init__(
-        self, width: int, height: int, population: Iterable[Optional[Character]]
+        self,
+        area: Area,
+        population: Iterable[Optional[Character]],
+        barriers: Optional[Barriers] = None,
     ):
-        grid = self._grid(width, height)
-        area = self._area(width, height)
+        if barriers is None:
+            barriers = Barriers(set())
+
+        character_positions = (p for p in area if not barriers.occupied(p))
 
         starting_positions = {
             point: character
-            for point, character in zip(grid, population)
+            for point, character in zip(character_positions, population)
             if character is not None
         }
 
         self._roster = Roster.partitioned(
             starting_positions, area=area, partition_func=LifeState.for_character
         )
-
-    def _area(self, width: int, height: int) -> Area:
-        return Area(Point(0, 0), Point(width, height))
-
-    def _grid(self, width: int, height: int) -> Generator[Point, None, None]:
-        for y in range(height):
-            for x in range(width):
-                yield Point(x, y)
 
     @property
     def roster(self) -> Roster[Character, LifeState]:

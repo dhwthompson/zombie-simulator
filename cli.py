@@ -1,6 +1,7 @@
 from contextlib import ExitStack
 from itertools import islice
 from os import environ
+import random
 import re
 import shutil
 import sys
@@ -12,9 +13,11 @@ try:
 except ImportError:
     from typing_extensions import Protocol  # type: ignore
 
+from barriers import random_barriers
 from character import Character, default_human, default_zombie
 from population import Population
 from renderer import Renderer
+from space import Area, Point
 import tracing
 from world import Builder, Tick
 
@@ -50,6 +53,7 @@ world_width, world_height = get_world_size(
 
 DENSITY = float(environ.get("DENSITY", 0.05))
 ZOMBIE_CHANCE = float(environ.get("ZOMBIE_CHANCE", 0.2))
+BARRIERS = int(environ.get("BARRIERS", 20))
 TICK = float(environ.get("TICK", 0.1))
 
 MAX_AGE = None
@@ -86,9 +90,13 @@ if __name__ == "__main__":
         (DENSITY * (1 - ZOMBIE_CHANCE), default_human),
         (DENSITY * ZOMBIE_CHANCE, default_zombie),
     )
-    builder = Builder(world_width, world_height, population)
+
+    world_area = Area.from_zero(world_width, world_height)
+    barriers = random_barriers(range(BARRIERS), world_area)
+
+    builder = Builder(world_area, population, barriers)
     roster = builder.roster
-    renderer = Renderer(roster)
+    renderer = Renderer(roster, barriers)
 
     ticks: Iterator[None] = each_interval(TICK)
     if MAX_AGE is not None:
@@ -110,10 +118,10 @@ if __name__ == "__main__":
                     print(line)
 
                 with tracing.span("tick"):
-                    old_roster, roster = roster, Tick(roster).next()
+                    old_roster, roster = roster, Tick(roster, barriers).next()
 
                 if old_roster == roster:
                     break
-                renderer = Renderer(roster)
+                renderer = Renderer(roster, barriers)
         except KeyboardInterrupt:
             sys.exit(1)
