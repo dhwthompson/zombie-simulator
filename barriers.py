@@ -1,9 +1,24 @@
 import random
-from typing import Any, ClassVar, Generator, Iterable, Set
+from typing import Any, ClassVar, Generator, Iterable, Set, Tuple
 
 import attr
 
 from space import Area, Point
+
+
+@attr.s(auto_attribs=True, frozen=True)
+class BarrierPoint:
+    """BarrierPoint is a data structure representing a single unit of a barrier.
+
+    It has a Boolean attribute for each of the four directions. In the co-ordinate
+    system of the world, "left" and "up" are assumed to correspond to lower x and y
+    co-ordinates, respectively.
+    """
+
+    above: bool = False
+    below: bool = False
+    left: bool = False
+    right: bool = False
 
 
 @attr.s(auto_attribs=True, frozen=True)
@@ -13,10 +28,16 @@ class Barriers:
     NONE: ClassVar["Barriers"]
 
     @property
-    def positions(self) -> Generator[Point, None, None]:
+    def positions(self) -> Generator[Tuple[Point, BarrierPoint], None, None]:
         for area in self.areas:
             for point in area:
-                yield point
+                bp = BarrierPoint(
+                    above=self.occupied(Point(point.x, point.y - 1)),
+                    below=self.occupied(Point(point.x, point.y + 1)),
+                    left=self.occupied(Point(point.x - 1, point.y)),
+                    right=self.occupied(Point(point.x + 1, point.y)),
+                )
+                yield (point, bp)
 
     def occupied(self, point: Point) -> bool:
         return any(point in area for area in self.areas)
