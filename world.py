@@ -78,18 +78,14 @@ class AvailableActions:
 class Builder:
     def __init__(
         self,
-        width: int,
-        height: int,
+        area: Area,
         population: Iterable[Optional[Character]],
         barriers: Optional[Barriers] = None,
     ):
-        area = self._area(width, height)
         if barriers is None:
             barriers = Barriers(set())
 
-        character_positions = (
-            p for p in self._grid(width, height) if not barriers.occupied(p)
-        )
+        character_positions = (p for p in area if not barriers.occupied(p))
 
         starting_positions = {
             point: character
@@ -100,14 +96,6 @@ class Builder:
         self._roster = Roster.partitioned(
             starting_positions, area=area, partition_func=LifeState.for_character
         )
-
-    def _area(self, width: int, height: int) -> Area:
-        return Area(Point(0, 0), Point(width, height))
-
-    def _grid(self, width: int, height: int) -> Generator[Point, None, None]:
-        for y in range(height):
-            for x in range(width):
-                yield Point(x, y)
 
     @property
     def roster(self) -> Roster[Character, LifeState]:

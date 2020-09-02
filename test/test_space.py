@@ -190,6 +190,10 @@ class TestArea:
     def test_two_point_constructor(self, point_a, point_b):
         Area(point_a, point_b)
 
+    @given(st.integers(), st.integers())
+    def test_construction_from_zero(self, width, height):
+        assert Area.from_zero(width, height) == Area(Point(0, 0), Point(width, height))
+
     @given(ordered_points())
     def test_contains_lower_bound(self, points):
         lower, upper = points

@@ -21,6 +21,10 @@ class Area:
     _lower: Point
     _upper: Point
 
+    @classmethod
+    def from_zero(cls, width: int, height: int) -> "Area":
+        return Area(Point(0, 0), Point(width, height))
+
     def __contains__(self, point: Point) -> bool:
         x_contains = self._lower.x <= point.x < self._upper.x
         y_contains = self._lower.y <= point.y < self._upper.y

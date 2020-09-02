@@ -23,7 +23,7 @@ characters = st.builds(FakeCharacter, st.sampled_from(LifeState))
 class TestBuilder:
     @given(st.iterables(elements=st.one_of(characters, st.just(None)), min_size=25))
     def test_population(self, population):
-        builder = Builder(5, 5, population)
+        builder = Builder(Area(Point(0, 0), Point(5, 5)), population)
         roster = builder.roster
         assert roster.width == 5
         assert roster.height == 5
