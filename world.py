@@ -80,11 +80,8 @@ class Builder:
         self,
         area: Area,
         population: Iterable[Optional[Character]],
-        barriers: Optional[Barriers] = None,
+        barriers: Barriers = Barriers.NONE,
     ):
-        if barriers is None:
-            barriers = Barriers(set())
-
         character_positions = (p for p in area if not barriers.occupied(p))
 
         starting_positions = {
