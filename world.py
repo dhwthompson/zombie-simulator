@@ -26,7 +26,7 @@ import tracing
 @attr.s(auto_attribs=True, frozen=True)
 class Tick:
     roster: Roster[Character, LifeState]
-    barriers: Barriers = Barriers(set())
+    barriers: Barriers = Barriers.NONE
 
     def next(self) -> Roster[Character, LifeState]:
         roster = self.roster
