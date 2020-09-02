@@ -16,31 +16,11 @@ try:
 except ImportError:
     from typing_extensions import Protocol  # type: ignore
 
+from barriers import Barriers
 from character import Character, LifeState, State
 from roster import Roster, ChangeCharacter, Move, Viewpoint
 from space import Area, BoundingBox, Point, Vector
 import tracing
-
-
-@attr.s(auto_attribs=True, frozen=True)
-class Barriers:
-
-    areas: Set[Area]
-
-    @property
-    def positions(self) -> Generator[Point, None, None]:
-        for area in self.areas:
-            for point in area:
-                yield point
-
-    def occupied(self, point: Point) -> bool:
-        return any(point in area for area in self.areas)
-
-    def occupied_points_in(self, area: Area) -> Set[Point]:
-        barrier_points = set()
-        for barrier in self.areas:
-            barrier_points |= {point for point in barrier.intersect(area)}
-        return barrier_points
 
 
 @attr.s(auto_attribs=True, frozen=True)

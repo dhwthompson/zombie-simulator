@@ -23,6 +23,7 @@ try:
 except ImportError:
     from typing_extensions import Protocol  # type: ignore
 
+from barriers import Barriers
 from space import Area, BoundingBox, Point, Vector
 from tree import PartitionTree
 
@@ -164,7 +165,7 @@ class Viewpoint(Generic[PartitionKeyType]):
         self,
         origin: Point,
         roster: Roster[Any, PartitionKeyType],
-        barriers: Any,
+        barriers: Barriers = Barriers.NONE,
     ):
         self._origin = origin
         self._roster = roster

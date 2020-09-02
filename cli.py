@@ -1,6 +1,7 @@
 from contextlib import ExitStack
 from itertools import islice
 from os import environ
+import random
 import re
 import shutil
 import sys
@@ -12,11 +13,13 @@ try:
 except ImportError:
     from typing_extensions import Protocol  # type: ignore
 
+from barriers import Barriers
 from character import Character, default_human, default_zombie
 from population import Population
 from renderer import Renderer
+from space import Area, Point
 import tracing
-from world import Barriers, Builder, Tick
+from world import Builder, Tick
 
 
 class TerminalSize(Protocol):
@@ -82,17 +85,9 @@ def clear() -> None:
     print("\033[H\033[J", end="")
 
 
-if __name__ == "__main__":
-    population = Population[Character](
-        (DENSITY * (1 - ZOMBIE_CHANCE), default_human),
-        (DENSITY * ZOMBIE_CHANCE, default_zombie),
-    )
-
-    from space import Area, Point
-    import random
-
+def random_barriers(count: int, world_width: int, world_height: int) -> Barriers:
     barrier_areas = set()
-    for _ in range(BARRIERS):
+    for _ in range(count):
         if random.choice([True, False]):
             # Vertical barrier
             x1 = random.randint(0, world_width - 1)
@@ -108,8 +103,16 @@ if __name__ == "__main__":
 
         barrier_areas.add(Area(Point(x1, y1), Point(x2, y2)))
 
+    return Barriers(barrier_areas)
 
-    barriers = Barriers(barrier_areas)
+
+if __name__ == "__main__":
+    population = Population[Character](
+        (DENSITY * (1 - ZOMBIE_CHANCE), default_human),
+        (DENSITY * ZOMBIE_CHANCE, default_zombie),
+    )
+
+    barriers = random_barriers(BARRIERS, world_width, world_height)
 
     builder = Builder(world_width, world_height, population, barriers)
     roster = builder.roster
