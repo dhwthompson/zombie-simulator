@@ -16,7 +16,7 @@ except ImportError:
 from barriers import random_barriers
 from character import Character, default_human, default_zombie
 from population import Population
-from renderer import Renderer
+from renderer import Renderer, RenderEmpty
 from space import Area, Point
 import tracing
 from world import Builder, Tick
@@ -31,23 +31,23 @@ def get_world_size(
     size_string: Optional[str],
     get_terminal_size: Callable[[], TerminalSize],
     default: Tuple[int, int],
-) -> Tuple[int, int]:
+) -> Tuple[Tuple[int, int], bool]:
     if not size_string:
-        return default
+        return default, False
 
     if size_string == "auto":
         terminal_size = get_terminal_size()
-        return (terminal_size.columns // 2, terminal_size.lines - 1)
+        return (terminal_size.columns // 2, terminal_size.lines - 1), True
 
     size_match = re.match(r"(\d+)x(\d+)$", size_string)
 
     if size_match:
-        return (int(size_match.group(1)), int(size_match.group(2)))
+        return (int(size_match.group(1)), int(size_match.group(2))), False
 
     raise ValueError(f'Unrecognised format "{size_string}"')
 
 
-world_width, world_height = get_world_size(
+(world_width, world_height), world_size_auto = get_world_size(
     environ.get("WORLD_SIZE"), shutil.get_terminal_size, default=(60, 30)
 )
 
@@ -94,9 +94,11 @@ if __name__ == "__main__":
     world_area = Area.from_zero(world_width, world_height)
     barriers = random_barriers(range(BARRIERS), world_area)
 
+    empty = RenderEmpty.SPACE if world_size_auto and barriers else RenderEmpty.DOT
+
     builder = Builder(world_area, population, barriers)
     roster = builder.roster
-    renderer = Renderer(roster, barriers)
+    renderer = Renderer(roster, barriers, empty=empty)
 
     ticks: Iterator[None] = each_interval(TICK)
     if MAX_AGE is not None:
@@ -122,6 +124,6 @@ if __name__ == "__main__":
 
                 if old_roster == roster:
                     break
-                renderer = Renderer(roster, barriers)
+                renderer = Renderer(roster, barriers, empty=empty)
         except KeyboardInterrupt:
             sys.exit(1)

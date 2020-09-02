@@ -21,21 +21,24 @@ def test_auto_world_size():
         return TerminalSize(80, 25)
 
     default = (0, 0)
-    world_size = get_world_size("auto", get_terminal_size, default=default)
+    world_size, auto = get_world_size("auto", get_terminal_size, default=default)
 
     assert world_size == (40, 24)
+    assert auto
 
 
 def test_defined_world_size():
     default = (0, 0)
-    world_size = get_world_size("40x30", get_terminal_size=fail, default=default)
+    world_size, auto = get_world_size("40x30", get_terminal_size=fail, default=default)
 
     assert world_size == (40, 30)
+    assert not auto
 
 
 def test_default_world_size():
-    world_size = get_world_size(None, get_terminal_size=fail, default=(40, 20))
+    world_size, auto = get_world_size(None, get_terminal_size=fail, default=(40, 20))
     assert world_size == (40, 20)
+    assert not auto
 
 
 @pytest.mark.parametrize("bad_size", ["12", "really big", "infxinf", "10.x6"])

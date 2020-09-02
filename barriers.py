@@ -39,6 +39,9 @@ class Barriers:
                 )
                 yield (point, bp)
 
+    def __bool__(self) -> bool:
+        return bool(self.areas)
+
     def occupied(self, point: Point) -> bool:
         return any(point in area for area in self.areas)
 

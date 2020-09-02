@@ -1,7 +1,7 @@
 import attr
 
 from character import LifeState
-from renderer import Renderer
+from renderer import Renderer, RenderEmpty
 from space import Point
 
 
@@ -32,6 +32,11 @@ class TestRenderer:
         world = World(width=5, height=3, positions=[])
         renderer = Renderer(world)
         assert renderer.lines == [". . . . . ", ". . . . . ", ". . . . . "]
+
+    def test_empty_space(self):
+        world = World(width=5, height=3, positions=[])
+        renderer = Renderer(world, empty=RenderEmpty.SPACE)
+        assert renderer.lines == ["          ", "          ", "          "]
 
     def test_human(self):
         human = Character(LifeState.LIVING)

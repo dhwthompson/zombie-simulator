@@ -1,3 +1,5 @@
+from enum import Enum
+
 from barriers import BarrierPoint
 from character import LifeState
 from space import Point
@@ -7,6 +9,12 @@ try:
     from typing import Protocol
 except ImportError:
     from typing_extensions import Protocol  # type: ignore
+
+
+class RenderEmpty(Enum):
+    """What to render for empty spaces in the world."""
+    SPACE = " "
+    DOT = "."
 
 
 class Character(Protocol):
@@ -45,13 +53,20 @@ class NoBarriers:
 
 
 class Renderer:
-    def __init__(self, world: World, barriers: Optional[Barriers] = None):
+    def __init__(
+        self,
+        world: World,
+        barriers: Optional[Barriers] = None,
+        empty: RenderEmpty = RenderEmpty.DOT,
+    ):
         self._world = world
         self._barriers: Barriers = barriers or NoBarriers()
+        self._empty = empty
 
     @property
     def lines(self) -> Iterable[str]:
-        all_lines = [[". "] * self._world.width for _ in range(self._world.height)]
+        empty_str = str(self._empty.value) + " "
+        all_lines = [[empty_str] * self._world.width for _ in range(self._world.height)]
         for position, barrier in self._barriers.positions:
             all_lines[position.y][position.x] = self._render_barrier(barrier)
         for position, character in self._world.positions:
