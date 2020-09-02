@@ -21,17 +21,20 @@ characters = st.builds(FakeCharacter, st.sampled_from(LifeState))
 
 
 class TestBuilder:
-    @given(st.iterables(elements=st.one_of(characters, st.just(None)), min_size=25, max_size=25))
+    @given(st.lists(elements=st.one_of(characters, st.just(None)), min_size=25, max_size=25))
     @settings(max_examples=25)
     def test_population(self, population):
-        builder = Builder(Area(Point(0, 0), Point(5, 5)), population)
+        world_area = Area.from_zero(5, 5)
+        builder = Builder(world_area, population)
         roster = builder.roster
         assert roster.width == 5
         assert roster.height == 5
+        total_characters = 0
         for position, character in roster.positions:
-            assert 0 <= position.x < 5
-            assert 0 <= position.y < 5
-            assert character is not None
+            assert position in world_area
+            assert character in population
+            total_characters = total_characters + 1
+        assert total_characters == len([c for c in population if c is not None])
 
 
 @st.composite
