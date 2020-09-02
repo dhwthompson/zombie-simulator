@@ -2,7 +2,7 @@ from collections import OrderedDict
 from operator import itemgetter
 from typing import Any, Mapping
 
-from hypothesis import assume, given, note
+from hypothesis import assume, given, note, settings
 from hypothesis import strategies as st
 
 import pytest
@@ -110,6 +110,7 @@ class TestRoster:
             Roster.for_mapping(positions, area_containing(positions))
 
     @given(position_dicts(), areas())
+    @settings(max_examples=25)
     def test_characters_outside_area(self, positions, area):
         assume(not all(p in area for p in positions))
         with pytest.raises(ValueError) as e:
@@ -236,6 +237,7 @@ class TestMove:
         ),
         st.from_type(Point),
     )
+    @settings(max_examples=25)
     def test_move_out_of_bounds(self, area_and_positions, new_position):
         area, positions = area_and_positions
         position, character = next(iter(positions.items()))
