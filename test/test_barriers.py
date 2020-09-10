@@ -40,7 +40,7 @@ def area_and_point(area):
 class TestBarriers:
     @given(barrier_areas=st.sets(areas), area=areas)
     def test_occupied_points(self, barrier_areas, area):
-        barriers = Barriers(barrier_areas)
+        barriers = Barriers.for_areas(barrier_areas)
         points = barriers.occupied_points_in(area)
         for point in points:
             assert any(point in area for area in barrier_areas)
@@ -53,6 +53,6 @@ class TestBarriers:
     def test_unoccupied_point(self, barrier_areas, area_and_point):
         area, point = area_and_point
         assume(not any(point in b for b in barrier_areas))
-        barriers = Barriers(barrier_areas)
+        barriers = Barriers.for_areas(barrier_areas)
         assert point not in barriers.occupied_points_in(area)
         assert not barriers.occupied(point)

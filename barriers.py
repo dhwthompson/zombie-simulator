@@ -1,5 +1,5 @@
 import random
-from typing import Any, ClassVar, Generator, Iterable, Set, Tuple
+from typing import Any, ClassVar, FrozenSet, Generator, Iterable, Set, Tuple
 
 import attr
 
@@ -24,8 +24,13 @@ class BarrierPoint:
 @attr.s(auto_attribs=True, frozen=True)
 class Barriers:
 
-    areas: Set[Area]
+    areas: FrozenSet[Area]
+
     NONE: ClassVar["Barriers"]
+
+    @classmethod
+    def for_areas(cls, areas: Iterable[Area]) -> "Barriers":
+        return Barriers(areas=frozenset(areas))
 
     @property
     def positions(self) -> Generator[Tuple[Point, BarrierPoint], None, None]:
@@ -52,7 +57,7 @@ class Barriers:
         return barrier_points
 
 
-Barriers.NONE = Barriers(set())
+Barriers.NONE = Barriers.for_areas([])
 
 
 def random_barriers(counter: Iterable[Any], area: Area) -> Barriers:
@@ -77,4 +82,4 @@ def random_barriers(counter: Iterable[Any], area: Area) -> Barriers:
 
         barrier_areas.add(Area(Point(x1, y1), Point(x2, y2)))
 
-    return Barriers(barrier_areas)
+    return Barriers.for_areas(barrier_areas)
