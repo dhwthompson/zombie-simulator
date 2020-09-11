@@ -19,6 +19,7 @@ from space import Area, Point
 
 ValueType = TypeVar("ValueType")
 PartitionKeyType = TypeVar("PartitionKeyType", bound=Hashable)
+LowerFunc = Callable[[Point], bool]
 
 
 @attr.s(auto_attribs=True, frozen=True)
@@ -294,11 +295,11 @@ class Leaf(Generic[ValueType]):
         return best_match
 
 
-def horizontal_midpoint(x: int) -> Callable[[Point], bool]:
+def horizontal_midpoint(x: int) -> LowerFunc:
     return lambda p: p.x < x
 
 
-def vertical_midpoint(y: int) -> Callable[[Point], bool]:
+def vertical_midpoint(y: int) -> LowerFunc:
     return lambda p: p.y < y
 
 
@@ -308,7 +309,7 @@ class SplitNode(Generic[ValueType]):
     def __init__(
         self,
         area: Area,
-        lower_func: Callable[[Point], bool],
+        lower_func: LowerFunc,
         lower_child: "Node[ValueType]",
         upper_child: "Node[ValueType]",
     ):
