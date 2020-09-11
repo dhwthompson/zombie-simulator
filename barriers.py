@@ -25,30 +25,33 @@ class BarrierPoint:
 class Barriers:
 
     areas: FrozenSet[Area]
+    points: FrozenSet[Point]
 
     NONE: ClassVar["Barriers"]
 
     @classmethod
     def for_areas(cls, areas: Iterable[Area]) -> "Barriers":
-        return Barriers(areas=frozenset(areas))
+        points: FrozenSet[Point] = frozenset()
+        for area in areas:
+            points = points.union(area)
+        return Barriers(areas=frozenset(areas), points=points)
 
     @property
     def positions(self) -> Generator[Tuple[Point, BarrierPoint], None, None]:
-        for area in self.areas:
-            for point in area:
-                bp = BarrierPoint(
-                    above=self.occupied(Point(point.x, point.y - 1)),
-                    below=self.occupied(Point(point.x, point.y + 1)),
-                    left=self.occupied(Point(point.x - 1, point.y)),
-                    right=self.occupied(Point(point.x + 1, point.y)),
-                )
-                yield (point, bp)
+        for point in self.points:
+            bp = BarrierPoint(
+                above=self.occupied(Point(point.x, point.y - 1)),
+                below=self.occupied(Point(point.x, point.y + 1)),
+                left=self.occupied(Point(point.x - 1, point.y)),
+                right=self.occupied(Point(point.x + 1, point.y)),
+            )
+            yield (point, bp)
 
     def __bool__(self) -> bool:
         return bool(self.areas)
 
     def occupied(self, point: Point) -> bool:
-        return any(point in area for area in self.areas)
+        return point in self.points
 
     def occupied_points_in(self, area: Area) -> Set[Point]:
         barrier_points = set()
