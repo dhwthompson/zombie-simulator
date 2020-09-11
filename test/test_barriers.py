@@ -55,7 +55,7 @@ def all_points_in(areas: Iterable[Area]) -> FrozenSet[Point]:
 
 
 class TestBarriers:
-    @given(barrier_areas=st.sets(areas()), area=areas())
+    @given(barrier_areas=st.sets(areas(), max_size=20), area=areas())
     @settings(max_examples=25)
     def test_occupied_points(self, barrier_areas, area):
         barriers = Barriers.for_areas(barrier_areas)
@@ -66,7 +66,7 @@ class TestBarriers:
             assert barriers.occupied(point)
 
     @given(
-        barrier_areas=st.sets(areas()),
+        barrier_areas=st.sets(areas(), max_size=20),
         area_and_point=areas(min_width=1, min_height=1).flatmap(area_and_point),
     )
     @settings(max_examples=25)
@@ -77,7 +77,11 @@ class TestBarriers:
         assert point not in barriers.occupied_points_in(area)
         assert not barriers.occupied(point)
 
-    @given(barrier_areas=st.sets(st.one_of([areas(max_width=1), areas(max_height=1)])))
+    @given(
+        barrier_areas=st.sets(
+            st.one_of([areas(max_width=1), areas(max_height=1)]), max_size=20
+        )
+    )
     @settings(max_examples=25)
     def test_positions(self, barrier_areas):
         barriers = Barriers.for_areas(barrier_areas)
