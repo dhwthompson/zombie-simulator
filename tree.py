@@ -229,44 +229,38 @@ class Leaf(Generic[ValueType]):
             Match(pos, item) for pos, item in self._positions.items() if pos in area
         )
 
+    def _split(self) -> Tuple[Area, Area, LowerFunc]:
+        if self._area.width >= self._area.height:
+            # Split horizontally
+            midpoint_x = (self._area._lower.x + self._area._upper.x) // 2
+            lower_area = Area(self._area._lower, Point(midpoint_x, self._area._upper.y))
+            upper_area = Area(Point(midpoint_x, self._area._lower.y), self._area._upper)
+            lower_func = lambda point: point.x < midpoint_x
+
+            return (lower_area, upper_area, lower_func)
+        else:
+            # Split vertically
+            midpoint_y = (self._area._lower.y + self._area._upper.y) // 2
+            lower_area = Area(self._area._lower, Point(self._area._upper.x, midpoint_y))
+            upper_area = Area(Point(self._area._lower.x, midpoint_y), self._area._upper)
+            lower_func = lambda point: point.y < midpoint_y
+
+            return (lower_area, upper_area, lower_func)
+
     def set(self, point: Point, value: ValueType) -> "Node[ValueType]":
         if point not in self._positions and len(self._positions) >= self.LEAF_MAX:
-            result: SplitNode[ValueType]
+            lower_area, upper_area, lower_func = self._split()
 
-            if self._area.width >= self._area.height:
-                # Split horizontally
-                midpoint_x = (self._area._lower.x + self._area._upper.x) // 2
-                lower_func = horizontal_midpoint(midpoint_x)
+            lower_child = Leaf(
+                lower_area, {p: v for p, v in self.items() if lower_func(p)}
+            )
 
-                lower_child = Leaf(
-                    Area(self._area._lower, Point(midpoint_x, self._area._upper.y)),
-                    {p: v for p, v in self.items() if lower_func(p)},
-                )
+            upper_child = Leaf(
+                upper_area, {p: v for p, v in self.items() if not lower_func(p)},
+            )
 
-                upper_child = Leaf(
-                    Area(Point(midpoint_x, self._area._lower.y), self._area._upper),
-                    {p: v for p, v in self.items() if not lower_func(p)},
-                )
-
-                result = SplitNode(self._area, lower_func, lower_child, upper_child)
-            else:
-                # Split vertically
-                midpoint_y = (self._area._lower.y + self._area._upper.y) // 2
-                lower_func = vertical_midpoint(midpoint_y)
-
-                lower_child = Leaf(
-                    Area(self._area._lower, Point(self._area._upper.x, midpoint_y)),
-                    {p: v for p, v in self.items() if lower_func(p)},
-                )
-
-                upper_child = Leaf(
-                    Area(Point(self._area._lower.x, midpoint_y), self._area._upper),
-                    {p: v for p, v in self.items() if not lower_func(p)},
-                )
-
-                result = SplitNode(self._area, lower_func, lower_child, upper_child)
-
-            return result.set(point, value)
+            split_node = SplitNode(self._area, lower_func, lower_child, upper_child)
+            return split_node.set(point, value)
         else:
             new_positions = self._positions.copy()
             new_positions[point] = value
@@ -293,14 +287,6 @@ class Leaf(Generic[ValueType]):
                 threshold = distance
                 best_match = Match(pos, value)
         return best_match
-
-
-def horizontal_midpoint(x: int) -> LowerFunc:
-    return lambda p: p.x < x
-
-
-def vertical_midpoint(y: int) -> LowerFunc:
-    return lambda p: p.y < y
 
 
 class SplitNode(Generic[ValueType]):
