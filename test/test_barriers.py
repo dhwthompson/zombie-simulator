@@ -36,14 +36,11 @@ def areas(
     return Area(lower, upper)
 
 
-def area_and_point(area):
-    return st.tuples(
-        st.just(area),
-        st.builds(
-            Point,
-            x=st.integers(min_value=area._lower.x, max_value=area._upper.x - 1),
-            y=st.integers(min_value=area._lower.y, max_value=area._upper.y - 1),
-        ),
+def points_in_area(area):
+    return st.builds(
+        Point,
+        x=st.integers(min_value=area._lower.x, max_value=area._upper.x - 1),
+        y=st.integers(min_value=area._lower.y, max_value=area._upper.y - 1),
     )
 
 
@@ -65,14 +62,15 @@ class TestBarriers:
             assert point in all_area_points
             assert barriers.occupied(point)
 
-    @given(
-        barrier_areas=st.sets(areas(), max_size=20),
-        area_and_point=areas(min_width=1, min_height=1).flatmap(area_and_point),
-    )
+    @given(st.data())
     @settings(max_examples=25)
-    def test_unoccupied_point(self, barrier_areas, area_and_point):
-        area, point = area_and_point
-        assume(not any(point in b for b in barrier_areas))
+    def test_unoccupied_point(self, data):
+        area = data.draw(areas(min_width=1, min_height=1))
+        point = data.draw(points_in_area(area))
+        barrier_areas = data.draw(
+            st.sets(areas().filter(lambda area: point not in area), max_size=20)
+        )
+
         barriers = Barriers.for_areas(barrier_areas)
         assert point not in barriers.occupied_points_in(area)
         assert not barriers.occupied(point)
