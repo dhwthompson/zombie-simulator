@@ -95,16 +95,6 @@ class VectorContainer(Protocol):
         ...
 
 
-def best_move_brute_force(
-    moves: Iterable[Vector], nearest_func: Callable[[Vector], Optional[Vector]]
-) -> Vector:
-    def distance_after_move(move: Vector) -> float:
-        nearest = nearest_func(move)
-        return nearest.distance if nearest is not None else math.inf
-
-    return min(moves, key=lambda move: (-distance_after_move(move), move.distance))
-
-
 @attr.s(auto_attribs=True)
 class MoveOption:
     move: Vector
@@ -197,12 +187,7 @@ class Living:
         def nearest_zombie(move: Vector) -> Optional[Vector]:
             return target_vectors.from_offset(move).nearest_zombie
 
-        use_upper_bound = True
-
-        if use_upper_bound:
-            return best_move_upper_bound(available_moves, nearest_zombie)
-        else:
-            return best_move_brute_force(available_moves, nearest_zombie)
+        return best_move_upper_bound(available_moves, nearest_zombie)
 
 
 class Dead:
