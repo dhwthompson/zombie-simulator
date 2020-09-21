@@ -33,7 +33,9 @@ class TestPopulation:
 
     def test_random_source(self):
         uniform = [0.0, 0.2, 0.4, 0.6, 0.8]
-        population = Population[str]((0.4, human), (0.4, zombie), random_source=uniform.pop)
+        population = Population[str](
+            (0.4, human), (0.4, zombie), random_source=uniform.pop
+        )
 
         generated = [next(population) for _ in range(5)]
         population_counts = Counter(generated)

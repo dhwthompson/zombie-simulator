@@ -21,7 +21,11 @@ characters = st.builds(FakeCharacter, st.sampled_from(LifeState))
 
 
 class TestBuilder:
-    @given(st.lists(elements=st.one_of(characters, st.just(None)), min_size=25, max_size=25))
+    @given(
+        st.lists(
+            elements=st.one_of(characters, st.just(None)), min_size=25, max_size=25
+        )
+    )
     @settings(max_examples=25)
     def test_population(self, population):
         world_area = Area.from_zero(5, 5)

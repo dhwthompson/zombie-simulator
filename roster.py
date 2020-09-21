@@ -184,9 +184,7 @@ class Viewpoint(Generic[PartitionKeyType]):
         else:
             return None
 
-    def from_offset(
-        self, offset: Vector
-    ) -> "Viewpoint[PartitionKeyType]":
+    def from_offset(self, offset: Vector) -> "Viewpoint[PartitionKeyType]":
         return Viewpoint(self._origin + offset, self._roster, self._barriers)
 
 

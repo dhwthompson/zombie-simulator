@@ -8,6 +8,7 @@ from typing import Any, Iterable, Optional, Protocol, Tuple
 
 class RenderEmpty(Enum):
     """What to render for empty spaces in the world."""
+
     SPACE = " "
     DOT = "."
 
