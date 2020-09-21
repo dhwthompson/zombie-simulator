@@ -68,7 +68,7 @@ class TestBarriers:
         area = data.draw(areas(min_width=1, min_height=1))
         point = data.draw(points_in_area(area))
         barrier_areas = data.draw(
-            st.sets(areas().filter(lambda area: point not in area), max_size=20)
+            st.sets(areas().filter(lambda area: point not in area), max_size=5)
         )
 
         barriers = Barriers.for_areas(barrier_areas)
@@ -77,7 +77,7 @@ class TestBarriers:
 
     @given(
         barrier_areas=st.sets(
-            st.one_of([areas(max_width=1), areas(max_height=1)]), max_size=20
+            st.one_of([areas(max_width=1), areas(max_height=1)]), max_size=5
         )
     )
     @settings(max_examples=25)
