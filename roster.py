@@ -13,15 +13,11 @@ from typing import (
     Iterator,
     Mapping,
     Optional,
+    Protocol,
     Set,
     Tuple,
     TypeVar,
 )
-
-try:
-    from typing import Protocol
-except ImportError:
-    from typing_extensions import Protocol  # type: ignore
 
 from barriers import Barriers
 from space import Area, BoundingBox, Point, Vector

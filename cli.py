@@ -6,12 +6,7 @@ import re
 import shutil
 import sys
 import time
-from typing import Callable, Generator, Iterator, Optional, Tuple
-
-try:
-    from typing import Protocol
-except ImportError:
-    from typing_extensions import Protocol  # type: ignore
+from typing import Callable, Generator, Iterator, Optional, Protocol, Tuple
 
 from barriers import random_barriers
 from character import Character, default_human, default_zombie

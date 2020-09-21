@@ -3,12 +3,7 @@ from enum import Enum
 from barriers import BarrierPoint
 from character import LifeState
 from space import Point
-from typing import Any, Iterable, Optional, Tuple
-
-try:
-    from typing import Protocol
-except ImportError:
-    from typing_extensions import Protocol  # type: ignore
+from typing import Any, Iterable, Optional, Protocol, Tuple
 
 
 class RenderEmpty(Enum):

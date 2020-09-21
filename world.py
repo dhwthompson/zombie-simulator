@@ -6,15 +6,11 @@ from typing import (
     Iterable,
     Mapping,
     Optional,
+    Protocol,
     Set,
     Tuple,
     TypeVar,
 )
-
-try:
-    from typing import Protocol
-except ImportError:
-    from typing_extensions import Protocol  # type: ignore
 
 from barriers import Barriers
 from character import Character, LifeState, State

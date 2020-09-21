@@ -8,16 +8,12 @@ from typing import (
     Iterable,
     Optional,
     Mapping,
+    Protocol,
     Set,
     Tuple,
     TypeVar,
     Union,
 )
-
-try:
-    from typing import Protocol
-except ImportError:
-    from typing_extensions import Protocol  # type: ignore
 
 import attr
 

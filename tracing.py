@@ -3,13 +3,17 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta
 import json
 from types import TracebackType
-from typing import ContextManager, Generator, Dict, List, Optional, Mapping, Type
+from typing import (
+    ContextManager,
+    Generator,
+    Dict,
+    List,
+    Optional,
+    Mapping,
+    Protocol,
+    Type,
+)
 import uuid
-
-try:
-    from typing import Protocol
-except ImportError:
-    from typing_extensions import Protocol  # type: ignore
 
 Context = Optional[Mapping[str, object]]
 
