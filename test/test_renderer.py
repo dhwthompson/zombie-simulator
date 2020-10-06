@@ -46,7 +46,11 @@ class TestRenderer:
 
     def test_dead_human(self):
         dead_human = Character(LifeState.DEAD)
-        world = World(width=3, height=1, positions=[(Point(1, 0), dead_human)],)
+        world = World(
+            width=3,
+            height=1,
+            positions=[(Point(1, 0), dead_human)],
+        )
         renderer = Renderer(world)
         assert renderer.lines == [". \U0001F480 . "]
 

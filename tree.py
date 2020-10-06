@@ -79,7 +79,9 @@ class PartitionTree(Generic[PartitionKeyType, ValueType]):
         return matches
 
     def nearest_to(
-        self, origin: Point, key: PartitionKeyType,
+        self,
+        origin: Point,
+        key: PartitionKeyType,
     ) -> Optional[Match[ValueType]]:
         try:
             tree = self._trees[key]
@@ -256,7 +258,8 @@ class Leaf(Generic[ValueType]):
             )
 
             upper_child = Leaf(
-                upper_area, {p: v for p, v in self.items() if not lower_func(p)},
+                upper_area,
+                {p: v for p, v in self.items() if not lower_func(p)},
             )
 
             split_node = SplitNode(self._area, lower_func, lower_child, upper_child)
@@ -272,7 +275,9 @@ class Leaf(Generic[ValueType]):
         return Leaf(self._area, new_positions)
 
     def nearest_to(
-        self, origin: Point, threshold: float = math.inf,
+        self,
+        origin: Point,
+        threshold: float = math.inf,
     ) -> Optional[Match[ValueType]]:
 
         if self._area.distance_from(origin) > threshold:
@@ -366,7 +371,9 @@ class SplitNode(Generic[ValueType]):
             return SplitNode(self._area, self._lower_func, lower_child, upper_child)
 
     def nearest_to(
-        self, origin: Point, threshold: float = math.inf,
+        self,
+        origin: Point,
+        threshold: float = math.inf,
     ) -> Optional[Match[ValueType]]:
 
         if self._area.distance_from(origin) > threshold:

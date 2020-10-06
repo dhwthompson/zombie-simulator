@@ -136,7 +136,8 @@ class TestRoster:
     @given(characters)
     def test_no_nearest_character(self, character):
         roster = Roster.for_mapping(
-            {Point(1, 1): character}, area=Area(Point(0, 0), Point(2, 2)),
+            {Point(1, 1): character},
+            area=Area(Point(0, 0), Point(2, 2)),
         )
         assert roster.nearest_to(Point(1, 1), key=()) is None
 
@@ -144,7 +145,9 @@ class TestRoster:
     def test_nearest_in_partition(self, positions_and_item):
         positions, (position, character) = positions_and_item
         roster = Roster.partitioned(
-            positions, area_containing(positions), partition_func=character_colour,
+            positions,
+            area_containing(positions),
+            partition_func=character_colour,
         )
 
         partition_key = "blue"

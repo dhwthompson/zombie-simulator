@@ -97,7 +97,10 @@ class Roster(Generic[CharacterType, PartitionKeyType]):
         return {Match(i.point, i.value) for i in self._positions.items_in(area)}
 
     def nearest_to(
-        self, origin: Point, *, key: PartitionKeyType,
+        self,
+        origin: Point,
+        *,
+        key: PartitionKeyType,
     ) -> Optional[Match[CharacterType]]:
         match = self._positions.nearest_to(origin, key=key)
 

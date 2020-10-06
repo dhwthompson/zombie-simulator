@@ -282,7 +282,8 @@ class TestArea:
         assert not area_b.intersects_with(area_a)
 
     @given(
-        areas=st.lists(st.builds(Area, points(), points()), min_size=2), point=points(),
+        areas=st.lists(st.builds(Area, points(), points()), min_size=2),
+        point=points(),
     )
     def test_point_outside_intersection(self, areas, point):
         assume(any(point not in area for area in areas))

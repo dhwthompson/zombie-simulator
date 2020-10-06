@@ -257,7 +257,10 @@ class Character:
         return self._state.life_state
 
     def next_action(
-        self, environment: Viewpoint, limits: BoundingBox, actions: Actions[ActionType],
+        self,
+        environment: Viewpoint,
+        limits: BoundingBox,
+        actions: Actions[ActionType],
     ) -> ActionType:
         new_state = self._state.next_state
         if new_state:
@@ -314,7 +317,8 @@ def default_zombie() -> Character:
 
 
 def available_moves(
-    character_range: Iterable[Vector], obstacles: Set[Vector],
+    character_range: Iterable[Vector],
+    obstacles: Set[Vector],
 ) -> Set[Vector]:
     """Determine available moves for a character.
 
