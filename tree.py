@@ -277,10 +277,10 @@ class Leaf(Generic[ValueType]):
     def nearest_to(
         self,
         origin: Point,
-        threshold: float = math.inf,
+        max_distance: float = math.inf,
     ) -> Optional[Match[ValueType]]:
 
-        if self._area.distance_from(origin) > threshold:
+        if self._area.distance_from(origin) > max_distance:
             return None
 
         best_match = None
@@ -288,8 +288,8 @@ class Leaf(Generic[ValueType]):
             if pos == origin:
                 continue
             distance = (pos - origin).distance
-            if distance < threshold:
-                threshold = distance
+            if distance < max_distance:
+                max_distance = distance
                 best_match = Match(pos, value)
         return best_match
 
@@ -373,10 +373,10 @@ class SplitNode(Generic[ValueType]):
     def nearest_to(
         self,
         origin: Point,
-        threshold: float = math.inf,
+        max_distance: float = math.inf,
     ) -> Optional[Match[ValueType]]:
 
-        if self._area.distance_from(origin) > threshold:
+        if self._area.distance_from(origin) > max_distance:
             return None
 
         if self._lower_func(origin):
@@ -386,10 +386,10 @@ class SplitNode(Generic[ValueType]):
 
         best_match = None
         for child in children:
-            child_match = child.nearest_to(origin, threshold)
+            child_match = child.nearest_to(origin, max_distance)
             if child_match is not None:
                 best_match = child_match
-                threshold = (child_match.point - origin).distance
+                max_distance = (child_match.point - origin).distance
 
         return best_match
 
