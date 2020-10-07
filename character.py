@@ -82,15 +82,6 @@ class TargetVectors:
         return TargetVectors(self._viewpoint.from_offset(offset))
 
 
-class VectorContainer(Protocol):
-
-    # For reasons I don't fully understand, typing.Container[T] doesn't
-    # actually seem to respect the [T] part
-
-    def __contains__(self, vector: Vector) -> bool:
-        ...
-
-
 @attr.s(auto_attribs=True)
 class MoveOption:
     move: Vector
