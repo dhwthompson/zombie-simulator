@@ -30,21 +30,11 @@ class FakeViewpoint:
         else:
             return None
 
-    def character_at(self, position):
-        for point, character in self._positions:
-            if point == position:
-                return character
-        else:
-            return None
-
     def occupied_points_in(self, box):
         return {pos for pos, char in self._positions if pos in box}
 
     def from_offset(self, offset):
         return FakeViewpoint((v - offset, char) for v, char in self._positions)
-
-    def __iter__(self):
-        return iter(self._positions)
 
 
 def vectors(max_offset=None):
