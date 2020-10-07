@@ -19,22 +19,19 @@ class FakeViewpoint:
     def __init__(self, positions):
         self._positions = positions
 
-    def nearest(self, life_state):
+    def nearest_to(self, vector, life_state):
         matches = [
             pos
             for pos, char in self._positions
             if LifeState.for_character(char) == life_state
         ]
         if matches:
-            return min(matches, key=lambda pos: pos.distance)
+            return min(matches, key=lambda pos: (pos - vector).distance)
         else:
             return None
 
     def occupied_points_in(self, box):
         return {pos for pos, char in self._positions if pos in box}
-
-    def from_offset(self, offset):
-        return FakeViewpoint((v - offset, char) for v, char in self._positions)
 
 
 def vectors(max_offset=None):

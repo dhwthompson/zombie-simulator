@@ -53,10 +53,7 @@ class Viewpoint(Protocol):
     def occupied_points_in(self, box: BoundingBox) -> Set[Vector]:
         ...
 
-    def nearest(self, key: LifeState) -> Optional[Vector]:
-        ...
-
-    def from_offset(self, offset: Vector) -> "Viewpoint":
+    def nearest_to(self, origin: Vector, key: LifeState) -> Optional[Vector]:
         ...
 
 
@@ -72,14 +69,13 @@ class TargetVectors:
 
     @property
     def nearest_human(self) -> Optional[Vector]:
-        return self._viewpoint.nearest(LifeState.LIVING)
+        return self.nearest_human_to(Vector.ZERO)
 
-    @property
-    def nearest_zombie(self) -> Optional[Vector]:
-        return self._viewpoint.nearest(LifeState.UNDEAD)
+    def nearest_human_to(self, offset: Vector) -> Optional[Vector]:
+        return self._viewpoint.nearest_to(offset, LifeState.LIVING)
 
-    def from_offset(self, offset: Vector) -> "TargetVectors":
-        return TargetVectors(self._viewpoint.from_offset(offset))
+    def nearest_zombie_to(self, offset: Vector) -> Optional[Vector]:
+        return self._viewpoint.nearest_to(offset, LifeState.UNDEAD)
 
 
 @attr.s(auto_attribs=True)
@@ -172,7 +168,10 @@ class Living:
         self, target_vectors: TargetVectors, available_moves: Iterable[Vector]
     ) -> Vector:
         def nearest_zombie(move: Vector) -> Optional[Vector]:
-            return target_vectors.from_offset(move).nearest_zombie
+            if (nearest := target_vectors.nearest_zombie_to(move)) is not None:
+                return nearest - move
+            else:
+                return None
 
         return best_move_upper_bound(available_moves, nearest_zombie)
 
@@ -268,7 +267,7 @@ class Character:
         Arguments:
             environment: the character's current environment. This is currently
                 passed in as a Viewpoint instance, supporting the
-                `occupied_points_in`, `nearest` and `from_offset` methods.
+                `occupied_points_in` and `nearest_to` methods.
             limits: any limits on the character's movement provided by the
                 edges of the world. This can be anything that reponds to the
                 `in` operator.

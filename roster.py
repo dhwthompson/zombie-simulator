@@ -180,15 +180,12 @@ class Viewpoint(Generic[PartitionKeyType]):
         }
         return occupied_by_character | occupied_by_barrier
 
-    def nearest(self, key: PartitionKeyType) -> Optional[Vector]:
-        nearest = self._roster.nearest_to(self._origin, key=key)
+    def nearest_to(self, vector: Vector, key: PartitionKeyType) -> Optional[Vector]:
+        nearest = self._roster.nearest_to(self._origin + vector, key=key)
         if nearest:
             return nearest.position - self._origin
         else:
             return None
-
-    def from_offset(self, offset: Vector) -> "Viewpoint[PartitionKeyType]":
-        return Viewpoint(self._origin + offset, self._roster, self._barriers)
 
 
 @attr.s(auto_attribs=True, frozen=True)
