@@ -1,4 +1,4 @@
-.PHONY: deps mypy test watch zombies
+.PHONY: deps mypy test zombies
 
 WORLD_SIZE ?= auto
 
@@ -10,9 +10,6 @@ mypy:
 
 test: mypy
 	pytest
-
-watch: deps
-	fswatch -or -e '.' -i '\.py$$' . | xargs -I {} -L 1 pytest -q --ff -x
 
 zombies: deps
 	WORLD_SIZE=$(WORLD_SIZE) python3 -m cli
