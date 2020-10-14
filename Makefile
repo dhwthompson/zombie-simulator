@@ -3,12 +3,15 @@
 WORLD_SIZE ?= auto
 
 deps:
-	pip install -q -r requirements.txt
+	pipenv install
 
-mypy:
+dev-deps:
+	pipenv install --dev
+
+mypy: dev-deps
 	mypy --html-report mypy .
 
-test: mypy
+test: dev-deps mypy
 	pytest
 
 zombies: deps

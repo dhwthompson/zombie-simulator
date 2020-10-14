@@ -1,0 +1,17 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+pytest = "==5.4.3"
+lxml = "==4.5.2"
+mypy = "==0.782"
+hypothesis = "==5.16.1"
+pytest-cov = "==2.10.0"
+
+[packages]
+attrs = ">=19.2.0"
+
+[requires]
+python_version = "3.8"
