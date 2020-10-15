@@ -8,13 +8,16 @@ deps:
 dev-deps:
 	pipenv install --dev
 
+lint:
+	pipenv run black --check .
+
 mypy:
 	pipenv run mypy --html-report mypy .
 
 test:
 	pipenv run pytest
 
-test-all: mypy test
+test-all: lint mypy test
 
 zombies: deps
 	WORLD_SIZE=$(WORLD_SIZE) pipenv run python3 -m cli

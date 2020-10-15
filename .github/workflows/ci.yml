@@ -3,7 +3,7 @@ name: CI
 on: [ push ]
 
 jobs:
-  mypy:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -15,7 +15,21 @@ jobs:
         run: pip install pipenv
       - name: Install dependencies
         run: make dev-deps
-      - name: Run tests
+      - name: Run lint checks
+        run: make lint
+  type-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Install pipenv
+        run: pip install pipenv
+      - name: Install dependencies
+        run: make dev-deps
+      - name: Run type checks
         run: make mypy
   test:
     runs-on: ubuntu-latest
