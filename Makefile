@@ -9,10 +9,10 @@ dev-deps:
 	pipenv install --dev
 
 mypy: dev-deps
-	mypy --html-report mypy .
+	pipenv run mypy --html-report mypy .
 
 test: dev-deps mypy
-	pytest
+	pipenv run pytest
 
 zombies: deps
-	WORLD_SIZE=$(WORLD_SIZE) python3 -m cli
+	WORLD_SIZE=$(WORLD_SIZE) pipenv run python3 -m cli
