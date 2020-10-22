@@ -1,4 +1,4 @@
-.PHONY: deps mypy test zombies
+.PHONY: deps flame mypy test zombies
 
 WORLD_SIZE ?= auto
 
@@ -13,6 +13,9 @@ lint:
 
 mypy:
 	pipenv run mypy --html-report mypy .
+
+flame:
+	sudo TICK=0 MAX_AGE=100 WORLD_SIZE=$(WORLD_SIZE) py-spy record -o flame.svg -- python -m cli
 
 test:
 	pipenv run pytest
