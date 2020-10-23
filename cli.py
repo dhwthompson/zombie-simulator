@@ -6,7 +6,7 @@ import re
 import shutil
 import sys
 import time
-from typing import Callable, Generator, Iterator, Optional, Protocol, Tuple
+from typing import Callable, Iterator, Optional, Protocol, Tuple
 
 from barriers import random_barriers
 from character import Character, default_human, default_zombie
@@ -95,9 +95,7 @@ if __name__ == "__main__":
     roster = builder.roster
     renderer = Renderer(roster, barriers, empty=empty)
 
-    ticks: Iterator[None] = each_interval(TICK)
-    if MAX_AGE is not None:
-        ticks = islice(ticks, MAX_AGE)
+    ticks = islice(each_interval(TICK), MAX_AGE)
 
     tracing_context = ExitStack()
 
