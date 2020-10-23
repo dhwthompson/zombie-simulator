@@ -61,7 +61,7 @@ def each_interval(
     interval: float,
     current_time: Callable[[], float] = time.time,
     sleep: Callable[[float], None] = time.sleep,
-) -> Generator[None, None, None]:
+) -> Iterator[None]:
     """Yield at regular intervals.
 
     This generator waits at least `interval` seconds between each value it
