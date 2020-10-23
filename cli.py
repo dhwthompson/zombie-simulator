@@ -51,8 +51,6 @@ ZOMBIE_CHANCE = float(environ.get("ZOMBIE_CHANCE", 0.2))
 BARRIERS = int(environ.get("BARRIERS", 20))
 TICK = float(environ.get("TICK", 0.1))
 
-MAX_AGE = None
-
 max_age_str = environ.get("MAX_AGE")
 MAX_AGE = int(max_age_str) if max_age_str else None
 
