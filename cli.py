@@ -101,7 +101,7 @@ if __name__ == "__main__":
     if trace_file_name:
         trace_file = open(trace_file_name, mode="w")
         tracing_context.enter_context(trace_file)
-        tracing_context.enter_context(tracing.file_tracing(trace_file))
+        tracing.init(trace_file)
 
     with tracing_context:
         try:
