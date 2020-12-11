@@ -2,12 +2,21 @@ import attr
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 import json
+import os
+
+from opentelemetry import trace
+from opentelemetry.sdk.trace import Span, TracerProvider
+from opentelemetry.sdk.trace.export import (
+    ConsoleSpanExporter,
+    SimpleExportSpanProcessor,
+)
+
 from types import TracebackType
 from typing import (
-    ContextManager,
     Generator,
     Dict,
     List,
+    IO,
     Optional,
     Mapping,
     Protocol,
@@ -15,7 +24,7 @@ from typing import (
 )
 import uuid
 
-Context = Optional[Mapping[str, object]]
+Context = Optional[Mapping[str, str]]
 
 
 class Tracer(Protocol):
@@ -26,103 +35,32 @@ class Tracer(Protocol):
         ...
 
 
-class Writable(Protocol):
-    def write(self, out: str) -> int:
-        ...
+def single_line_json(span: Span) -> str:
+    """Format tracing spans as single-line JSON.
+
+    By default, the ConsoleSpanExporter spits out verbose JSON across multiple lines.
+    I'd like to be able to slurp these spans up into some kind of data store so that I
+    can poke at them, and the easiest way to do that is to have one span per line.
+    """
+    json = span.to_json(indent=None)
+    assert isinstance(json, str)
+    return json + os.linesep
 
 
-def file_tracing(outfile: Writable) -> ContextManager[Tracer]:
-    global _tracer
-
-    _tracer = FileTracer(outfile)
-    return _tracer
-
-
-class NullTracer:
-    def open_span(self, span_name: str, context: Context = None) -> None:
-        pass
-
-    def close_span(self) -> None:
-        pass
-
-
-@attr.s(auto_attribs=True)
-class Span:
-    id: uuid.UUID
-    name: str
-    start_time: datetime
-    context: Dict[str, object]
-
-    parent_id: Optional[uuid.UUID] = None
-    end_time: Optional[datetime] = None
-
-    def to_dict(self) -> Dict[str, object]:
-        if not self.end_time:
-            raise ValueError("Cannot serialise spans without an end time")
-        duration = self.end_time - self.start_time
-        span_dict = {
-            "id": self.id,
-            "name": self.name,
-            "start_time": self.start_time,
-            "end_time": self.end_time,
-            "duration_us": duration // timedelta(microseconds=1),
-        }
-        span_dict.update(self.context)
-        return span_dict
-
-
-class FileTracer:
-    def __init__(self, outfile: Writable):
-        self._outfile = outfile
-        self._span_stack: List[Span] = []
-
-    def __enter__(self) -> Tracer:
-        return self
-
-    def __exit__(
-        self,
-        type: Optional[Type[BaseException]],
-        value: Optional[BaseException],
-        traceback: Optional[TracebackType],
-    ) -> None:
-        pass
-
-    def open_span(self, span_name: str, context: Context = None) -> None:
-        parent_id = self._span_stack[-1].id if self._span_stack else None
-        span = Span(
-            id=uuid.uuid4(),
-            name=span_name,
-            start_time=datetime.utcnow(),
-            context={},
-            parent_id=parent_id,
+def init(tracefile: Optional[IO[str]] = None) -> None:
+    tracer_provider = TracerProvider()
+    if tracefile is not None:
+        tracer_provider.add_span_processor(
+            SimpleExportSpanProcessor(
+                ConsoleSpanExporter(out=tracefile, formatter=single_line_json)
+            )
         )
-        if context:
-            span.context.update(context)
-
-        self._span_stack.append(span)
-
-    def close_span(self) -> None:
-        span = self._span_stack.pop()
-        span.end_time = datetime.utcnow()
-        span_str = json.dumps(span.to_dict(), default=str)
-        self._outfile.write(span_str + "\n")
-
-
-def open_span(span_name: str, context: Context = None) -> None:
-    _tracer.open_span(span_name, context)
-
-
-def close_span() -> None:
-    _tracer.close_span()
+    trace.set_tracer_provider(tracer_provider)
 
 
 @contextmanager
 def span(span_name: str, context: Context = None) -> Generator[None, None, None]:
-    open_span(span_name, context)
-    try:
+    tracer = trace.get_tracer(__name__)
+
+    with tracer.start_as_current_span(span_name, attributes=context):
         yield
-    finally:
-        close_span()
-
-
-_tracer = NullTracer()  # type: Tracer
